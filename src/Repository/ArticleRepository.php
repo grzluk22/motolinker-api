@@ -39,6 +39,16 @@ class ArticleRepository extends ServiceEntityRepository
         }
     }
 
+    public function findOneByCode($code): ?Article
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.code = :code')
+            ->setParameter('code', $code)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
 //    /**
 //     * @return Article[] Returns an array of Article objects
 //     */
@@ -63,4 +73,6 @@ class ArticleRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+
 }
