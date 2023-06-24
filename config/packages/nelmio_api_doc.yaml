@@ -4,6 +4,14 @@ nelmio_api_doc:
             title: MotolinkerApi
             description: Api do panelu motolinker udostępnia metody do tworzenia bazy danych części samochodowych
             version: 0.0.1
+        components:
+            securitySchemes:
+                Bearer:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+        security:
+            - Bearer: []
     areas: # to filter documented areas
         path_patterns:
-            - ^\/((?!_error)(?!doc).)*$ # Accepts routes under / except /doc
+            - ^\/((?!_error)(?!doc)(?!_wdt)(?!_profiler).)*$ # Accepts routes under / except /doc /_error /_wdt /_profler
