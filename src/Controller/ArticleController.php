@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use function Symfony\Config\toArray;
+use OpenApi\Annotations as OA;
+use Nelmio\ApiDocBundle\Annotation\Model;
 
 class ArticleController extends AbstractController
 {
@@ -41,6 +43,45 @@ class ArticleController extends AbstractController
      * Przyjmuje pola arykułu
      */
     #[Route('/article', name: 'app_article_create', methods: ["POST"])]
+    /**
+     * @OA\Response(
+     *     response=200,
+     *     description="Stworzono artykuł",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                 @OA\Schema(
+     *                     @OA\Property(
+     *                         property="code",
+     *                         type="string",
+     *                         description="Kod artykułu"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="ean13",
+     *                         type="string",
+     *                         description="Kod kreskowy artykułu"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="price",
+     *                         type="float",
+     *                         description="Cena artykułu",
+     *                     ),
+     *                     @OA\Property(
+     *                         property="idCategory",
+     *                         type="integer",
+     *                         description="Domyślne id kategorii",
+     *                     ),
+     *                     example={
+     *                         "code": "36790-SET-MS",
+     *                         "ean13": "1234567890123",
+     *                         "price": "367.99",
+     *                         "idCategory": "0"
+     *                     }
+     *                 )
+     *             )
+     *         })
+     * )
+    **/
     public function create(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $entityManager = $doctrine->getManager();
