@@ -33,5 +33,5 @@ security:
     access_control:
         - { path: ^/doc, roles: PUBLIC_ACCESS  }
         - { path: ^/register, roles: PUBLIC_ACCESS  }
-        - { path: ^/login, roles: PUBLIC_ACCESS  }
+        - { path: ^/login_check, roles: PUBLIC_ACCESS  }
         - { path: ^/,       roles: IS_AUTHENTICATED_FULLY }

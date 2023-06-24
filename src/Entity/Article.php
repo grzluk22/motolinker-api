@@ -13,17 +13,17 @@ class Article
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $code = null;
+    #[ORM\Column(unique: true, length: 255)]
+    public ?string $code = null;
 
     #[ORM\Column]
-    private ?int $ean13 = null;
+    public ?int $ean13 = null;
 
     #[ORM\Column]
-    private ?float $price = null;
+    public ?float $price = null;
 
     #[ORM\Column]
-    private ?int $id_category = null;
+    public ?int $id_category = null;
 
     public function getId(): ?int
     {

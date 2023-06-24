@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Article;
+use App\Repository\ArticleRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,21 +17,29 @@ class ArticleController extends AbstractController
      *
      * Dodatkowy opis metody do NelmioApiDocBundle
      */
-    #[Route('/article', name: 'app_article', methods: ["GET"])]
-    public function index(): JsonResponse
+    #[Route('/article', name: 'app_article_get', methods: ["GET"])]
+    public function index(ArticleRepository $articleRepository): JsonResponse
     {
-        return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/ArticleController.php',
-        ]);
+        $result = $articleRepository->findAll();
+        $data = ["code" => $result[0]->getCode()];
+        return $this->json($result);
     }
+
+    #[Route('/article/{code}', name: 'app_article_get_by_code', methods: ["GET"])]
+    public function getByCode(ArticleRepository $articleRepository, string $code): JsonResponse
+    {
+        $result = $articleRepository->findOneByCode($code);
+        return $this->json($result);
+    }
+
+
 
     /**
      * Tworzy nowy artykuł
      *
      * Przyjmuje pola arykułu
      */
-    #[Route('/article', name: 'app_article', methods: ["POST"])]
+    #[Route('/article', name: 'app_article_create', methods: ["POST"])]
     public function create(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $entityManager = $doctrine->getManager();
