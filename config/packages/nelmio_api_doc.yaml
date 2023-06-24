@@ -6,4 +6,4 @@ nelmio_api_doc:
             version: 0.0.1
     areas: # to filter documented areas
         path_patterns:
-            - ^\/((?!_error)(?!doc).)*$ # Accepts routes under / except /doc
+            - ^\/((?!_error)(?!doc)(?!_wdt)(?!_profiler).)*$ # Accepts routes under / except /doc /_error /_wdt /_profler
