@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use function Symfony\Config\toArray;
 
 class ArticleController extends AbstractController
 {
@@ -43,16 +44,30 @@ class ArticleController extends AbstractController
     public function create(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $entityManager = $doctrine->getManager();
-
+        $requestArray = $request->toArray();
+        /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
+        $requiredFields = ['code', 'ean13', 'price', 'idCategory'];
+        foreach ($requiredFields as $requiredField) {
+            if(!isset($requestArray[$requiredField])) {
+                return $this->json(["error" => "Nie przekazano wymaganego parametru '".$requiredField."'"]);
+            }
+        }
+        if(!isset($requestArray['translations'])) {
+            return $this->json(["error" => "Nie przekazano tłumaczeń"]);
+        }else{
+            if(count($requestArray['translations'] == 0)) {
+                return $this->json(["error" => "Nie przekazano tłumaczeń"]);
+            }else{
+                /* @Todo: Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
+            }
+        }
         /* Ustawianie podstawowych danych artykułu */
         $article = new Article();
-        $article->setCode($request->request->get('code'));
-        $article->setEan13($request->request->get('ean13'));
-        $article->setPrice($request->request->get('price'));
-        $article->setIdCategory($request->request->get('id_category'));
-        /* Ustawianie tłumaczeń, przynajmniej jedno powinno być przekazane, w przypadku braku takiego języka w bazie danych tworzenie nowego  */
-
-
+        $article->setCode($requestArray['code']);
+        $article->setEan13($requestArray['ean13']);
+        $article->setPrice($requestArray['price']);
+        $article->setIdCategory($requestArray['idCategory']);
+        /* @Todo: Ustawianie tłumaczeń, przynajmniej jedno powinno być przekazane, w przypadku braku takiego języka w bazie danych tworzenie nowego  */
 
         $entityManager->persist($article);
         $entityManager->flush();
