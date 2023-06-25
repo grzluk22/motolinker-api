@@ -81,13 +81,28 @@ class ArticleController extends AbstractController
      *                         type="integer",
      *                         description="Domyślne id kategorii",
      *                     ),
+     *                     @OA\Property(
+     *                         property="translations",
+     *                         type="array",
+     *                         description="Tablica tłumaczeń",
+     *                      @OA\Items(
+     *                          @OA\Property(
+     *                              property="pl",
+     *                              type="string",
+     *                              description="tłumaczenie_pl"
+     *                          ))
+     *
+     *                     ),
      * )
      *        },
      *       example={
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": "0"
+     *                         "idCategory": "0",
+     *                         "translations": {
+    *                               "pl": "polska nazwa"
+     *                          }
      *                     }
      *    )
      * )
