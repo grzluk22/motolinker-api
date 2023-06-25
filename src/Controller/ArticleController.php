@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Article;
+use App\Entity\ArticleLanguage;
+use App\Repository\ArticleLanguageRepository;
 use App\Repository\ArticleRepository;
+use App\Repository\LanguageRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -12,6 +15,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use function Symfony\Config\toArray;
 use OpenApi\Annotations as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use App\Entity\Language;
 
 class ArticleController extends AbstractController
 {
@@ -137,10 +141,17 @@ class ArticleController extends AbstractController
      * )
      **/
     #[Route('/article', name: 'app_article_create', methods: ["POST"])]
-    public function create(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function create(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, Request $request): JsonResponse
     {
         $entityManager = $doctrine->getManager();
+        $languageManager = $doctrine->getManagerForClass(Language::class);
+        $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
         $requestArray = $request->toArray();
+        /* Sprawdzanie czy artykuł o podanym kodzie nie istnieje juz w bazie danych */
+        $articleResult = $articleRepository->findOneByCode($requestArray['code']);
+        if($articleResult !== null) {
+            return $this->json(["error" => "Artykuł o takim kodzie już istnieje"]);
+        }
         /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
         $requiredFields = ['code', 'ean13', 'price', 'idCategory'];
         foreach ($requiredFields as $requiredField) {
@@ -151,26 +162,56 @@ class ArticleController extends AbstractController
         if (!isset($requestArray['translations'])) {
             return $this->json(["error" => "Nie przekazano tłumaczeń"]);
         } else {
-            if (count($requestArray['translations'] == 0)) {
+            if (count($requestArray['translations']) == 0) {
                 return $this->json(["error" => "Nie przekazano tłumaczeń"]);
             } else {
-                /* @Todo: Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
+                /* Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
+                foreach ($requestArray['translations'] as $languageName=>$translation) {
+                    $langResult = $languageRepository->findOneByName($languageName);
+                    if($langResult === null) {
+                        /* Wstawianie nowego języka */
+                        $language = new Language();
+                        $language->setName($languageName);
+                        $language->setIsoCode($languageName);
+                        $languageManager->persist($language);
+                        $languageManager->flush();
+                    }
+                }
             }
         }
+
         /* Ustawianie podstawowych danych artykułu */
         $article = new Article();
         $article->setCode($requestArray['code']);
         $article->setEan13($requestArray['ean13']);
         $article->setPrice($requestArray['price']);
         $article->setIdCategory($requestArray['idCategory']);
-        /* @Todo: Ustawianie tłumaczeń, przynajmniej jedno powinno być przekazane, w przypadku braku takiego języka w bazie danych tworzenie nowego */
-
         $entityManager->persist($article);
         $entityManager->flush();
 
+        /* @Todo: Ustawianie tłumaczeń */
+        /* Pobieranie id wszystkich dostępnych języków */
+        $languages = $languageRepository->findAll();
+        $languageIds = [];
+        foreach ($languages as $language) {
+            $languageIds[$language->getName()] = $language->getId();
+        }
+        foreach ($requestArray['translations'] as $languageName=>$translation) {
+            $articleLanguage = new ArticleLanguage();
+            $articleLanguage->setName($translation);
+            $articleLanguage->setDescription('asd');
+            $articleLanguage->setIdArticle($article->getId());
+            $articleLanguage->setIdLanguage($languageIds[$languageName]);
+            $articleLanguageManager->persist($articleLanguage);
+            $articleLanguageManager->flush();
+        }
+
         $data = [
             'id' => $article->getId(),
-            'code' => $article->getCode()
+            'code' => $article->getCode(),
+            'ean13' => $article->getEan13(),
+            'price' => $article->getPrice(),
+            'translations' => $articleLanguageRepository->findByArticleId($article->getId())
         ];
 
         return $this->json($data);
