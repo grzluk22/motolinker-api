@@ -19,6 +19,16 @@ class ArticleController extends AbstractController
      * Wyświetla liste artykułów
      *
      * Dodatkowy opis metody do NelmioApiDocBundle
+     *
+     * @OA\Response(
+     *     response=200,
+     *     description="successful operation",
+     *     @OA\MediaType(
+     *         mediaType="application/json",
+     *         @OA\Schema(ref="../Entity/Article"),
+     *     )
+     * )
+     *
      */
     #[Route('/article', name: 'app_article_get', methods: ["GET"])]
     public function index(ArticleRepository $articleRepository): JsonResponse
@@ -35,15 +45,49 @@ class ArticleController extends AbstractController
         return $this->json($result);
     }
 
-
-
     /**
      * Tworzy nowy artykuł
      *
-     * Przyjmuje pola arykułu
-     */
-    #[Route('/article', name: 'app_article_create', methods: ["POST"])]
-    /**
+     *
+     *
+     * @OA\RequestBody(
+     *     request="ArticleCreateRequestBody",
+     *     description="Artykuł",
+     *     required=true,
+     *     @OA\JsonContent(
+     *        allOf={
+     *           @OA\Schema(
+     *                     @OA\Property(
+     *                         property="code",
+     *                         type="string",
+     *                         description="Kod artykułu"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="ean13",
+     *                         type="string",
+     *                         description="Kod kreskowy artykułu"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="price",
+     *                         type="float",
+     *                         description="Cena artykułu",
+     *                     ),
+     *                     @OA\Property(
+     *                         property="idCategory",
+     *                         type="integer",
+     *                         description="Domyślne id kategorii",
+     *                     ),
+     * )
+     *        },
+     *       example={
+     *                         "code": "36790-SET-MS",
+     *                         "ean13": "1234567890123",
+     *                         "price": "367.99",
+     *                         "idCategory": "0"
+     *                     }
+     *    )
+     * )
+     *
      * @OA\Response(
      *     response=200,
      *     description="Stworzono artykuł",
@@ -51,6 +95,11 @@ class ArticleController extends AbstractController
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                 @OA\Schema(
+     *                     @OA\Property(
+     *                         property="id",
+     *                         type="int",
+     *                         description="Unikalne ID"
+     *                     ),
      *                     @OA\Property(
      *                         property="code",
      *                         type="string",
@@ -72,6 +121,7 @@ class ArticleController extends AbstractController
      *                         description="Domyślne id kategorii",
      *                     ),
      *                     example={
+     *                         "id": "1",
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
@@ -81,7 +131,12 @@ class ArticleController extends AbstractController
      *             )
      *         })
      * )
-    **/
+     * @OA\Response(
+     *     response=409,
+     *     description="Artykuł o podanym kodzie juz istnieje"
+     * )
+     **/
+    #[Route('/article', name: 'app_article_create', methods: ["POST"])]
     public function create(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $entityManager = $doctrine->getManager();
@@ -89,16 +144,16 @@ class ArticleController extends AbstractController
         /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
         $requiredFields = ['code', 'ean13', 'price', 'idCategory'];
         foreach ($requiredFields as $requiredField) {
-            if(!isset($requestArray[$requiredField])) {
-                return $this->json(["error" => "Nie przekazano wymaganego parametru '".$requiredField."'"]);
+            if (!isset($requestArray[$requiredField])) {
+                return $this->json(["error" => "Nie przekazano wymaganego parametru '" . $requiredField . "'"]);
             }
         }
-        if(!isset($requestArray['translations'])) {
+        if (!isset($requestArray['translations'])) {
             return $this->json(["error" => "Nie przekazano tłumaczeń"]);
-        }else{
-            if(count($requestArray['translations'] == 0)) {
+        } else {
+            if (count($requestArray['translations'] == 0)) {
                 return $this->json(["error" => "Nie przekazano tłumaczeń"]);
-            }else{
+            } else {
                 /* @Todo: Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
             }
         }
@@ -108,12 +163,12 @@ class ArticleController extends AbstractController
         $article->setEan13($requestArray['ean13']);
         $article->setPrice($requestArray['price']);
         $article->setIdCategory($requestArray['idCategory']);
-        /* @Todo: Ustawianie tłumaczeń, przynajmniej jedno powinno być przekazane, w przypadku braku takiego języka w bazie danych tworzenie nowego  */
+        /* @Todo: Ustawianie tłumaczeń, przynajmniej jedno powinno być przekazane, w przypadku braku takiego języka w bazie danych tworzenie nowego */
 
         $entityManager->persist($article);
         $entityManager->flush();
 
-        $data =  [
+        $data = [
             'id' => $article->getId(),
             'code' => $article->getCode()
         ];
