@@ -22,6 +22,7 @@ class ArticleController extends AbstractController
     /**
      * Wyświetla liste artykułów
      *
+     * @OA\Tag(name="Article")
      * @OA\Response(
      *     response=200,
      *     description="Lista artykułów",
@@ -104,6 +105,7 @@ class ArticleController extends AbstractController
     /**
      * Wyświetla konkretny artykuł
      *
+     * @OA\Tag(name="Article")
      * @OA\Response(
      *     response=200,
      *     description="Artykuł",
@@ -192,7 +194,7 @@ class ArticleController extends AbstractController
      * Tworzy nowy artykuł
      *
      *
-     *
+     * @OA\Tag(name="Article")
      * @OA\RequestBody(
      *     request="ArticleCreateRequestBody",
      *     description="Artykuł",
@@ -391,6 +393,7 @@ class ArticleController extends AbstractController
      *
      *
      *
+     * @OA\Tag(name="Article")
      * @OA\RequestBody(
      *     request="ArticleCreateRequestBody",
      *     description="Artykuł",
@@ -548,6 +551,7 @@ class ArticleController extends AbstractController
     /**
      * Usuwa istniejący artykuł
      *
+     * @OA\Tag(name="Article")
      * @OA\Response(
      *     response=200,
      *     description="Usunięto"
