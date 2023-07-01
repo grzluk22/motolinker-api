@@ -360,7 +360,7 @@ class ArticleController extends AbstractController
         $entityManager->persist($article);
         $entityManager->flush();
 
-        /* @Todo: Ustawianie tłumaczeń */
+        /* Ustawianie tłumaczeń */
         /* Pobieranie id wszystkich dostępnych języków */
         $languages = $languageRepository->findAll();
         $languageIds = [];
@@ -531,6 +531,11 @@ class ArticleController extends AbstractController
         foreach ($requestArray['translations'] as $languageName=>$translation) {
             $language = $languageRepository->findOneBy(['name' => $languageName]);
             $articleLanguage = $articleLanguageRepository->findOneBy(['id_article' => $article->getId(), 'id_language' => $language->getId()]);
+            if($articleLanguage === null) {
+                $articleLanguage = new ArticleLanguage();
+                $articleLanguage->setIdArticle($article->getId());
+                $articleLanguage->setIdLanguage($language->getId());
+            }
             $articleLanguage->setName($translation);
             $articleLanguage->setDescription('asd');
             $articleLanguageManager->persist($articleLanguage);
