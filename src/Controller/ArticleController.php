@@ -544,4 +544,38 @@ class ArticleController extends AbstractController
 
         return $this->json($data);
     }
+
+    /**
+     * Usuwa istniejący artykuł
+     *
+     * @OA\Response(
+     *     response=200,
+     *     description="Usunięto"
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono artykułu o podanym kodzie"
+     * )
+     **/
+    #[Route('/article/{code}', name: 'app_article_delete', methods: ["DELETE"])]
+    public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, string $code): JsonResponse
+    {
+        $entityManager = $doctrine->getManager();
+        $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
+        $article = $articleRepository->findOneByCode($code);
+        if($article === null) {
+            return $this->json(["error" => "Nie znaleziono artykułu o podanym kodzie"]);
+        }
+        /* Usuwanie tlumaczeń artykułu */
+        $translations = $articleLanguageRepository->findBy(['id_article' => $article->getId()]);
+        foreach ($translations as $translation) {
+            $articleLanguageManager->remove($translation);
+            $articleLanguageManager->flush();
+        }
+        /* Usuwanie samego artykułu */
+        $entityManager->remove($article);
+        $entityManager->flush();
+
+        return $this->json("Usunięto");
+    }
 }
