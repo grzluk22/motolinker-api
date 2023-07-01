@@ -18,7 +18,9 @@ security:
                 check_path: /login_check
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
-
+        profiler:
+            pattern: ^/_profiler
+            stateless: false
         api:
             pattern:   ^/
             stateless: true
@@ -33,6 +35,7 @@ security:
     access_control:
         - { path: ^/doc, roles: PUBLIC_ACCESS  }
         - { path: ^/_wdt, roles: PUBLIC_ACCESS  }
+        - { path: ^/_profiler, roles: PUBLIC_ACCESS  }
         - { path: ^/register, roles: PUBLIC_ACCESS  }
         - { path: ^/login_check, roles: PUBLIC_ACCESS  }
         - { path: ^/,       roles: IS_AUTHENTICATED_FULLY }
