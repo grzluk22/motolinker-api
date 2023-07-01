@@ -360,7 +360,7 @@ class ArticleController extends AbstractController
         $entityManager->persist($article);
         $entityManager->flush();
 
-        /* @Todo: Ustawianie tłumaczeń */
+        /* Ustawianie tłumaczeń */
         /* Pobieranie id wszystkich dostępnych języków */
         $languages = $languageRepository->findAll();
         $languageIds = [];

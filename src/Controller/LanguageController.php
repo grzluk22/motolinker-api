@@ -199,7 +199,7 @@ class LanguageController extends AbstractController
     }
 
     /**
-     * Edytuje język
+     * Tworzy język
      *
      *
      *
