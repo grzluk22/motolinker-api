@@ -67,7 +67,7 @@ class CriterionController extends AbstractController
      *
      */
     #[Route('/criterion', name: 'app_criterion_get', methods: ['GET'])]
-    public function index(CriterionRepository $criterionRepository, ArticleCriterionRepository $articleCriterionRepository, CriterionLanguageRepository $criterionLanguageRepository, CriterionValueLanguageRepository $criterionValueLanguageRepository, int $id_article): Response
+    public function index(CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository): Response
     {
         $data = [];
         $criterions = $criterionRepository->findAll();
