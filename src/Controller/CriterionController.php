@@ -7,12 +7,15 @@ use App\Entity\Criterion;
 use App\Entity\CriterionLanguage;
 use App\Entity\Language;
 use App\Repository\ArticleCriterionRepository;
+use App\Repository\CategoryLanguageRepository;
+use App\Repository\CategoryRepository;
 use App\Repository\CriterionLanguageRepository;
 use App\Repository\CriterionRepository;
 use App\Repository\CriterionValueLanguageRepository;
 use App\Repository\LanguageRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -329,5 +332,42 @@ class CriterionController extends AbstractController
         }
         $updatedCriterion = $criterionLanguageRepository->findBy(['id_criterion' => $requestArray['id']]);
         return $this->json($updatedCriterion);
+    }
+
+
+    /**
+     * Usuwa kryterium
+     *
+     * @OA\Tag(name="Criterion")
+     * @OA\Response(
+     *     response=200,
+     *     description="Usunięto"
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono kryterium o podanym id"
+     * )
+     **/
+    #[Route('/criterion/{id}', name: 'app_criterion_delete', methods: ["DELETE"])]
+    public function delete(ManagerRegistry $doctrine, CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository, string $id): JsonResponse
+    {
+        $entityManager = $doctrine->getManager();
+        $criterionLanguageManager = $doctrine->getManagerForClass(CriterionLanguage::class);
+        $criterion = $criterionRepository->findOneBy(["id" => $id]);
+        if($criterion === null) {
+            return $this->json(["error" => "Nie znaleziono kryterium o podanym id"]);
+        }
+        /* Usuwanie kategorii */
+        $entityManager->remove($criterion);
+        $entityManager->flush();
+
+        /* Usuwanie tłumaczeń dla tego kryterium */
+        $criterionLanguages = $criterionLanguageRepository->findBy(['id_criterion' => $id]);
+        foreach ($criterionLanguages as $criterionLanguage) {
+            $criterionLanguageManager->remove($criterionLanguage);
+            $criterionLanguageManager->flush();
+        }
+
+        return $this->json("Usunięto");
     }
 }
