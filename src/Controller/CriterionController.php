@@ -314,7 +314,13 @@ class CriterionController extends AbstractController
                 /* Sprawdzanie czy tłumaczenie dla tego kryterium w danym języku istnieje */
                     /* aktualizacja danego tłumaczenia */
                     $thisCriterionLanguage = $criterionLanguageRepository->findOneBy(['id_criterion' => $requestArray['id'], 'id_language' => $languageIds[$languageCode]]);
-                    if($thisCriterionLanguage == null ) return $this->json(["error" => "Tłumaczenie dla tego kryterium dla tego języka (".$languageCode.") nie isnieje"]);
+                    if($thisCriterionLanguage == null ) {
+                        /*return $this->json(["error" => "Tłumaczenie dla tego kryterium dla tego języka (".$languageCode.") nie isnieje"]);*/
+                        /* Zamiast tego wstawianie nowego języka */
+                        $thisCriterionLanguage = new CriterionLanguage();
+                        $thisCriterionLanguage->setIdCriterion($requestArray['id']);
+                        $thisCriterionLanguage->setIdLanguage($languageIds[$languageCode]);
+                    }
                     $thisCriterionLanguage->setName($name);
                     $criterionLanguageRepository->save($thisCriterionLanguage);
                     $criterionLanguageManager->persist($thisCriterionLanguage);
