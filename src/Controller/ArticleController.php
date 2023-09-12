@@ -598,14 +598,14 @@ class ArticleController extends AbstractController
      *     description="Nie znaleziono artykułu o podanym kodzie"
      * )
      **/
-    #[Route('/article/{code}', name: 'app_article_delete', methods: ["DELETE"])]
-    public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, string $code): JsonResponse
+    #[Route('/article/{id_article}', name: 'app_article_delete', methods: ["DELETE"])]
+    public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, int $id_article): JsonResponse
     {
         $entityManager = $doctrine->getManager();
         $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
-        $article = $articleRepository->findOneByCode($code);
+        $article = $articleRepository->findOneBy(['id' => $id_article]);
         if($article === null) {
-            return $this->json(["error" => "Nie znaleziono artykułu o podanym kodzie"]);
+            return $this->json(["error" => "Nie znaleziono artykułu o podanym id"]);
         }
         /* Usuwanie tlumaczeń artykułu */
         $translations = $articleLanguageRepository->findBy(['id_article' => $article->getId()]);
