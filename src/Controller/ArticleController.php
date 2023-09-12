@@ -51,7 +51,7 @@ class ArticleController extends AbstractController
      *                         description="Cena artykułu",
      *                     ),
      *                     @OA\Property(
-     *                         property="idCategory",
+     *                         property="id_category",
      *                         type="integer",
      *                         description="Domyślne id kategorii",
      *                     ),
@@ -61,10 +61,31 @@ class ArticleController extends AbstractController
      *                         description="Tablica tłumaczeń",
      *                      @OA\Items(
      *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
+     *                              property="id",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="id_article",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="id_language",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="name",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="description",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                      )
      *
      *                     ),
      *                     example={
@@ -72,7 +93,7 @@ class ArticleController extends AbstractController
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": 0,
+     *                         "id_category": 0,
      *                              "translations": {
      *                               "id": 1,
      *                               "id_article": 1,
@@ -107,7 +128,7 @@ class ArticleController extends AbstractController
      * @OA\Tag(name="Article")
      * @OA\Response(
      *     response=200,
-     *     description="Artykuł",
+     *     description="Lista artykułów",
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
@@ -133,7 +154,7 @@ class ArticleController extends AbstractController
      *                         description="Cena artykułu",
      *                     ),
      *                     @OA\Property(
-     *                         property="idCategory",
+     *                         property="id_category",
      *                         type="integer",
      *                         description="Domyślne id kategorii",
      *                     ),
@@ -143,10 +164,31 @@ class ArticleController extends AbstractController
      *                         description="Tablica tłumaczeń",
      *                      @OA\Items(
      *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
+     *                              property="id",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="id_article",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="id_language",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="name",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="description",
+     *                              type="int",
+     *                              description="id języka"
+     *                          ),
+     *                      )
      *
      *                     ),
      *                     example={
@@ -154,7 +196,7 @@ class ArticleController extends AbstractController
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": 0,
+     *                         "id_category": 0,
      *                              "translations": {
      *                               "id": 1,
      *                               "id_article": 1,
@@ -173,18 +215,12 @@ class ArticleController extends AbstractController
      * )
      *
      */
-    #[Route('/article/{code}', name: 'app_article_get_by_code', methods: ["GET"])]
-    public function getByCode(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, string $code): JsonResponse
+    #[Route('/article/{id_article}', name: 'app_article_get_one', methods: ["GET"])]
+    public function getOne(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, int $id_article): JsonResponse
     {
-        $article = $articleRepository->findOneByCode($code);
-
-        $data = [
-            'id' => $article->getId(),
-            'code' => $article->getCode(),
-            'ean13' => $article->getEan13(),
-            'price' => $article->getPrice(),
-            'translations' => $articleLanguageRepository->findByArticleId($article->getId())
-        ];
+        $article = $articleRepository->findOneBy(['id' => $id_article]);
+        $translations = $articleLanguageRepository->findByArticleId($article->getId());
+        $data = (object) array_merge( (array)$article, array( 'translations' => $translations ) );
 
         return $this->json($data);
     }
