@@ -22,7 +22,7 @@ class ArticleCategoryController extends AbstractController
      * @OA\Tag(name="Category")
      * @OA\Response(
      *     response=200,
-     *     description="Lista artykułów",
+     *     description="Lista artykułów w danej kategorii",
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
@@ -88,10 +88,10 @@ class ArticleCategoryController extends AbstractController
      * )
      *
      */
-    #[Route('/category/{id}/articles', name: 'app_category_articles', methods: ['GET'])]
-    public function index(ArticleCategoryRepository $articleCategoryRepository,ArticleLanguageRepository $articleLanguageRepository, ArticleRepository $articleRepository, int $id): Response
+    #[Route('/category/{id_category}/articles', name: 'app_category_articles', methods: ['GET'])]
+    public function index(ArticleCategoryRepository $articleCategoryRepository,ArticleLanguageRepository $articleLanguageRepository, ArticleRepository $articleRepository, int $id_category): Response
     {
-        $categoryArticles = $articleCategoryRepository->findBy(['id_category' => $id]);
+        $categoryArticles = $articleCategoryRepository->findBy(['id_category' => $id_category]);
         $data = [];
         foreach ($categoryArticles as $categoryArticle) {
             $data[] = $articleRepository->findOneBy(['id' => $categoryArticle->getIdArticle()]);
