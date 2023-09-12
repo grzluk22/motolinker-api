@@ -98,7 +98,6 @@ class ArticleController extends AbstractController
         foreach ($result as $resid=>$res) {
             $result[$resid]->translations = $articleLanguageRepository->findByArticleId($res->getId());
         }
-        $data = ["code" => $result[0]->getCode()];
         return $this->json($result);
     }
 
