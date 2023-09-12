@@ -3,12 +3,15 @@
 namespace App\Controller;
 
 use App\Entity\ArticleCriterion;
+use App\Entity\CriterionLanguage;
 use App\Repository\ArticleCriterionRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\CriterionLanguageRepository;
 use App\Repository\CriterionRepository;
 use App\Repository\CriterionValueLanguageRepository;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -94,18 +97,16 @@ class ArtileCriterionController extends AbstractController
      * )
      *
      */
-    #[Route('/article/{articleCode}/criterion', name: 'app_article_criterion', methods: ['GET'])]
-    public function index(ArticleRepository $articleRepository, ArticleCriterionRepository $articleCriterionRepository, CriterionLanguageRepository $criterionLanguageRepository, CriterionValueLanguageRepository $criterionValueLanguageRepository, string $articleCode): Response
+    #[Route('/article/{id_article}/criterion', name: 'app_article_criterion', methods: ['GET'])]
+    public function index(ArticleRepository $articleRepository, ArticleCriterionRepository $articleCriterionRepository, CriterionLanguageRepository $criterionLanguageRepository, CriterionValueLanguageRepository $criterionValueLanguageRepository, int $id_article): Response
     {
-        $article = $articleRepository->findOneByCode($articleCode);
-        $id_article = $article->getId();
         $criterions = $articleCriterionRepository->findBy(['id_article' => $id_article]);
         if(count($criterions) == 0) return $this->json(['message' => 'Nie znaleziono kryteriów dla artykułu o podanym id'], 404);
         $criterionTranslations = $criterionLanguageRepository->findAll();
         foreach ($criterions as $index=>$criterion) {
             $criterions[$index]->translations = $criterionValueLanguageRepository->findBy(['id_article_criterion' => $criterion->getId()]);
         }
-        $data = ["criterions" => $criterions, "translations" => $criterionTranslations];
+        $data = ["criterions" => $criterions];
         return $this->json($data);
     }
 
@@ -211,6 +212,28 @@ class ArtileCriterionController extends AbstractController
         $articleCriterion->setValueDescription($requestArray['value_description']);
         $articleCriterionRepository->save($articleCriterion,true);
         return $this->json($articleCriterion);
+    }
+
+    /**
+     * Usuwa kryterium z artykułu
+     *
+     * @OA\Tag(name="Article")
+     * @OA\Response(
+     *     response=200,
+     *     description="Usunięto"
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono kryterium/artykułu o podanym id"
+     * )
+     **/
+    #[Route('/article/{id_article}/criterion/{id_criterion}', name: 'app_article_criterion_delete', methods: ["DELETE"])]
+    public function delete(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, int $id_article, int $id_criterion): JsonResponse
+    {
+        $criterion = $articleCriterionRepository->findOneBy(['id_article' => $id_article, 'id_criterion' => $id_criterion]);
+        if($criterion == null) return $this->json(['error' => 'Nie istnieje takie kryterium']);
+        $articleCriterionRepository->remove($criterion, true);
+        return $this->json("Usunięto");
     }
 
 }
