@@ -225,6 +225,42 @@ class CategoryController extends AbstractController
     }
 
     /**
+     * Usuwa kategorie
+     *
+     * @OA\Tag(name="Category")
+     * @OA\Response(
+     *     response=200,
+     *     description="Usunięto"
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono kategorii o podanym id"
+     * )
+     **/
+    #[Route('/category/{id}', name: 'app_category_delete', methods: ["DELETE"])]
+    public function delete(ManagerRegistry $doctrine, CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository, string $id): JsonResponse
+    {
+        $entityManager = $doctrine->getManager();
+        $categoryLanguageManager = $doctrine->getManagerForClass(CategoryLanguage::class);
+        $category = $categoryRepository->findOneBy(["id" => $id]);
+        if($category === null) {
+            return $this->json(["error" => "Nie znaleziono kategorii o podanym id"]);
+        }
+        /* Usuwanie kategorii */
+        $entityManager->remove($category);
+        $entityManager->flush();
+
+        /* Usuwanie tłumaczeń dla tej kategorii */
+        $categoryLanguages = $categoryLanguageRepository->findBy(['id_category' => $id]);
+        foreach ($categoryLanguages as $categoryLanguage) {
+            $categoryLanguageManager->remove($categoryLanguage);
+            $categoryLanguageManager->flush();
+        }
+
+        return $this->json("Usunięto");
+    }
+
+    /**
      * Edytuje kategorie
      *
      *
@@ -325,36 +361,36 @@ class CategoryController extends AbstractController
         $categoryManager->flush();
 
         /* Ustawianie tłumaczeń */
-                /* Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
-                foreach ($requestArray['translations'] as $languageName=>$translation) {
-                    $langResult = $languageRepository->findOneByName($languageName);
-                    if ($langResult === null) {
-                        /* Wstawianie nowego języka */
-                        $language = new Language();
-                        $language->setName($languageName);
-                        $language->setIsoCode($languageName);
-                        $languageManager->persist($language);
-                        $languageManager->flush();
-                    }
-                }
-            /* Pobieranie id wszystkich dostępnych języków */
-            $languages = $languageRepository->findAll();
-            $languageIds = [];
-            foreach ($languages as $language) {
-                $languageIds[$language->getName()] = $language->getId();
+        /* Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
+        foreach ($requestArray['translations'] as $languageName=>$translation) {
+            $langResult = $languageRepository->findOneByName($languageName);
+            if ($langResult === null) {
+                /* Wstawianie nowego języka */
+                $language = new Language();
+                $language->setName($languageName);
+                $language->setIsoCode($languageName);
+                $languageManager->persist($language);
+                $languageManager->flush();
             }
-            foreach ($requestArray['translations'] as $languageName=>$translation) {
-                $categoryLanguage = $categoryLanguageRepository->findOneBy(['id_category' => $category->getId(), 'id_language' => $languageIds[$languageName]]);
-                if($categoryLanguage === null) {
-                    $categoryLanguage = new CategoryLanguage();
-                    $categoryLanguage->setIdCategory($category->getId());
-                    $categoryLanguage->setIdLanguage($languageIds[$languageName]);
-                }
-                $categoryLanguage->setName($translation);
-                $categoryLanguage->setDescription('asd');
-                $categoryManager->persist($categoryLanguage);;
-                $categoryManager->flush();
+        }
+        /* Pobieranie id wszystkich dostępnych języków */
+        $languages = $languageRepository->findAll();
+        $languageIds = [];
+        foreach ($languages as $language) {
+            $languageIds[$language->getName()] = $language->getId();
+        }
+        foreach ($requestArray['translations'] as $languageName=>$translation) {
+            $categoryLanguage = $categoryLanguageRepository->findOneBy(['id_category' => $category->getId(), 'id_language' => $languageIds[$languageName]]);
+            if($categoryLanguage === null) {
+                $categoryLanguage = new CategoryLanguage();
+                $categoryLanguage->setIdCategory($category->getId());
+                $categoryLanguage->setIdLanguage($languageIds[$languageName]);
             }
+            $categoryLanguage->setName($translation);
+            $categoryLanguage->setDescription('asd');
+            $categoryManager->persist($categoryLanguage);;
+            $categoryManager->flush();
+        }
 
         $data = [
             'id' => $category->getId(),
@@ -363,41 +399,5 @@ class CategoryController extends AbstractController
         ];
 
         return $this->json($data);
-    }
-
-    /**
-     * Usuwa kategorie
-     *
-     * @OA\Tag(name="Category")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono kategorii o podanym id"
-     * )
-     **/
-    #[Route('/category/{id}', name: 'app_category_delete', methods: ["DELETE"])]
-    public function delete(ManagerRegistry $doctrine, CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository, string $id): JsonResponse
-    {
-        $entityManager = $doctrine->getManager();
-        $categoryLanguageManager = $doctrine->getManagerForClass(CategoryLanguage::class);
-        $category = $categoryRepository->findOneBy(["id" => $id]);
-        if($category === null) {
-            return $this->json(["error" => "Nie znaleziono kategorii o podanym id"]);
-        }
-        /* Usuwanie kategorii */
-        $entityManager->remove($category);
-        $entityManager->flush();
-
-        /* Usuwanie tłumaczeń dla tej kategorii */
-        $categoryLanguages = $categoryLanguageRepository->findBy(['id_category' => $id]);
-        foreach ($categoryLanguages as $categoryLanguage) {
-            $categoryLanguageManager->remove($categoryLanguage);
-            $categoryLanguageManager->flush();
-        }
-
-        return $this->json("Usunięto");
     }
 }
