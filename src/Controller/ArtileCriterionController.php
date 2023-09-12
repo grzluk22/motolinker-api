@@ -72,30 +72,6 @@ class ArtileCriterionController extends AbstractController
      *     description="Kategoria",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *                 @OA\Schema(
-     *                      @OA\Property(
-     *                         property="id_article",
-     *                         type="int",
-     *                         description="ID Artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_criterion",
-     *                         type="int",
-     *                         description="ID Kryterium",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value",
-     *                         type="string",
-     *                         description="Wartość (np: P)",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value_description",
-     *                         type="string",
-     *                         description="Opis wartości (np: Przód)",
-     *                     ),
-     *                 )
-     *        },
      *                     example={
      *                         "id_article": 6,
      *                         "id_criterion": 1,
@@ -110,28 +86,6 @@ class ArtileCriterionController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                      @OA\Property(
-     *                         property="id_article",
-     *                         type="int",
-     *                         description="ID Artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_criterion",
-     *                         type="int",
-     *                         description="ID Kryterium",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value",
-     *                         type="string",
-     *                         description="Wartość (np: P)",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value_description",
-     *                         type="string",
-     *                         description="Opis wartości (np: Przód)",
-     *                     ),
-     *                 ),
      *                     example={
      *                         "id_article": 6,
      *                         "id_criterion": 1,
@@ -147,7 +101,7 @@ class ArtileCriterionController extends AbstractController
      *     description="Nie znaleziono artykułu/kryterium o podanym id"
      * )
      */
-    #[Route('/article/{id_article}/criterion', name: 'app_article_criterion_add', methods: ['POST'])]
+    #[Route('/article/criterion', name: 'app_article_criterion_add', methods: ['POST'])]
     public function add(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, Request $request)
     {
         $requestArray = $request->toArray();
