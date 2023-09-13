@@ -29,65 +29,6 @@ class ArticleController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_category",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="id",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="id_article",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="id_language",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="name",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="description",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                      )
-     *
-     *                     ),
      *                     example={
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
@@ -102,7 +43,6 @@ class ArticleController extends AbstractController
      *                               "description": "asd"
      *                          }
      *                     }
-     *                 )
      *             )
      *         })
      * )
@@ -132,65 +72,6 @@ class ArticleController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_category",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="id",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="id_article",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="id_language",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="name",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="description",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                      )
-     *
-     *                     ),
      *                     example={
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
@@ -205,7 +86,6 @@ class ArticleController extends AbstractController
      *                               "description": "asd"
      *                          }
      *                     }
-     *                 )
      *             )
      *         })
      * )
@@ -235,53 +115,6 @@ class ArticleController extends AbstractController
      *     description="Artykuł",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *           @OA\Schema(
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_category",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="id_language",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="name",
-     *                              type="int",
-     *                              description="Nazwa"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="description",
-     *                              type="int",
-     *                              description="Opis"
-     *                          ),
-     *                      )
-     *
-     *                     ),
-     * )
-     *        },
      *                     example={
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
@@ -303,64 +136,6 @@ class ArticleController extends AbstractController
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_category",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="id",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="id_article",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="id_language",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="name",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="description",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                      )
-     *
-     *                     ),
      *                     example={
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
@@ -448,63 +223,6 @@ class ArticleController extends AbstractController
      *     description="Artykuł",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *           @OA\Schema(
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_category",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="id",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="id_article",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="id_language",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="name",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                          @OA\Property(
-     *                              property="description",
-     *                              type="int",
-     *                              description="id języka"
-     *                          ),
-     *                      )
-     *
-     *                     ),
-     * )
-     *        },
      *                     example={
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
