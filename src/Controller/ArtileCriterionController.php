@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\ArticleCriterion;
+use App\Entity\ArticleCriterionValueDescriptionLanguage;
 use App\Entity\CriterionLanguage;
 use App\Repository\ArticleCriterionRepository;
+use App\Repository\ArticleCriterionValueDescriptionLanguageRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\CriterionLanguageRepository;
 use App\Repository\CriterionRepository;
@@ -102,7 +104,7 @@ class ArtileCriterionController extends AbstractController
      * )
      */
     #[Route('/article/criterion', name: 'app_article_criterion_add', methods: ['POST'])]
-    public function add(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, Request $request)
+    public function add(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, ArticleCriterionValueDescriptionLanguageRepository $articleCriterionValueDescriptionLanguageRepository, Request $request)
     {
         $requestArray = $request->toArray();
         $article = $articleRepository->findOneBy(['id' => $requestArray['id_article']]);
@@ -110,14 +112,27 @@ class ArtileCriterionController extends AbstractController
         $criterion = $criterionRepository->findOneBy(['id' => $requestArray['id_criterion']]);
         if($criterion == null) return $this->json(['error' => 'Nie znaleziono kryterium o podanym id']);
         $thisArticleCriterion = $articleCriterionRepository->findOneBy(['id_article' => $requestArray['id_article'], 'id_criterion' => $requestArray['id_criterion']]);
-        if($thisArticleCriterion !== null) return $this->json(['error' => 'Dla tego artykułu już istnieje kryterium o podanym id']);
+       // if($thisArticleCriterion !== null) return $this->json(['error' => 'Dla tego artykułu już istnieje kryterium o podanym id']);
         $articleCriterion = new ArticleCriterion();
         $articleCriterion->setIdCriterion($requestArray['id_criterion']);
         $articleCriterion->setIdArticle($requestArray['id_article']);
         $articleCriterion->setValue($requestArray['value']);
         $articleCriterion->setValueDescription($requestArray['value_description']);
         $articleCriterionRepository->save($articleCriterion,true);
-        return $this->json($articleCriterion);
+        /* Jeżeli przekazano tłumaczenia value_description to zapisywanie ich */
+        $articleCriterionTranslations = [];
+        if(isset($requestArray['translations']) && count($requestArray['translations']) > 0) {
+            foreach ($requestArray['translations'] as $translation) {
+                $valueDescriptionTranslation = new ArticleCriterionValueDescriptionLanguage();
+                $valueDescriptionTranslation->setIdLanguage($translation['id_language']);
+                $valueDescriptionTranslation->setIdArticleCriterion($articleCriterion->getId());
+                $valueDescriptionTranslation->setValueDescription($translation['value_description']);
+                $articleCriterionValueDescriptionLanguageRepository->save($valueDescriptionTranslation, true);
+                $articleCriterionTranslations[] = $valueDescriptionTranslation;
+            }
+        }
+        $data = array_merge((array) $articleCriterion, ["translations" => $articleCriterionTranslations]);
+        return $this->json($data);
     }
 
     /**

@@ -11,16 +11,16 @@ class ArticleCriterionValueDescriptionLanguage
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column]
-    private ?int $id_article_criterion = null;
+    public ?int $id_article_criterion = null;
 
     #[ORM\Column]
-    private ?int $id_language = null;
+    public ?int $id_language = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $value_description = null;
+    public ?string $value_description = null;
 
     public function getId(): ?int
     {
