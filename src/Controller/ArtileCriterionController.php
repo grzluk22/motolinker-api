@@ -54,12 +54,12 @@ class ArtileCriterionController extends AbstractController
      *
      */
     #[Route('/article/{id_article}/criterion', name: 'app_article_criterion', methods: ['GET'])]
-    public function index(ArticleRepository $articleRepository, ArticleCriterionRepository $articleCriterionRepository, CriterionLanguageRepository $criterionLanguageRepository, CriterionValueLanguageRepository $criterionValueLanguageRepository, int $id_article): Response
+    public function index(ArticleRepository $articleRepository, ArticleCriterionRepository $articleCriterionRepository, CriterionLanguageRepository $criterionLanguageRepository, ArticleCriterionValueDescriptionLanguageRepository $articleCriterionValueDescriptionLanguageRepository, int $id_article)
     {
         $criterions = $articleCriterionRepository->findBy(['id_article' => $id_article]);
         if(count($criterions) == 0) return $this->json(['message' => 'Nie znaleziono kryteriów dla artykułu o podanym id'], 404);
         foreach ($criterions as $index=>$criterion) {
-            $criterions[$index]->translations = $criterionValueLanguageRepository->findBy(['id_article_criterion' => $criterion->getId()]);
+            $criterions[$index]->translations = $articleCriterionValueDescriptionLanguageRepository->findBy(['id_article_criterion' => $criterion->getId()]);
         }
         return $this->json($criterions);
     }
