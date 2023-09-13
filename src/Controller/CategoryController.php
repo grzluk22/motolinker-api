@@ -29,34 +29,16 @@ class CategoryController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="integer",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_parent",
-     *                         type="string",
-     *                         description="ID kategorii rodzica",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
-     *                 ),
      *                     example={
      *                         "id": 1,
      *                         "id_parent": 1,
-     *                         "translations": {"Polski": "Zawieszenie"}
+     *                         "translations": {
+     *                              "id": 5,
+     *                              "id_category": 3,
+     *                              "id_language": 1,
+     *                              "name": "Układ Hamulcowy 2",
+     *                              "description": "Części układu hamulcowego"
+     *                          }
      *                     }
      *                 )
      *
@@ -95,30 +77,13 @@ class CategoryController extends AbstractController
      *     description="Kategoria",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id_parent",
-     *                         type="string",
-     *                         description="ID kategorii rodzica",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
-     *                 )
-     *        },
      *                     example={
      *                         "id_parent": 1,
-     *                         "translations": {"Polski": "Zawieszenie"}
+     *                         "translations": {
+     *                              "id_language": 1,
+     *                              "name": "Układ Hamulcowy 2",
+     *                              "description": "Części układu hamulcowego"
+     *                          }
      *                     }
      *    )
      * )
@@ -129,34 +94,16 @@ class CategoryController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="integer",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_parent",
-     *                         type="string",
-     *                         description="ID kategorii rodzica",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
-     *                 ),
      *                     example={
      *                         "id": 1,
      *                         "id_parent": 1,
-     *                         "translations": {"Polski": "Zawieszenie"}
+     *                         "translations": {
+     *                              "id": 5,
+     *                              "id_category": 3,
+     *                              "id_language": 1,
+     *                              "name": "Układ Hamulcowy 2",
+     *                              "description": "Części układu hamulcowego"
+     *                          }
      *                     }
      *                 )
      *
@@ -164,62 +111,31 @@ class CategoryController extends AbstractController
      * )
      * @OA\Response(
      *     response=500,
-     *     description="Inny język już ma taką nazwę"
+     *     description="Nie przekazano tłumaczeń"
      * )
      **/
     #[Route('/category', name: 'app_category_create', methods: ["POST"])]
-    public function create(ManagerRegistry $managerRegistry, LanguageRepository $languageRepository, CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository, Request $request): JsonResponse
+    public function create(ManagerRegistry $managerRegistry, CategoryLanguageRepository $categoryLanguageRepository, Request $request): JsonResponse
     {
         $categoryManager = $managerRegistry->getManager();
-        $languageManager = $managerRegistry->getManagerForClass(Language::class);
         $requestArray = $request->toArray();
         $category = new Category();
         $category->setIdParent($requestArray['id_parent']);
         $categoryManager->persist($category);
         $categoryManager->flush();
 
+        if(!isset($requestArray['translations']) or count($requestArray['translations']) == 0) return $this->json(["error" => "Nie przekazano tłumaczeń"]);
         /* Dodawanie tłumaczeń */
-        if (!isset($requestArray['translations'])) {
-            return $this->json(["error" => "Nie przekazano tłumaczeń"]);
-        } else {
-            if (count($requestArray['translations']) == 0) {
-                return $this->json(["error" => "Nie przekazano tłumaczeń"]);
-            } else {
-                /* Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
-                foreach ($requestArray['translations'] as $languageName=>$translation) {
-                    $langResult = $languageRepository->findOneByName($languageName);
-                    if($langResult === null) {
-                        /* Wstawianie nowego języka */
-                        $language = new Language();
-                        $language->setName($languageName);
-                        $language->setIsoCode($languageName);
-                        $languageManager->persist($language);
-                        $languageManager->flush();
-                    }
-                }
-            }
-            /* Pobieranie id wszystkich dostępnych języków */
-            $languages = $languageRepository->findAll();
-            $languageIds = [];
-            foreach ($languages as $language) {
-                $languageIds[$language->getName()] = $language->getId();
-            }
-            foreach ($requestArray['translations'] as $languageName=>$translation) {
-                $categoryLanguage = new CategoryLanguage();
-                $categoryLanguage->setName($translation);
-                $categoryLanguage->setIdLanguage($languageIds[$languageName]);
-                $categoryLanguage->setIdCategory($category->getId());
-                $categoryLanguage->setDescription('asd');
-                $categoryManager->persist($categoryLanguage);;
-                $categoryManager->flush();
-            }
+        foreach ($requestArray['translations'] as $translation) {
+            $categoryLanguage = new CategoryLanguage();
+            $categoryLanguage->setName($translation['name']);
+            $categoryLanguage->setIdLanguage($translation['id_language']);
+            $categoryLanguage->setIdCategory($category->getId());
+            $categoryLanguage->setDescription($translation['description']);
+            $categoryManager->persist($categoryLanguage);;
+            $categoryManager->flush();
         }
-
-        $data = [
-            'id' => $category->getId(),
-            'id_parent' => $category->getIdParent(),
-            'translations' => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])
-        ];
+        $data = array_merge((array) $category, ["translations" => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])]);
 
         return $this->json($data);
     }
@@ -271,36 +187,16 @@ class CategoryController extends AbstractController
      *     description="Kategoria",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *                 @OA\Schema(
-     *                      @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="ID Kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_parent",
-     *                         type="int",
-     *                         description="ID kategorii rodzica",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
-     *                 )
-     *        },
      *                     example={
      *                         "id": 1,
-     *                         "id_parent": 0,
-     *                         "translations": {"Polski": "Zawieszenie"}
+     *                         "id_parent": 1,
+     *                         "translations": {
+     *                              "id": 5,
+     *                              "id_category": 3,
+     *                              "id_language": 1,
+     *                              "name": "Układ Hamulcowy 2",
+     *                              "description": "Części układu hamulcowego"
+     *                          }
      *                     }
      *    )
      * )
@@ -311,34 +207,16 @@ class CategoryController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="integer",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_parent",
-     *                         type="string",
-     *                         description="ID kategorii rodzica",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
-     *                 ),
      *                     example={
      *                         "id": 1,
      *                         "id_parent": 1,
-     *                         "translations": {"Polski": "Zawieszenie"}
+     *                         "translations": {
+     *                              "id": 5,
+     *                              "id_category": 3,
+     *                              "id_language": 1,
+     *                              "name": "Układ Hamulcowy 2",
+     *                              "description": "Części układu hamulcowego"
+     *                          }
      *                     }
      *                 )
      *
@@ -350,10 +228,9 @@ class CategoryController extends AbstractController
      * )
      **/
     #[Route('/category', name: 'app_category_edit', methods: ["PUT"])]
-    public function edit(ManagerRegistry $managerRegistry, LanguageRepository $languageRepository, CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository, Request $request): JsonResponse
+    public function edit(ManagerRegistry $managerRegistry, CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository, Request $request): JsonResponse
     {
         $categoryManager = $managerRegistry->getManager();
-        $languageManager = $managerRegistry->getManagerForClass(Language::class);
         $requestArray = $request->toArray();
         $category = $categoryRepository->findOneBy(['id' => $requestArray['id']]);
         $category->setIdParent($requestArray['id_parent']);
@@ -361,42 +238,20 @@ class CategoryController extends AbstractController
         $categoryManager->flush();
 
         /* Ustawianie tłumaczeń */
-        /* Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
-        foreach ($requestArray['translations'] as $languageName=>$translation) {
-            $langResult = $languageRepository->findOneByName($languageName);
-            if ($langResult === null) {
-                /* Wstawianie nowego języka */
-                $language = new Language();
-                $language->setName($languageName);
-                $language->setIsoCode($languageName);
-                $languageManager->persist($language);
-                $languageManager->flush();
-            }
-        }
-        /* Pobieranie id wszystkich dostępnych języków */
-        $languages = $languageRepository->findAll();
-        $languageIds = [];
-        foreach ($languages as $language) {
-            $languageIds[$language->getName()] = $language->getId();
-        }
-        foreach ($requestArray['translations'] as $languageName=>$translation) {
-            $categoryLanguage = $categoryLanguageRepository->findOneBy(['id_category' => $category->getId(), 'id_language' => $languageIds[$languageName]]);
-            if($categoryLanguage === null) {
+        foreach ($requestArray['translations'] as $translation) {
+            if(!isset($translation['id'])) {
                 $categoryLanguage = new CategoryLanguage();
+                $categoryLanguage->setIdLanguage($translation['id_language']);
                 $categoryLanguage->setIdCategory($category->getId());
-                $categoryLanguage->setIdLanguage($languageIds[$languageName]);
+            }else{
+                $categoryLanguage = $categoryLanguageRepository->findOneBy(['id' => $translation['id']]);
             }
-            $categoryLanguage->setName($translation);
-            $categoryLanguage->setDescription('asd');
-            $categoryManager->persist($categoryLanguage);;
-            $categoryManager->flush();
+            $categoryLanguage->setName($translation['name']);
+            $categoryLanguage->setDescription($translation['description']);
+            $categoryLanguageRepository->save($categoryLanguage, true);
         }
 
-        $data = [
-            'id' => $category->getId(),
-            'id_parent' => $category->getIdParent(),
-            'translations' => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])
-        ];
+        $data = array_merge((array) $category, ["translations" => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])]);
 
         return $this->json($data);
     }

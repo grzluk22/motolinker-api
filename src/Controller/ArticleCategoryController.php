@@ -22,54 +22,16 @@ class ArticleCategoryController extends AbstractController
      * @OA\Tag(name="Category")
      * @OA\Response(
      *     response=200,
-     *     description="Lista artykułów",
+     *     description="Lista artykułów w danej kategorii",
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="idCategory",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
      *                     example={
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": 0,
+     *                         "id_category": 0,
      *                              "translations": {
      *                               "id": 1,
      *                               "id_article": 1,
@@ -78,7 +40,6 @@ class ArticleCategoryController extends AbstractController
      *                               "description": "asd"
      *                          }
      *                     }
-     *                 )
      *             )
      *         })
      * )
@@ -88,14 +49,16 @@ class ArticleCategoryController extends AbstractController
      * )
      *
      */
-    #[Route('/category/{id}/articles', name: 'app_category_articles', methods: ['GET'])]
-    public function index(ArticleCategoryRepository $articleCategoryRepository,ArticleLanguageRepository $articleLanguageRepository, ArticleRepository $articleRepository, int $id): Response
+    #[Route('/category/{id_category}/articles', name: 'app_category_articles', methods: ['GET'])]
+    public function index(ArticleCategoryRepository $articleCategoryRepository,ArticleLanguageRepository $articleLanguageRepository, ArticleRepository $articleRepository, int $id_category): Response
     {
-        $categoryArticles = $articleCategoryRepository->findBy(['id_category' => $id]);
+        $categoryArticles = $articleCategoryRepository->findBy(['id_category' => $id_category]);
+        $categoryArticlesDefault = $articleRepository->findBy(['id_category' => $id_category]);
         $data = [];
         foreach ($categoryArticles as $categoryArticle) {
             $data[] = $articleRepository->findOneBy(['id' => $categoryArticle->getIdArticle()]);
         }
+        $data = array_merge($data, $categoryArticlesDefault);
 
         foreach ($data as $data_id=>$data_val) {
             $data[$data_id]->translations = $articleLanguageRepository->findBy(['id_article' => $data_val->getId()]);

@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\ArticleCriterion;
+use App\Entity\ArticleCriterionValueDescriptionLanguage;
 use App\Entity\CriterionLanguage;
 use App\Repository\ArticleCriterionRepository;
+use App\Repository\ArticleCriterionValueDescriptionLanguageRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\CriterionLanguageRepository;
 use App\Repository\CriterionRepository;
@@ -25,89 +27,41 @@ class ArtileCriterionController extends AbstractController
      * @OA\Tag(name="Article")
      * @OA\Response(
      *     response=200,
-     *     description="Lista kryteriów artykułu o podanym id",
+     *     description="Lista kryteriow",
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_criterion",
-     *                         type="int",
-     *                         description="ID Kryterium"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_article",
-     *                         type="int",
-     *                         description="ID Artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value",
-     *                         type="string",
-     *                         description="Wartość danego kryteria"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value_description",
-     *                         type="string",
-     *                         description="Dluższy opis/wartość kryterium"
-     *                     ),
-     *
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *                      ),
-     *                     example={{
+     *                     example={
      *                         "id": 1,
-     *                         "id_article": "1",
-     *                         "id_criterion": "12",
-     *                         "value": "Oś tylna",
-     *                         "value_description": "Oś tylna po obydwu stronach",
+     *                         "id_article": 26,
+     *                         "id_crterion": 2,
+     *                         "value": "F",
+     *                         "value_description": "Front",
      *                         "translations": {
-     *                              "pl": {
-     *                                  "value":"tlumaczenie",
-     *                                  "value_description": "tlumaczenie description"
-     *                                  }
+     *                               "id": 1,
+     *                               "id_article_criterion": 1,
+     *                               "id_language": 1,
+     *                               "value_description": "Przód"
      *                          }
-     *                      },
-     *                     "translations":{
-     *                              {"id_criterion":1,
-     *                                   {"pl":"Strona Mocowania"}
-     *                                   }
-     *     }
-     *
-     *                     }
-     *                 )
+     *                       }
      *             )
      *         })
      * )
-     * * @OA\Response(
+     * @OA\Response(
      *     response=404,
      *     description="Brak kryteriów"
      * )
      *
      */
     #[Route('/article/{id_article}/criterion', name: 'app_article_criterion', methods: ['GET'])]
-    public function index(ArticleRepository $articleRepository, ArticleCriterionRepository $articleCriterionRepository, CriterionLanguageRepository $criterionLanguageRepository, CriterionValueLanguageRepository $criterionValueLanguageRepository, int $id_article): Response
+    public function index(ArticleRepository $articleRepository, ArticleCriterionRepository $articleCriterionRepository, CriterionLanguageRepository $criterionLanguageRepository, ArticleCriterionValueDescriptionLanguageRepository $articleCriterionValueDescriptionLanguageRepository, int $id_article)
     {
         $criterions = $articleCriterionRepository->findBy(['id_article' => $id_article]);
         if(count($criterions) == 0) return $this->json(['message' => 'Nie znaleziono kryteriów dla artykułu o podanym id'], 404);
-        $criterionTranslations = $criterionLanguageRepository->findAll();
         foreach ($criterions as $index=>$criterion) {
-            $criterions[$index]->translations = $criterionValueLanguageRepository->findBy(['id_article_criterion' => $criterion->getId()]);
+            $criterions[$index]->translations = $articleCriterionValueDescriptionLanguageRepository->findBy(['id_article_criterion' => $criterion->getId()]);
         }
-        $data = ["criterions" => $criterions];
-        return $this->json($data);
+        return $this->json($criterions);
     }
 
     /**
@@ -120,30 +74,6 @@ class ArtileCriterionController extends AbstractController
      *     description="Kategoria",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *                 @OA\Schema(
-     *                      @OA\Property(
-     *                         property="id_article",
-     *                         type="int",
-     *                         description="ID Artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_criterion",
-     *                         type="int",
-     *                         description="ID Kryterium",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value",
-     *                         type="string",
-     *                         description="Wartość (np: P)",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value_description",
-     *                         type="string",
-     *                         description="Opis wartości (np: Przód)",
-     *                     ),
-     *                 )
-     *        },
      *                     example={
      *                         "id_article": 6,
      *                         "id_criterion": 1,
@@ -158,28 +88,6 @@ class ArtileCriterionController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                      @OA\Property(
-     *                         property="id_article",
-     *                         type="int",
-     *                         description="ID Artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="id_criterion",
-     *                         type="int",
-     *                         description="ID Kryterium",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value",
-     *                         type="string",
-     *                         description="Wartość (np: P)",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="value_description",
-     *                         type="string",
-     *                         description="Opis wartości (np: Przód)",
-     *                     ),
-     *                 ),
      *                     example={
      *                         "id_article": 6,
      *                         "id_criterion": 1,
@@ -195,8 +103,8 @@ class ArtileCriterionController extends AbstractController
      *     description="Nie znaleziono artykułu/kryterium o podanym id"
      * )
      */
-    #[Route('/article/{id_article}/criterion', name: 'app_article_criterion_add', methods: ['POST'])]
-    public function add(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, Request $request)
+    #[Route('/article/criterion', name: 'app_article_criterion_add', methods: ['POST'])]
+    public function add(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, ArticleCriterionValueDescriptionLanguageRepository $articleCriterionValueDescriptionLanguageRepository, Request $request)
     {
         $requestArray = $request->toArray();
         $article = $articleRepository->findOneBy(['id' => $requestArray['id_article']]);
@@ -204,14 +112,27 @@ class ArtileCriterionController extends AbstractController
         $criterion = $criterionRepository->findOneBy(['id' => $requestArray['id_criterion']]);
         if($criterion == null) return $this->json(['error' => 'Nie znaleziono kryterium o podanym id']);
         $thisArticleCriterion = $articleCriterionRepository->findOneBy(['id_article' => $requestArray['id_article'], 'id_criterion' => $requestArray['id_criterion']]);
-        if($thisArticleCriterion !== null) return $this->json(['error' => 'Dla tego artykułu już istnieje kryterium o podanym id']);
+       // if($thisArticleCriterion !== null) return $this->json(['error' => 'Dla tego artykułu już istnieje kryterium o podanym id']);
         $articleCriterion = new ArticleCriterion();
         $articleCriterion->setIdCriterion($requestArray['id_criterion']);
         $articleCriterion->setIdArticle($requestArray['id_article']);
         $articleCriterion->setValue($requestArray['value']);
         $articleCriterion->setValueDescription($requestArray['value_description']);
         $articleCriterionRepository->save($articleCriterion,true);
-        return $this->json($articleCriterion);
+        /* Jeżeli przekazano tłumaczenia value_description to zapisywanie ich */
+        $articleCriterionTranslations = [];
+        if(isset($requestArray['translations']) && count($requestArray['translations']) > 0) {
+            foreach ($requestArray['translations'] as $translation) {
+                $valueDescriptionTranslation = new ArticleCriterionValueDescriptionLanguage();
+                $valueDescriptionTranslation->setIdLanguage($translation['id_language']);
+                $valueDescriptionTranslation->setIdArticleCriterion($articleCriterion->getId());
+                $valueDescriptionTranslation->setValueDescription($translation['value_description']);
+                $articleCriterionValueDescriptionLanguageRepository->save($valueDescriptionTranslation, true);
+                $articleCriterionTranslations[] = $valueDescriptionTranslation;
+            }
+        }
+        $data = array_merge((array) $articleCriterion, ["translations" => $articleCriterionTranslations]);
+        return $this->json($data);
     }
 
     /**

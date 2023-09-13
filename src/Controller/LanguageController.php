@@ -28,28 +28,11 @@ class LanguageController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="name",
-     *                         type="string",
-     *                         description="Nazwa"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="isoCode",
-     *                         type="string",
-     *                         description="Kod ISO języka"
-     *                     ),
      *                     example={
      *                         "id": 1,
-     *                         "name": "36790-SET-MS",
-     *                         "isoCode": "1234567890123"
+     *                         "name": "Polski",
+     *                         "isoCode": "pl-PL"
      *                     }
-     *                 )
      *             )
      *         })
      * )
@@ -105,25 +88,6 @@ class LanguageController extends AbstractController
      *     description="Artykuł",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *           @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="integer",
-     *                         description="id języka"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="name",
-     *                         type="string",
-     *                         description="Nazwa"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="isoCode",
-     *                         type="string",
-     *                         description="Kod w formacie ISO",
-     *                     )
-     *                  )
-     *        },
      *                     example={
      *                         "id": "1",
      *                         "name": "Polski",
@@ -138,23 +102,6 @@ class LanguageController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="integer",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="name",
-     *                         type="string",
-     *                         description="Unikalna nazwa",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="isoCode",
-     *                         type="integer",
-     *                         description="Kod języka w formacie ISO",
-     *                     )
-     *                 ),
      *                     example={
      *                         "id": "1",
      *                         "name": "Polski",
@@ -209,20 +156,6 @@ class LanguageController extends AbstractController
      *     description="Język",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *           @OA\Schema(
-     *                     @OA\Property(
-     *                         property="name",
-     *                         type="string",
-     *                         description="Nazwa"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="isoCode",
-     *                         type="string",
-     *                         description="Kod w formacie ISO",
-     *                     )
-     *                  )
-     *        },
      *                     example={
      *                         "name": "Polski",
      *                         "isoCode": "pl-PL"
@@ -236,23 +169,6 @@ class LanguageController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="integer",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="name",
-     *                         type="string",
-     *                         description="Unikalna nazwa",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="isoCode",
-     *                         type="integer",
-     *                         description="Kod języka w formacie ISO",
-     *                     )
-     *                 ),
      *                     example={
      *                         "id": "1",
      *                         "name": "Polski",

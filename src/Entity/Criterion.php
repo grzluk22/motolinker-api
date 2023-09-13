@@ -11,7 +11,7 @@ class Criterion
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     public function getId(): ?int
     {

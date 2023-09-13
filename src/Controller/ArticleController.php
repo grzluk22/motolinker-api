@@ -29,50 +29,12 @@ class ArticleController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="idCategory",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
      *                     example={
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": 0,
+     *                         "id_category": 0,
      *                              "translations": {
      *                               "id": 1,
      *                               "id_article": 1,
@@ -81,7 +43,6 @@ class ArticleController extends AbstractController
      *                               "description": "asd"
      *                          }
      *                     }
-     *                 )
      *             )
      *         })
      * )
@@ -107,54 +68,16 @@ class ArticleController extends AbstractController
      * @OA\Tag(name="Article")
      * @OA\Response(
      *     response=200,
-     *     description="Artykuł",
+     *     description="Lista artykułów",
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="idCategory",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
      *                     example={
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": 0,
+     *                         "id_category": 0,
      *                              "translations": {
      *                               "id": 1,
      *                               "id_article": 1,
@@ -163,7 +86,6 @@ class ArticleController extends AbstractController
      *                               "description": "asd"
      *                          }
      *                     }
-     *                 )
      *             )
      *         })
      * )
@@ -173,18 +95,12 @@ class ArticleController extends AbstractController
      * )
      *
      */
-    #[Route('/article/{code}', name: 'app_article_get_by_code', methods: ["GET"])]
-    public function getByCode(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, string $code): JsonResponse
+    #[Route('/article/{id_article}', name: 'app_article_get_one', methods: ["GET"])]
+    public function getOne(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, int $id_article): JsonResponse
     {
-        $article = $articleRepository->findOneByCode($code);
-
-        $data = [
-            'id' => $article->getId(),
-            'code' => $article->getCode(),
-            'ean13' => $article->getEan13(),
-            'price' => $article->getPrice(),
-            'translations' => $articleLanguageRepository->findByArticleId($article->getId())
-        ];
+        $article = $articleRepository->findOneBy(['id' => $id_article]);
+        $translations = $articleLanguageRepository->findByArticleId($article->getId());
+        $data = (object) array_merge( (array)$article, array( 'translations' => $translations ) );
 
         return $this->json($data);
     }
@@ -199,49 +115,15 @@ class ArticleController extends AbstractController
      *     description="Artykuł",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *           @OA\Schema(
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="idCategory",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
-     * )
-     *        },
-     *       example={
+     *                     example={
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": "0",
-     *                         "translations": {
-    *                               "pl": "polska nazwa"
+     *                         "id_category": 0,
+     *                              "translations": {
+     *                               "id_language": 1,
+     *                               "name": "Article name",
+     *                               "description": "Article Description"
      *                          }
      *                     }
      *    )
@@ -249,56 +131,23 @@ class ArticleController extends AbstractController
      *
      * @OA\Response(
      *     response=200,
-     *     description="Stworzono artykuł",
+     *     description="Stworzony artykuł",
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="idCategory",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
      *                     example={
-     *                         "id": "1",
+     *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": "0",
+     *                         "id_category": 0,
      *                              "translations": {
-     *                               "pl": "polska nazwa"
+     *                               "id": 1,
+     *                               "id_article": 1,
+     *                               "id_language": 1,
+     *                               "name": "Article name",
+     *                               "description": "Article description"
      *                          }
      *                     }
      *                 )
@@ -323,7 +172,7 @@ class ArticleController extends AbstractController
             return $this->json(["error" => "Artykuł o takim kodzie już istnieje"]);
         }
         /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
-        $requiredFields = ['code', 'ean13', 'price', 'idCategory'];
+        $requiredFields = ['code', 'ean13', 'price', 'id_category'];
         foreach ($requiredFields as $requiredField) {
             if (!isset($requestArray[$requiredField])) {
                 return $this->json(["error" => "Nie przekazano wymaganego parametru '" . $requiredField . "'"]);
@@ -334,19 +183,6 @@ class ArticleController extends AbstractController
         } else {
             if (count($requestArray['translations']) == 0) {
                 return $this->json(["error" => "Nie przekazano tłumaczeń"]);
-            } else {
-                /* Sprawdzanie czy dany język istnieje w tabeli z językami jezeli nie to dodawanie go do tej tabli */
-                foreach ($requestArray['translations'] as $languageName=>$translation) {
-                    $langResult = $languageRepository->findOneByName($languageName);
-                    if($langResult === null) {
-                        /* Wstawianie nowego języka */
-                        $language = new Language();
-                        $language->setName($languageName);
-                        $language->setIsoCode($languageName);
-                        $languageManager->persist($language);
-                        $languageManager->flush();
-                    }
-                }
             }
         }
 
@@ -355,34 +191,22 @@ class ArticleController extends AbstractController
         $article->setCode($requestArray['code']);
         $article->setEan13($requestArray['ean13']);
         $article->setPrice($requestArray['price']);
-        $article->setIdCategory($requestArray['idCategory']);
+        $article->setIdCategory($requestArray['id_category']);
         $entityManager->persist($article);
         $entityManager->flush();
 
         /* Ustawianie tłumaczeń */
-        /* Pobieranie id wszystkich dostępnych języków */
-        $languages = $languageRepository->findAll();
-        $languageIds = [];
-        foreach ($languages as $language) {
-            $languageIds[$language->getName()] = $language->getId();
-        }
-        foreach ($requestArray['translations'] as $languageName=>$translation) {
+        foreach ($requestArray['translations'] as $translation) {
             $articleLanguage = new ArticleLanguage();
-            $articleLanguage->setName($translation);
-            $articleLanguage->setDescription('asd');
+            $articleLanguage->setName($translation['name']);
+            $articleLanguage->setDescription($translation['description']);
             $articleLanguage->setIdArticle($article->getId());
-            $articleLanguage->setIdLanguage($languageIds[$languageName]);
+            $articleLanguage->setIdLanguage($translation['id_language']);
             $articleLanguageManager->persist($articleLanguage);
             $articleLanguageManager->flush();
         }
 
-        $data = [
-            'id' => $article->getId(),
-            'code' => $article->getCode(),
-            'ean13' => $article->getEan13(),
-            'price' => $article->getPrice(),
-            'translations' => $articleLanguageRepository->findByArticleId($article->getId())
-        ];
+        $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
 
         return $this->json($data);
     }
@@ -390,57 +214,24 @@ class ArticleController extends AbstractController
     /**
      * Edytuje istniejący artykuł
      *
+     * Jeżeli chcesz dodać nowe tłumaczenie do artykułu możesz również skorzystać z tej metody. Poprostu w tabeli z tłumaczeniami przekaż jedno bez id, a zostanie ono automatycznie utworzone
      *
      *
      * @OA\Tag(name="Article")
      * @OA\RequestBody(
-     *     request="ArticleCreateRequestBody",
+     *     request="ArticleUpdateRequestBody",
      *     description="Artykuł",
      *     required=true,
      *     @OA\JsonContent(
-     *        allOf={
-     *           @OA\Schema(
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="idCategory",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
-     * )
-     *        },
-     *       example={
+     *                     example={
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": "0",
-     *                         "translations": {
-     *                               "pl": "polska nazwa"
+     *                         "id_category": 0,
+     *                              "translations": {
+     *                               "id_language": 1,
+     *                               "name": "Article name",
+     *                               "description": "Article Description"
      *                          }
      *                     }
      *    )
@@ -452,61 +243,26 @@ class ArticleController extends AbstractController
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     @OA\Property(
-     *                         property="id",
-     *                         type="int",
-     *                         description="Unikalne ID"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="code",
-     *                         type="string",
-     *                         description="Kod artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="ean13",
-     *                         type="string",
-     *                         description="Kod kreskowy artykułu"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="float",
-     *                         description="Cena artykułu",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="idCategory",
-     *                         type="integer",
-     *                         description="Domyślne id kategorii",
-     *                     ),
-     *                     @OA\Property(
-     *                         property="translations",
-     *                         type="array",
-     *                         description="Tablica tłumaczeń",
-     *                      @OA\Items(
-     *                          @OA\Property(
-     *                              property="pl",
-     *                              type="string",
-     *                              description="tłumaczenie_pl"
-     *                          ))
-     *
-     *                     ),
      *                     example={
-     *                         "id": "1",
+     *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "idCategory": "0",
+     *                         "id_category": 0,
      *                              "translations": {
-     *                               "pl": "polska nazwa"
+     *                               "id": 1,
+     *                               "id_article": 1,
+     *                               "id_language": 1,
+     *                               "name": "Article name",
+     *                               "description": "Article description"
      *                          }
      *                     }
-     *                 )
      *             )
      *         })
      * )
      * @OA\Response(
      *     response=404,
-     *     description="Nie znaleziono artykułu o podanym kodzie"
+     *     description="Nie znaleziono artykułu o podanym id"
      * )
      **/
     #[Route('/article', name: 'app_article_edit', methods: ["PUT"])]
@@ -515,7 +271,7 @@ class ArticleController extends AbstractController
         $entityManager = $doctrine->getManager();
         $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
         $requestArray = $request->toArray();
-        $article = $articleRepository->findOneByCode($requestArray['code']);
+        $article = $articleRepository->findOneBy(['id' => $requestArray['id']]);
         if($article === null) {
             return $this->json(["error" => "Nie znaleziono artykułu o podanym kodzie"]);
         }
@@ -523,31 +279,26 @@ class ArticleController extends AbstractController
         $article->setCode($requestArray['code']);
         $article->setEan13($requestArray['ean13']);
         $article->setPrice($requestArray['price']);
-        $article->setIdCategory($requestArray['idCategory']);
+        $article->setIdCategory($requestArray['id_category']);
         $entityManager->persist($article);
         $entityManager->flush();
         /* Ustawianie tłumaczeń */
-        foreach ($requestArray['translations'] as $languageName=>$translation) {
-            $language = $languageRepository->findOneBy(['name' => $languageName]);
-            $articleLanguage = $articleLanguageRepository->findOneBy(['id_article' => $article->getId(), 'id_language' => $language->getId()]);
-            if($articleLanguage === null) {
+        foreach ($requestArray['translations'] as $translation) {
+            if(!isset($translation['id'])) {
+                /* Nie podano id istniejącego tłumaczenia więc tworzymy nowe, uznając że użytkownik chce stworzyć nowe tłumaczenie dla tego artykułu */
                 $articleLanguage = new ArticleLanguage();
                 $articleLanguage->setIdArticle($article->getId());
-                $articleLanguage->setIdLanguage($language->getId());
+                $articleLanguage->setIdLanguage($translation['id_language']);
+            }else{
+                $articleLanguage = $articleLanguageRepository->findOneBy(['id' => $translation['id']]);
             }
-            $articleLanguage->setName($translation);
-            $articleLanguage->setDescription('asd');
+            $articleLanguage->setName($translation['name']);
+            $articleLanguage->setDescription($translation['description']);
             $articleLanguageManager->persist($articleLanguage);
             $articleLanguageManager->flush();
         }
 
-        $data = [
-            'id' => $article->getId(),
-            'code' => $article->getCode(),
-            'ean13' => $article->getEan13(),
-            'price' => $article->getPrice(),
-            'translations' => $articleLanguageRepository->findByArticleId($article->getId())
-        ];
+        $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
 
         return $this->json($data);
     }
@@ -565,14 +316,14 @@ class ArticleController extends AbstractController
      *     description="Nie znaleziono artykułu o podanym kodzie"
      * )
      **/
-    #[Route('/article/{code}', name: 'app_article_delete', methods: ["DELETE"])]
-    public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, string $code): JsonResponse
+    #[Route('/article/{id_article}', name: 'app_article_delete', methods: ["DELETE"])]
+    public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, int $id_article): JsonResponse
     {
         $entityManager = $doctrine->getManager();
         $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
-        $article = $articleRepository->findOneByCode($code);
+        $article = $articleRepository->findOneBy(['id' => $id_article]);
         if($article === null) {
-            return $this->json(["error" => "Nie znaleziono artykułu o podanym kodzie"]);
+            return $this->json(["error" => "Nie znaleziono artykułu o podanym id"]);
         }
         /* Usuwanie tlumaczeń artykułu */
         $translations = $articleLanguageRepository->findBy(['id_article' => $article->getId()]);
