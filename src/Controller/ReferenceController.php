@@ -14,6 +14,8 @@ class ReferenceController extends AbstractController
     /**
      * Pobiera numery referencyjne
      *
+     * Parametr type w RequestBody nie jest obowiązkowy, w przypadku jego braku metoda zwróci wszystkie numery referencjne
+     *
      * @OA\Tag(name="Reference")
      * @OA\RequestBody(
      *     request="ReferenceGetBody",
