@@ -18,6 +18,13 @@ security:
                 check_path: /login_check
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            refresh_jwt:
+                check_path: /token/refresh
+        token_refresh:
+            pattern: ^/token/refresh
+            stateless: true
+            provider: app_user_provider
+            refresh_jwt: ~
         profiler:
             pattern: ^/_profiler
             stateless: false
@@ -38,4 +45,5 @@ security:
         - { path: ^/_profiler, roles: PUBLIC_ACCESS  }
         - { path: ^/register, roles: PUBLIC_ACCESS  }
         - { path: ^/login_check, roles: PUBLIC_ACCESS  }
+        - { path: ^/token/refresh, roles: PUBLIC_ACCESS  }
         - { path: ^/,       roles: IS_AUTHENTICATED_FULLY }
