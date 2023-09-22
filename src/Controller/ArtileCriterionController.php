@@ -148,10 +148,10 @@ class ArtileCriterionController extends AbstractController
      *     description="Nie znaleziono kryterium/artykułu o podanym id"
      * )
      **/
-    #[Route('/article/{id_article}/criterion/{id_criterion}', name: 'app_article_criterion_delete', methods: ["DELETE"])]
-    public function delete(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, int $id_article, int $id_criterion): JsonResponse
+    #[Route('/article/criterion/{id_article_criterion}', name: 'app_article_criterion_delete', methods: ["DELETE"])]
+    public function delete(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, int $id_article_criterion): JsonResponse
     {
-        $criterion = $articleCriterionRepository->findOneBy(['id_article' => $id_article, 'id_criterion' => $id_criterion]);
+        $criterion = $articleCriterionRepository->findOneBy(['id' => $id_article_criterion]);
         if($criterion == null) return $this->json(['error' => 'Nie istnieje takie kryterium']);
         $articleCriterionRepository->remove($criterion, true);
         return $this->json("Usunięto");
