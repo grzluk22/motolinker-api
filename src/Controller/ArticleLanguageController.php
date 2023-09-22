@@ -24,12 +24,13 @@ class ArticleLanguageController extends AbstractController
      * )
      **/
     #[Route('/article/language/{id}', name: 'app_article_language_delete', methods: ['DELETE'])]
-    public function delete(ArticleLanguageRepository $articleLanguageRepository, string $id): Response
+    public function delete(ArticleLanguageRepository $articleLanguageRepository, string $id)
     {
         $articleLanguage = $articleLanguageRepository->findOneBy(['id' => $id]);
         if($articleLanguage === null) {
             return $this->json(["error" => "Nie znaleziono tłumaczenia o podanym kodzie"]);
         }
         $articleLanguageRepository->remove($articleLanguage, true);
+        return $this->json("Usunięto");
     }
 }
