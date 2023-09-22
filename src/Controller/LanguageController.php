@@ -127,7 +127,7 @@ class LanguageController extends AbstractController
         }
         /* Sprawdzanie czy inny język nie ma już takiej nazwy */
         $otherLanguage = $languageRepository->findOneBy(['name' => $requestArray['name']]);
-        if($otherLanguage !== null) {
+        if($otherLanguage !== null && $otherLanguage->getId() !== $requestArray['id']) {
             return $this->json(['error' => "Inny język już ma taką nazwę"]);
         }
         /* Ustawianie danych języka */
