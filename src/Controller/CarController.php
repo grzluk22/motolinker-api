@@ -20,7 +20,7 @@ class CarController extends AbstractController
      * @OA\RequestBody(
      *     request="CarGetRequestBody",
      *     description="Parametry samochodu do wyszukania",
-     *     required=true,
+     *     required=false,
      *     @OA\JsonContent(
      *                     example={
      *                              "manufacturer": "Opel",
@@ -73,11 +73,20 @@ class CarController extends AbstractController
      * )
      **/
     #[Route('/car', name: 'app_car_get', methods: ["GET"])]
-    public function index(CarRepository $carRepository, Request $request)
+    public function index(CarRepository $carRepository, Request $request = null)
     {
         /* Najprostsza metoda do pobrania samochodów przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
-        $requestArray = $request->toArray();
-        $cars = $carRepository->findBy($requestArray);
+        /* Jeżeli nie przekazano nic w body request to zwracanie wszystkich samochodów */
+        try {
+            $requestArray = $request->toArray();
+            $cars = $carRepository->findBy($requestArray);
+        } catch (\Exception $exception) {
+            if($exception->getMessage() == "Request body is empty.") {
+                $cars = $carRepository->findAll();
+            }else{
+                throw $exception;
+            }
+        }
         return $this->json($cars);
     }
 
