@@ -266,6 +266,77 @@ class CarController extends AbstractController
         $carRepository->save($car, true);
         return $this->json($car);
     }
+
+    /**
+     * Usuwa samochód z bazy daych i odpina go od części do których był podłączony
+     *
+     *
+     * @OA\Tag(name="Car")
+     * @OA\RequestBody(
+     *     request="CarDeleteRequestBody",
+     *     description="Samochód do usunięcia",
+     *     required=true,
+     *     @OA\JsonContent(
+     *                     example={
+     *                              "id": 1,
+     *                              "manufacturer": "Opel",
+     *                              "model": "Vectra",
+     *                              "type": "C",
+     *                              "model_from": "2002-09",
+     *                              "model_to": "2004-5",
+     *                              "body_type": "Sedan",
+     *                              "drive_type": "FWD",
+     *                              "displacement_liters": "1655",
+     *                              "displacement_cmm": "1655",
+     *                              "fuel_type": "Gas",
+     *                              "kw": "90",
+     *                              "hp": "120",
+     *                              "cylinders": 4,
+     *                              "valves": "8",
+     *                              "engine_type": "V2",
+     *                              "engine_codes": "KWA456",
+     *                              "kba": "45689722"
+     *                     }
+     *    )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Usunięty samochód",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                              "id": 1,
+     *                              "manufacturer": "Opel",
+     *                              "model": "Vectra",
+     *                              "type": "C",
+     *                              "model_from": "2002-09",
+     *                              "model_to": "2004-5",
+     *                              "body_type": "Sedan",
+     *                              "drive_type": "FWD",
+     *                              "displacement_liters": "1655",
+     *                              "displacement_cmm": "1655",
+     *                              "fuel_type": "Gas",
+     *                              "kw": "90",
+     *                              "hp": "120",
+     *                              "cylinders": 4,
+     *                              "valves": "8",
+     *                              "engine_type": "V2",
+     *                              "engine_codes": "KWA456",
+     *                              "kba": "45689722"
+     *                     }
+     *             )
+     *         })
+     * )
+     **/
+    #[Route('/car/{id_car}', name: 'app_car_delete', methods: ["DELETE"])]
+    public function delete(CarRepository $carRepository, int $id_car)
+    {
+        /* Aktualizowanie samochodu */
+        $car = $carRepository->findOneBy(['id' => $id_car]);
+        $carRepository->remove($car, true);
+        return $this->json($car);
+    }
 }
 
 
