@@ -112,7 +112,7 @@ class ArtileCriterionController extends AbstractController
         $criterion = $criterionRepository->findOneBy(['id' => $requestArray['id_criterion']]);
         if($criterion == null) return $this->json(['error' => 'Nie znaleziono kryterium o podanym id']);
         $thisArticleCriterion = $articleCriterionRepository->findOneBy(['id_article' => $requestArray['id_article'], 'id_criterion' => $requestArray['id_criterion']]);
-       // if($thisArticleCriterion !== null) return $this->json(['error' => 'Dla tego artykułu już istnieje kryterium o podanym id']);
+        // if($thisArticleCriterion !== null) return $this->json(['error' => 'Dla tego artykułu już istnieje kryterium o podanym id']);
         $articleCriterion = new ArticleCriterion();
         $articleCriterion->setIdCriterion($requestArray['id_criterion']);
         $articleCriterion->setIdArticle($requestArray['id_article']);
@@ -136,6 +136,84 @@ class ArtileCriterionController extends AbstractController
     }
 
     /**
+     * Aktualizuje kryterium artykułu
+     *
+     * @OA\Tag(name="Article")
+     *
+     * @OA\RequestBody(
+     *     request="ArticleCriterionAddRequestBody",
+     *     description="Kategoria",
+     *     required=true,
+     *     @OA\JsonContent(
+     *                     example={
+     *                         "id": 1,
+     *                         "id_article": 6,
+     *                         "id_criterion": 1,
+     *                         "value": "P",
+     *                         "value_description": "Przód"
+     *                     }
+     *    )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Dodane kryterium do artykułu",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                         "id": 1,
+     *                         "id_article": 6,
+     *                         "id_criterion": 1,
+     *                         "value": "P",
+     *                         "value_description": "Przód"
+     *                     }
+     *                 )
+     *
+     *         })
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono artykułu/kryterium o podanym id"
+     * )
+     */
+    #[Route('/article/criterion', name: 'app_article_criterion_update', methods: ['PUT'])]
+    public function update(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, ArticleCriterionValueDescriptionLanguageRepository $articleCriterionValueDescriptionLanguageRepository, Request $request)
+    {
+        $requestArray = $request->toArray();
+        $article = $articleRepository->findOneBy(['id' => $requestArray['id_article']]);
+        if ($article == null) return $this->json(['error' => 'Nie znaleziono artykulu o podanym id']);
+        $criterion = $criterionRepository->findOneBy(['id' => $requestArray['id_criterion']]);
+        if($criterion == null) return $this->json(['error' => 'Nie znaleziono kryterium o podanym id']);
+        $thisArticleCriterion = $articleCriterionRepository->findOneBy(['id_article' => $requestArray['id_article'], 'id_criterion' => $requestArray['id_criterion']]);
+        // if($thisArticleCriterion !== null) return $this->json(['error' => 'Dla tego artykułu już istnieje kryterium o podanym id']);
+        $articleCriterion = $articleCriterionRepository->findOneBy(['id' => $requestArray['id']]);
+        $articleCriterion->setIdCriterion($requestArray['id_criterion']);
+        $articleCriterion->setIdArticle($requestArray['id_article']);
+        $articleCriterion->setValue($requestArray['value']);
+        $articleCriterion->setValueDescription($requestArray['value_description']);
+        $articleCriterionRepository->save($articleCriterion,true);
+        /* Jeżeli przekazano tłumaczenia value_description to zapisywanie ich */
+        $articleCriterionTranslations = [];
+        if(isset($requestArray['translations']) && count($requestArray['translations']) > 0) {
+            foreach ($requestArray['translations'] as $translation) {
+                if(isset($translation['id'])) {
+                    $valueDescriptionTranslation = $articleCriterionValueDescriptionLanguageRepository->findOneBy(['id' => $translation['id']]);
+                }else{
+                    $valueDescriptionTranslation = new ArticleCriterionValueDescriptionLanguage();
+                }
+                $valueDescriptionTranslation->setIdLanguage($translation['id_language']);
+                $valueDescriptionTranslation->setIdArticleCriterion($articleCriterion->getId());
+                $valueDescriptionTranslation->setValueDescription($translation['value_description']);
+                $articleCriterionValueDescriptionLanguageRepository->save($valueDescriptionTranslation, true);
+                $articleCriterionTranslations[] = $valueDescriptionTranslation;
+            }
+        }
+        $data = array_merge((array) $articleCriterion, ["translations" => $articleCriterionTranslations]);
+        return $this->json($data);
+    }
+
+
+    /**
      * Usuwa kryterium z artykułu
      *
      * @OA\Tag(name="Article")
@@ -148,10 +226,10 @@ class ArtileCriterionController extends AbstractController
      *     description="Nie znaleziono kryterium/artykułu o podanym id"
      * )
      **/
-    #[Route('/article/{id_article}/criterion/{id_criterion}', name: 'app_article_criterion_delete', methods: ["DELETE"])]
-    public function delete(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, int $id_article, int $id_criterion): JsonResponse
+    #[Route('/article/criterion/{id_article_criterion}', name: 'app_article_criterion_delete', methods: ["DELETE"])]
+    public function delete(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, int $id_article_criterion): JsonResponse
     {
-        $criterion = $articleCriterionRepository->findOneBy(['id_article' => $id_article, 'id_criterion' => $id_criterion]);
+        $criterion = $articleCriterionRepository->findOneBy(['id' => $id_article_criterion]);
         if($criterion == null) return $this->json(['error' => 'Nie istnieje takie kryterium']);
         $articleCriterionRepository->remove($criterion, true);
         return $this->json("Usunięto");
