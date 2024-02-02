@@ -177,6 +177,95 @@ class CarController extends AbstractController
         $carRepository->save($car, true);
         return $this->json($car);
     }
+
+    /**
+     * Aktualizuje samochód
+     *
+     *
+     * @OA\Tag(name="Car")
+     * @OA\RequestBody(
+     *     request="CarPutRequestBody",
+     *     description="Właściwości samochodu",
+     *     required=true,
+     *     @OA\JsonContent(
+     *                     example={
+     *                              "id": 1,
+     *                              "manufacturer": "Opel",
+     *                              "model": "Vectra",
+     *                              "type": "C",
+     *                              "model_from": "2002-09",
+     *                              "model_to": "2004-5",
+     *                              "body_type": "Sedan",
+     *                              "drive_type": "FWD",
+     *                              "displacement_liters": "1655",
+     *                              "displacement_cmm": "1655",
+     *                              "fuel_type": "Gas",
+     *                              "kw": "90",
+     *                              "hp": "120",
+     *                              "cylinders": 4,
+     *                              "valves": "8",
+     *                              "engine_type": "V2",
+     *                              "engine_codes": "KWA456",
+     *                              "kba": "45689722"
+     *                     }
+     *    )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Stworzony samochód",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                              "id": 1,
+     *                              "manufacturer": "Opel",
+     *                              "model": "Vectra",
+     *                              "type": "C",
+     *                              "model_from": "2002-09",
+     *                              "model_to": "2004-5",
+     *                              "body_type": "Sedan",
+     *                              "drive_type": "FWD",
+     *                              "displacement_liters": "1655",
+     *                              "displacement_cmm": "1655",
+     *                              "fuel_type": "Gas",
+     *                              "kw": "90",
+     *                              "hp": "120",
+     *                              "cylinders": 4,
+     *                              "valves": "8",
+     *                              "engine_type": "V2",
+     *                              "engine_codes": "KWA456",
+     *                              "kba": "45689722"
+     *                     }
+     *             )
+     *         })
+     * )
+     **/
+    #[Route('/car', name: 'app_car_put', methods: ["PUT"])]
+    public function put(CarRepository $carRepository, Request $request)
+    {
+        /* Aktualizowanie samochodu */
+        $requestArray = $request->toArray();
+        $car = $carRepository->findOneBy(['id' => $requestArray['id']]);
+        $car->setManufacturer($requestArray['manufacturer']);
+        $car->setModel($requestArray['model']);
+        $car->setType($requestArray['type']);
+        $car->setModelFrom($requestArray['model_from']);
+        $car->setModelTo($requestArray['model_to']);
+        $car->setBodyType($requestArray['body_type']);
+        $car->setDriveType($requestArray['drive_type']);
+        $car->setDisplacementLiters($requestArray['displacement_liters']);
+        $car->setDisplacementCmm($requestArray['displacement_cmm']);
+        $car->setFuelType($requestArray['fuel_type']);
+        $car->setKw($requestArray['kw']);
+        $car->setHp($requestArray['hp']);
+        $car->setCylinders($requestArray['cylinders']);
+        $car->setValves($requestArray['valves']);
+        $car->setEngineType($requestArray['engine_type']);
+        $car->setEngineCodes($requestArray['engine_codes']);
+        $car->setKba($requestArray['kba']);
+        $carRepository->save($car, true);
+        return $this->json($car);
+    }
 }
 
 
