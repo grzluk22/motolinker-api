@@ -11,13 +11,13 @@ class ArticleCar
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column]
-    private ?int $id_article = null;
+    public ?int $id_article = null;
 
     #[ORM\Column]
-    private ?int $id_car = null;
+    public ?int $id_car = null;
 
     public function getId(): ?int
     {
