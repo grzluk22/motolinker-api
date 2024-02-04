@@ -72,7 +72,7 @@ class CarController extends AbstractController
      *         })
      * )
      **/
-    #[Route('/car', name: 'app_car_get', methods: ["GET"])]
+    #[Route('/car/get', name: 'app_car_get', methods: ["POST"])]
     public function index(CarRepository $carRepository, Request $request = null)
     {
         /* Najprostsza metoda do pobrania samochodów przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
