@@ -346,32 +346,11 @@ class CarController extends AbstractController
      * @OA\RequestBody(
      *     request="CarGetRequestBody",
      *     description="Parametry samochodu do wyszukania",
-     *     required=false,
-     *     @OA\JsonContent(
-     *                     example={
-     *                              "manufacturer": "Opel",
-     *                              "model": "Vectra",
-     *                              "type": "C",
-     *                              "model_from": "2002-09",
-     *                              "model_to": "2004-5",
-     *                              "body_type": "Sedan",
-     *                              "drive_type": "FWD",
-     *                              "displacement_liters": "1655",
-     *                              "displacement_cmm": "1655",
-     *                              "fuel_type": "Gas",
-     *                              "kw": "90",
-     *                              "hp": "120",
-     *                              "cylinders": 4,
-     *                              "valves": "8",
-     *                              "engine_type": "V2",
-     *                              "engine_codes": "KWA456",
-     *                              "kba": "45689722"
-     *                     }
-     *    )
+     *     required=false
      * )
      * @OA\Response(
      *     response=200,
-     *     description="Lista znalezionych samochodów pasujących do danego kryterium",
+     *     description="Lista znalezionych samochodów pasujących do danego ciągu txt",
      *     content={
      *             @OA\MediaType(
      *                 mediaType="application/json",
