@@ -337,6 +337,74 @@ class CarController extends AbstractController
         $carRepository->remove($car, true);
         return $this->json($car);
     }
+
+    /**
+     * Zwraca samochód pasujący do wyszukanej frazy
+     *
+     *
+     * @OA\Tag(name="Car")
+     * @OA\RequestBody(
+     *     request="CarGetRequestBody",
+     *     description="Parametry samochodu do wyszukania",
+     *     required=false,
+     *     @OA\JsonContent(
+     *                     example={
+     *                              "manufacturer": "Opel",
+     *                              "model": "Vectra",
+     *                              "type": "C",
+     *                              "model_from": "2002-09",
+     *                              "model_to": "2004-5",
+     *                              "body_type": "Sedan",
+     *                              "drive_type": "FWD",
+     *                              "displacement_liters": "1655",
+     *                              "displacement_cmm": "1655",
+     *                              "fuel_type": "Gas",
+     *                              "kw": "90",
+     *                              "hp": "120",
+     *                              "cylinders": 4,
+     *                              "valves": "8",
+     *                              "engine_type": "V2",
+     *                              "engine_codes": "KWA456",
+     *                              "kba": "45689722"
+     *                     }
+     *    )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Lista znalezionych samochodów pasujących do danego kryterium",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                              "manufacturer": "Opel",
+     *                              "model": "Vectra",
+     *                              "type": "C",
+     *                              "model_from": "2002-09",
+     *                              "model_to": "2004-5",
+     *                              "body_type": "Sedan",
+     *                              "drive_type": "FWD",
+     *                              "displacement_liters": "1655",
+     *                              "displacement_cmm": "1655",
+     *                              "fuel_type": "Gas",
+     *                              "kw": "90",
+     *                              "hp": "120",
+     *                              "cylinders": 4,
+     *                              "valves": "8",
+     *                              "engine_type": "V2",
+     *                              "engine_codes": "KWA456",
+     *                              "kba": "45689722"
+     *                     }
+     *             )
+     *         })
+     * )
+     **/
+    #[Route('/car/search/{text_value}', name: 'app_car_search', methods: ["GET"])]
+    public function search(CarRepository $carRepository, string $text_value)
+    {
+        /* Metoda wyszukuje samochód na podstawie wprowadzonego tekstu */
+        $result = $carRepository->search($text_value);
+        return $this->json($result);
+    }
 }
 
 

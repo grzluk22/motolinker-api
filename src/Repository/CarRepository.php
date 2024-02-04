@@ -63,4 +63,17 @@ class CarRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+    public function search(string $text_value)
+    {
+        /* Metoda wyszukuje samochód na podstawie wprowadzonego tekstu */
+        $queryBuilder = $this->createQueryBuilder('c');
+        $queryBuilder->andWhere('c.text_value LIKE :text_value')
+            ->setParameter('text_value', '%'.$text_value.'%');
+
+        return $queryBuilder
+            ->setMaxResults(10)
+            ->getQuery()
+            ->getResult();
+    }
 }

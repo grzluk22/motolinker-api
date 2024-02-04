@@ -64,6 +64,9 @@ class Car
     #[ORM\Column(length: 255)]
     public ?string $kba = null;
 
+    #[ORM\Column(length: 255)]
+    public ?string $text_value = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -269,6 +272,18 @@ class Car
     public function setKba(string $kba): static
     {
         $this->kba = $kba;
+
+        return $this;
+    }
+
+    public function getTextValue(): ?string
+    {
+        return $this->text_value;
+    }
+
+    public function setTextValue(string $text_value): static
+    {
+        $this->text_value = $text_value;
 
         return $this;
     }
