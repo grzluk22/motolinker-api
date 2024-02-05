@@ -170,7 +170,7 @@ class ArticleController extends AbstractController
         /* Sprawdzanie czy artykuł o podanym kodzie nie istnieje juz w bazie danych */
         $articleResult = $articleRepository->findOneByCode($requestArray['code']);
         if($articleResult !== null) {
-            return new JsonResponse(["message" => "Artykuł o takim kodzie już istnieje"], 404);
+            return new JsonResponse(["message" => "Artykuł o takim kodzie już istnieje"], 400);
         }
         /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
         $requiredFields = ['code', 'ean13', 'price', 'id_category'];
