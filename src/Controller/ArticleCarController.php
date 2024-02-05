@@ -68,20 +68,20 @@ class ArticleCarController extends AbstractController
         /* Sprawdzanie czy istnieje artykuł o podanym id */
         $article = $articleRepository->findOneBy(['id' => $article_id]);
         if($article === null) {
-            return $this->json(["message" => "Nie znaleziono artykułu o podanym id"]);
+            return new JsonResponse(["message" => "Nie znaleziono artykułu o podanym id"], 404);
         }
 
         /* Sprawdzanie czy istnieje samochód o podanym id */
         $car = $carRepository->findOneBy(['id' => $car_id]);
         if($car === null) {
-            return $this->json(['message' => 'Nie znaleziono samochodu o podanym id']);
+            return new JsonResponse(['message' => 'Nie znaleziono samochodu o podanym id'], 404);
         }
         $articleCar = new ArticleCar();
         $articleCar->setIdArticle($article_id);
         $articleCar->setIdCar($car_id);
         $articleCarRepository->save($articleCar, true);
         $response = ["message" => "podłączono samochód do produktu"];
-        return $this->json($response);
+        return new JsonResponse($response);
     }
 
     /**
