@@ -59,7 +59,7 @@ class ArticleController extends AbstractController
         foreach ($result as $resid=>$res) {
             $result[$resid]->translations = $articleLanguageRepository->findByArticleId($res->getId());
         }
-        return $this->json($result);
+        return new JsonResponse($result);
     }
 
     /**
@@ -102,7 +102,8 @@ class ArticleController extends AbstractController
         $translations = $articleLanguageRepository->findByArticleId($article->getId());
         $data = (object) array_merge( (array)$article, array( 'translations' => $translations ) );
 
-        return $this->json($data);
+        if(!$article) return new JsonResponse(["message" => 'Nie znaleziono produktu'], 404);
+        return new JsonResponse($data);
     }
 
     /**
@@ -155,7 +156,7 @@ class ArticleController extends AbstractController
      *         })
      * )
      * @OA\Response(
-     *     response=409,
+     *     response=400,
      *     description="Artykuł o podanym kodzie juz istnieje"
      * )
      **/
@@ -169,20 +170,20 @@ class ArticleController extends AbstractController
         /* Sprawdzanie czy artykuł o podanym kodzie nie istnieje juz w bazie danych */
         $articleResult = $articleRepository->findOneByCode($requestArray['code']);
         if($articleResult !== null) {
-            return $this->json(["error" => "Artykuł o takim kodzie już istnieje"]);
+            return new JsonResponse(["message" => "Artykuł o takim kodzie już istnieje"], 404);
         }
         /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
         $requiredFields = ['code', 'ean13', 'price', 'id_category'];
         foreach ($requiredFields as $requiredField) {
             if (!isset($requestArray[$requiredField])) {
-                return $this->json(["error" => "Nie przekazano wymaganego parametru '" . $requiredField . "'"]);
+                return new JsonResponse(["message" => "Nie przekazano wymaganego parametru '" . $requiredField . "'"], 400);
             }
         }
         if (!isset($requestArray['translations'])) {
-            return $this->json(["error" => "Nie przekazano tłumaczeń"]);
+            return new JsonResponse(["message" => "Nie przekazano tłumaczeń"], 400);
         } else {
             if (count($requestArray['translations']) == 0) {
-                return $this->json(["error" => "Nie przekazano tłumaczeń"]);
+                return new JsonResponse(["message" => "Nie przekazano tłumaczeń"], 400);
             }
         }
 
@@ -208,7 +209,7 @@ class ArticleController extends AbstractController
 
         $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
 
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     /**
@@ -273,7 +274,7 @@ class ArticleController extends AbstractController
         $requestArray = $request->toArray();
         $article = $articleRepository->findOneBy(['id' => $requestArray['id']]);
         if($article === null) {
-            return $this->json(["error" => "Nie znaleziono artykułu o podanym kodzie"]);
+            return new JsonResponse(["message" => "Nie znaleziono artykułu o podanym kodzie"], 404);
         }
         /* Ustawianie danych artykułu */
         $article->setCode($requestArray['code']);
@@ -300,7 +301,7 @@ class ArticleController extends AbstractController
 
         $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
 
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     /**
@@ -323,7 +324,7 @@ class ArticleController extends AbstractController
         $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
         $article = $articleRepository->findOneBy(['id' => $id_article]);
         if($article === null) {
-            return $this->json(["error" => "Nie znaleziono artykułu o podanym id"]);
+            return new JsonResponse(["message" => "Nie znaleziono artykułu o podanym id"], 404);
         }
         /* Usuwanie tlumaczeń artykułu */
         $translations = $articleLanguageRepository->findBy(['id_article' => $article->getId()]);
@@ -335,6 +336,6 @@ class ArticleController extends AbstractController
         $entityManager->remove($article);
         $entityManager->flush();
 
-        return $this->json("Usunięto");
+        return new JsonResponse(["message" => "Usunięto"]);
     }
 }
