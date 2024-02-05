@@ -45,7 +45,8 @@ class ArticleCarController extends AbstractController
     public function index(ArticleCarRepository $articleCarRepository, int $article_id): JsonResponse
     {
         $result = $articleCarRepository->findBy(['id_article' => $article_id]);
-        return $this->json($result);
+        if(!$result) return new JsonResponse(['message' => 'Brak zastosowań dla danego artykułu'], 404);
+        return new JsonResponse($result);
     }
 
     /**
@@ -111,10 +112,9 @@ class ArticleCarController extends AbstractController
         $articleCar = $articleCarRepository->findOneBy(['id_article' => $article_id, 'id_car' => $car_id]);
         if($articleCar !== null) {
             $articleCarRepository->remove($articleCar, true);
-            $response = ["message" => "odłączono samochód do produktu"];
+            return new JsonResponse(["message" => "Odłączono samochód do produktu"]);
         }else{
-            $response = ["message" => "nie znaleziono takiego samochodu podłączonego do artykułu"];
+            return new JsonResponse(["message" => "nie znaleziono takiego samochodu podłączonego do artykułu"], 404);
         }
-        return $this->json($response);
     }
 }
