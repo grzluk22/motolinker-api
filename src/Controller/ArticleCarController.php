@@ -65,6 +65,12 @@ class ArticleCarController extends AbstractController
     #[Route('/article/{article_id}/car/{car_id}', name: 'app_article_car_post', methods: ["POST"])]
     public function post(ArticleRepository $articleRepository, CarRepository $carRepository, ArticleCarRepository $articleCarRepository, int $article_id, int $car_id): JsonResponse
     {
+        /* Sprawdzanie czy samochód o podanym id nie został już podłączony do tego artykułu w celu uniknięcia tworzenia duplikatów */
+        $articleCar = $articleCarRepository->findOneBy(['id_article' => $article_id, 'id_car' => $car_id]);
+        if($articleCar) {
+            return new JsonResponse(['message' => 'Samochód o podanym id już jest połączony z produktem'], 400);
+        }
+
         /* Sprawdzanie czy istnieje artykuł o podanym id */
         $article = $articleRepository->findOneBy(['id' => $article_id]);
         if($article === null) {
@@ -76,6 +82,7 @@ class ArticleCarController extends AbstractController
         if($car === null) {
             return new JsonResponse(['message' => 'Nie znaleziono samochodu o podanym id'], 404);
         }
+
         $articleCar = new ArticleCar();
         $articleCar->setIdArticle($article_id);
         $articleCar->setIdCar($car_id);
