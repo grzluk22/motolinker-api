@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Car;
+use App\Repository\ArticleCarRepository;
 use App\Repository\CarRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Annotations as OA;
@@ -77,6 +79,7 @@ class CarController extends AbstractController
     {
         /* Najprostsza metoda do pobrania samochodów przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
         /* Jeżeli nie przekazano nic w body request to zwracanie wszystkich samochodów */
+        /* Jezeli żaden samochód nie pasuje do parametrów przekazanych w RequestBody lub nie ma nic w bazie to 404 */
         try {
             $requestArray = $request->toArray();
             $cars = $carRepository->findBy($requestArray);
@@ -87,7 +90,8 @@ class CarController extends AbstractController
                 throw $exception;
             }
         }
-        return $this->json($cars);
+        if(!$cars) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
+        return new JsonResponse($cars);
     }
 
     /**
@@ -150,12 +154,19 @@ class CarController extends AbstractController
      *             )
      *         })
      * )
+     * @OA\Response(
+     *     response=400,
+     *     description="W bazie już istnieje samochód o dokładnie takich samych paraetrach"
+     * )
      **/
     #[Route('/car', name: 'app_car_post', methods: ["POST"])]
     public function post(CarRepository $carRepository, Request $request)
     {
-        /* Dodawanie nowego samochodu do bazy danych */
         $requestArray = $request->toArray();
+        /* Sprawdzanie czy w bazie nie istnieje już samochód o identycznych parametrach */
+        $car = $carRepository->findOneBy($requestArray);
+        if($car !== null) return new JsonResponse(['message' => 'Samochód o identycznych parametrach już istnieje w bazie danych'], 400);
+        /* Dodawanie nowego samochodu do bazy danych */
         $car = new Car();
         $car->setManufacturer($requestArray['manufacturer']);
         $car->setModel($requestArray['model']);
@@ -175,7 +186,7 @@ class CarController extends AbstractController
         $car->setEngineCodes($requestArray['engine_codes']);
         $car->setKba($requestArray['kba']);
         $carRepository->save($car, true);
-        return $this->json($car);
+        return new JsonResponse($car);
     }
 
     /**
@@ -239,6 +250,10 @@ class CarController extends AbstractController
      *             )
      *         })
      * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono samochodu o podanym id"
+     * )
      **/
     #[Route('/car', name: 'app_car_put', methods: ["PUT"])]
     public function put(CarRepository $carRepository, Request $request)
@@ -246,6 +261,7 @@ class CarController extends AbstractController
         /* Aktualizowanie samochodu */
         $requestArray = $request->toArray();
         $car = $carRepository->findOneBy(['id' => $requestArray['id']]);
+        if(!$car) return new JsonResponse(['message' => 'Nie znaleziono samochodu o podanym id'], 404);
         $car->setManufacturer($requestArray['manufacturer']);
         $car->setModel($requestArray['model']);
         $car->setType($requestArray['type']);
@@ -264,7 +280,7 @@ class CarController extends AbstractController
         $car->setEngineCodes($requestArray['engine_codes']);
         $car->setKba($requestArray['kba']);
         $carRepository->save($car, true);
-        return $this->json($car);
+        return new JsonResponse($car);
     }
 
     /**
@@ -328,14 +344,25 @@ class CarController extends AbstractController
      *             )
      *         })
      * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono samochodu o podanym id"
+     * )
      **/
     #[Route('/car/{id_car}', name: 'app_car_delete', methods: ["DELETE"])]
-    public function delete(CarRepository $carRepository, int $id_car)
+    public function delete(CarRepository $carRepository, ArticleCarRepository $articleCarRepository, int $id_car)
     {
-        /* Aktualizowanie samochodu */
         $car = $carRepository->findOneBy(['id' => $id_car]);
+        if(!$car) return new JsonResponse(['message' => 'Nie znaleziono samochodu o podanym id']);
+        /* Najpierw odpinanie samochodu od wszystkich produktów do których został podpięty */
+        $articleCars= $articleCarRepository->findBy(['id_car' => $id_car]);
+        $deletedArticleCars = 0;
+        foreach ($articleCars as $articleCar) {
+            $articleCarRepository->remove($articleCar, true);
+            $deletedArticleCars++;
+        }
         $carRepository->remove($car, true);
-        return $this->json($car);
+        return new JsonResponse(['message' => 'Usunięto samochód oraz odpięto od '.$deletedArticleCars.' produktów.', 'deletedItem' => $car]);
     }
 
     /**
@@ -376,13 +403,18 @@ class CarController extends AbstractController
      *             )
      *         })
      * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono samochodu na podstawie wpisanej frazy"
+     * )
      **/
     #[Route('/car/search/{text_value}', name: 'app_car_search', methods: ["GET"])]
     public function search(CarRepository $carRepository, string $text_value)
     {
         /* Metoda wyszukuje samochód na podstawie wprowadzonego tekstu */
         $result = $carRepository->search($text_value);
-        return $this->json($result);
+        if(!$result) return new JsonResponse(['message' => 'Nie znaleziono samochodu na podstawie wpisanej frazy'], 404);
+        return new JsonResponse($result);
     }
 }
 
