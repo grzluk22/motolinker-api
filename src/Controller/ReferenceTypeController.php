@@ -1,0 +1,109 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\ReferenceType;
+use App\Repository\ReferenceTypeRepository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use OpenApi\Annotations as OA;
+
+class ReferenceTypeController extends AbstractController
+{
+    /**
+     * Pobiera typy numerów referencyjnych
+     *
+     * @OA\Tag(name="ReferenceType")
+     * @OA\Response(
+     *     response=200,
+     *     description="Lista typów numerów referencyjnych",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                      "id": 1,
+     *                      "name": "Oryginalne"
+     *                     }
+     *             )
+     *         })
+     * )
+     **/
+    #[Route('/reference_type', name: 'app_article_reference_type_get', methods: ["GET"])]
+    public function index(ReferenceTypeRepository $referenceTypeRepository)
+    {
+        /* Pobiera typy numerów referencyjnych */
+        $referenceTypes = $referenceTypeRepository->findAll();
+        if(!$referenceTypes) return new JsonResponse(['message' => 'Nie znaleziono żadnych typów numerów referencyjnych'], 404);
+        return new JsonResponse($referenceTypes);
+    }
+    /**
+     * Wstawia typ numeru referencyjnego
+     *
+     * @OA\Tag(name="ReferenceType")
+     * @OA\RequestBody(
+     *     request="ReferenceTypePostBody",
+     *     description="Nazwa typu",
+     *     required=true,
+     *     @OA\JsonContent(
+     *                     example={
+     *                      "name": "Oryginalny"
+     *                     }
+     *    )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Dodany typ numeru referencyjnego",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                      "id": 1,
+     *                      "name": "Oryginalne"
+     *                     }
+     *             )
+     *         })
+     * )
+     * @OA\Response(
+     *     response=400,
+     *     description="ReferenceType o podanej nazwie już istnieje"
+     * )
+     **/
+    #[Route('/reference_type', name: 'app_reference_type_post', methods: ["POST"])]
+    public function post(ReferenceTypeRepository $referenceTypeRepository, Request $request): JsonResponse
+    {
+        $requestArray = $request->toArray();
+        $referenceType = $referenceTypeRepository->findOneBy(['name' => $requestArray['name']]);
+        if($referenceType !== null) return new JsonResponse(['message' => 'ReferenceType o podanej nazwie już istnieje'], 400);
+        /* Wstawia nowy typ numeru referencyjnego */
+        $referenceType = new ReferenceType();
+        $referenceType->setName($requestArray['name']);
+        $referenceTypeRepository->save($referenceType, true);
+        return new JsonResponse($referenceType);
+    }
+    /**
+     * Usuwa typ numeru referencyjnego
+     *
+     * @OA\Tag(name="ReferenceType")
+     * @OA\Response(
+     *     response=200,
+     *     description="Usunieto",
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono typu numeru referencyjnego o podanym id"
+     * )
+     **/
+    #[Route('/reference_type', name: 'app_reference_type_delete', methods: ["DELETE"])]
+    public function delete(ReferenceTypeRepository $referenceTypeRepository, Request $request)
+    {
+        /* Usuwa typ nueru referencyjnego */
+        $requestArray = $request->toArray();
+        $referenceType = $referenceTypeRepository->findOneBy(['id' => $requestArray['id']]);
+        if(!$referenceType) return new JsonResponse(['message' => 'Nie znaleziono typu numeru referencyjnego'], 404);
+        $referenceTypeRepository->remove($referenceType, true);
+        return new JsonResponse(['message' => 'Usunięto']);
+    }
+}
