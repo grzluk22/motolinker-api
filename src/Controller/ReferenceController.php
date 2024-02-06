@@ -47,16 +47,11 @@ class ReferenceController extends AbstractController
      *         })
      * )
      **/
-    #[Route('/reference', name: 'app_reference_get', methods: ["GET"])]
-    public function index(ReferenceRepository $referenceRepository, Request $request)
+    #[Route('/reference/{id_article}', name: 'app_article_reference_get', methods: ["GET"])]
+    public function index(ReferenceRepository $referenceRepository, int $id_article)
     {
-        /* Pobiera numery referencyjne dla id artykułu przekazanego w body żądania, jeżeli przekazano też typ to pobiera tylko te (porównawcze oraz oryginalne) */
-        $requestArray = $request->toArray();
-        if(isset($requestArray['type'])) {
-            $references = $referenceRepository->findBy(['id_article' => $requestArray['id_article'], 'type' => $requestArray['type']]);
-        }else{
-            $references = $referenceRepository->findBy(['id_article' => $requestArray['id_article']]);
-        }
+        /* Pobiera numery referencyjne dla id artykułu */
+        $references = $referenceRepository->findBy(['id_article' => $id_article]);
         if(!$references) return new JsonResponse(['message' => 'Nie znaleziono numerów porównawczych'], 404);
         return new JsonResponse($references);
 
