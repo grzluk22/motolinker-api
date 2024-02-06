@@ -52,9 +52,10 @@ class CategoryController extends AbstractController
      *
      * */
     #[Route('/category', name: 'app_category_get', methods:['GET'])]
-    public function index(CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository): Response
+    public function index(CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository): JsonResponse
     {
         $categories = $categoryRepository->findAll();
+        if(!$categories) return new JsonResponse(['message' => 'Brak kategorii'], 404);
         $data = [];
         foreach ($categories as $id=>$category) {
             $data[] = [
@@ -63,7 +64,7 @@ class CategoryController extends AbstractController
                 "translations" => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])
             ];
         }
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     /**
@@ -110,7 +111,7 @@ class CategoryController extends AbstractController
      *         })
      * )
      * @OA\Response(
-     *     response=500,
+     *     response=400,
      *     description="Nie przekazano tłumaczeń"
      * )
      **/
@@ -124,7 +125,7 @@ class CategoryController extends AbstractController
         $categoryManager->persist($category);
         $categoryManager->flush();
 
-        if(!isset($requestArray['translations']) or count($requestArray['translations']) == 0) return $this->json(["error" => "Nie przekazano tłumaczeń"]);
+        if(!isset($requestArray['translations']) or count($requestArray['translations']) == 0) return new JsonResponse(["message" => "Nie przekazano tłumaczeń"], 400);
         /* Dodawanie tłumaczeń */
         foreach ($requestArray['translations'] as $translation) {
             $categoryLanguage = new CategoryLanguage();
@@ -137,7 +138,7 @@ class CategoryController extends AbstractController
         }
         $data = array_merge((array) $category, ["translations" => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])]);
 
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     /**
@@ -160,7 +161,7 @@ class CategoryController extends AbstractController
         $categoryLanguageManager = $doctrine->getManagerForClass(CategoryLanguage::class);
         $category = $categoryRepository->findOneBy(["id" => $id]);
         if($category === null) {
-            return $this->json(["error" => "Nie znaleziono kategorii o podanym id"]);
+            return new JsonResponse(["message" => "Nie znaleziono kategorii o podanym id"], 404);
         }
         /* Usuwanie kategorii */
         $entityManager->remove($category);
@@ -173,7 +174,7 @@ class CategoryController extends AbstractController
             $categoryLanguageManager->flush();
         }
 
-        return $this->json("Usunięto");
+        return new JsonResponse(['message' => "Usunięto"]);
     }
 
     /**
@@ -233,6 +234,7 @@ class CategoryController extends AbstractController
         $categoryManager = $managerRegistry->getManager();
         $requestArray = $request->toArray();
         $category = $categoryRepository->findOneBy(['id' => $requestArray['id']]);
+        if(!$category) return new JsonResponse(['message' => 'Nie znaleziono kategorii o podanym id'], 404);
         $category->setIdParent($requestArray['id_parent']);
         $categoryManager->persist($category);
         $categoryManager->flush();
@@ -253,6 +255,6 @@ class CategoryController extends AbstractController
 
         $data = array_merge((array) $category, ["translations" => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])]);
 
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 }
