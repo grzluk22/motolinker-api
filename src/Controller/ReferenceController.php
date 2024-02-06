@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Reference;
+use App\Repository\ArticleRepository;
 use App\Repository\ReferenceRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Annotations as OA;
@@ -45,17 +47,13 @@ class ReferenceController extends AbstractController
      *         })
      * )
      **/
-    #[Route('/reference', name: 'app_reference_get', methods: ["GET"])]
-    public function index(ReferenceRepository $referenceRepository, Request $request)
+    #[Route('/reference/{id_article}', name: 'app_article_reference_get', methods: ["GET"])]
+    public function index(ReferenceRepository $referenceRepository, int $id_article)
     {
-        /* Pobiera numery referencyjne dla id artykułu przekazanego w body żądania, jeżeli przekazano też typ to pobiera tylko te (porównawcze oraz oryginalne) */
-        $requestArray = $request->toArray();
-        if(isset($requestArray['type'])) {
-            $references = $referenceRepository->findBy(['id_article' => $requestArray['id_article'], 'type' => $requestArray['type']]);
-        }else{
-            $references = $referenceRepository->findBy(['id_article' => $requestArray['id_article']]);
-        }
-        return $this->json($references);
+        /* Pobiera numery referencyjne dla id artykułu */
+        $references = $referenceRepository->findBy(['id_article' => $id_article]);
+        if(!$references) return new JsonResponse(['message' => 'Nie znaleziono numerów porównawczych'], 404);
+        return new JsonResponse($references);
 
     }
     /**
@@ -91,19 +89,25 @@ class ReferenceController extends AbstractController
      *             )
      *         })
      * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono artykułu o podanym id"
+     * )
      **/
     #[Route('/reference', name: 'app_reference_post', methods: ["POST"])]
-    public function post(ReferenceRepository $referenceRepository, Request $request)
+    public function post(ReferenceRepository $referenceRepository, ArticleRepository $articleRepository, Request $request)
     {
-        /* Wstawia nowy numer referencyjny dla danego artykułu */
         $requestArray = $request->toArray();
+        $article = $articleRepository->findOneBy(['id' => $requestArray['id_article']]);
+        if(!$article) return new JsonResponse(['message' => 'Nie znaleziono artykułu o podanym id'], 404);
+        /* Wstawia nowy numer referencyjny dla danego artykułu */
         $reference = new Reference();
         $reference->setIdArticle($requestArray['id_article']);
         $reference->setBrand($requestArray['brand']);
         $reference->setNumber($requestArray['number']);
         $reference->setType($requestArray['type']);
         $referenceRepository->save($reference, true);;
-        return $this->json($reference);
+        return new JsonResponse($reference);
     }
     /**
      * Usuwa numery referencyjne
@@ -123,6 +127,10 @@ class ReferenceController extends AbstractController
      *     response=200,
      *     description="Usunieto",
      * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono numeru referencyjnego o podanym id"
+     * )
      **/
     #[Route('/reference', name: 'app_reference_delete', methods: ["DELETE"])]
     public function delete(ReferenceRepository $referenceRepository, Request $request)
@@ -130,6 +138,8 @@ class ReferenceController extends AbstractController
         /* Usuwa numer referencyjny */
         $requestArray = $request->toArray();
         $reference = $referenceRepository->findOneBy(['id' => $requestArray['id']]);
+        if(!$reference) return new JsonResponse(['message' => 'Nie znaleziono numeru referencyjnego'], 404);
         $referenceRepository->remove($reference, true);
+        return new JsonResponse(['message' => 'Usunięto']);
     }
 }
