@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\ArticleLanguageRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Annotations as OA;
@@ -28,9 +29,9 @@ class ArticleLanguageController extends AbstractController
     {
         $articleLanguage = $articleLanguageRepository->findOneBy(['id' => $id]);
         if($articleLanguage === null) {
-            return $this->json(["error" => "Nie znaleziono tłumaczenia o podanym kodzie"]);
+            return new JsonResponse(["message" => "Nie znaleziono tłumaczenia o podanym kodzie"], 404);
         }
         $articleLanguageRepository->remove($articleLanguage, true);
-        return $this->json("Usunięto");
+        return new JsonResponse(["message" => "Usunięto"]);
     }
 }
