@@ -54,16 +54,17 @@ class CriterionController extends AbstractController
      *
      */
     #[Route('/criterion', name: 'app_criterion_get', methods: ['GET'])]
-    public function index(CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository): Response
+    public function index(CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository): JsonResponse
     {
         $data = [];
         $criterions = $criterionRepository->findAll();
+        if(!$criterions) return new JsonResponse(['message' => 'Brak kryteriów w bazie danych'], 404);
         foreach ($criterions as $criterion) {
             /* Pobieranie tłumaczeń dla tego kryteria */
             $translations = $criterionLanguageRepository->findBy(['id_criterion' => $criterion->getId()]);
             $data[] = ['id' => $criterion->getId(), 'translations' => $translations];
         }
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     #[Route('/criterion/{id}', name: 'app_criterion_get_one', methods: ['GET'])]
@@ -126,7 +127,7 @@ class CriterionController extends AbstractController
             $criterionLanguageRepository->save($criterionLanguage, true);
         }
         $data = (object) array_merge((array) $criterion, ["translations" => $criterionLanguageRepository->findBy(['id_criterion' => $criterion->getId()])]);
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     /**
@@ -181,7 +182,7 @@ class CriterionController extends AbstractController
     {
         $requestArray = $request->toArray();
         $criterion = $criterionRepository->findOneBy(['id' => $requestArray['id']]);
-        if($criterion == null) return $this->json(['error' => 'Nie znaleziono kryterium o podanym id']);
+        if($criterion == null) return new JsonResponse(['message' => 'Nie znaleziono kryterium o podanym id'], 404);
         foreach ($requestArray['translations'] as $translation) {
             if(!isset($translation['id'])) {
                 $criterionLanguage = new CriterionLanguage();
@@ -194,7 +195,7 @@ class CriterionController extends AbstractController
             $criterionLanguageRepository->save($criterionLanguage, true);
         }
         $data = (object) array_merge((array) $criterion, ["translations" => $criterionLanguageRepository->findBy(['id_criterion' => $criterion->getId()])]);
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
 
@@ -218,7 +219,7 @@ class CriterionController extends AbstractController
         $criterionLanguageManager = $doctrine->getManagerForClass(CriterionLanguage::class);
         $criterion = $criterionRepository->findOneBy(["id" => $id]);
         if($criterion === null) {
-            return $this->json(["error" => "Nie znaleziono kryterium o podanym id"]);
+            return new JsonResponse(["message" => "Nie znaleziono kryterium o podanym id"], 404);
         }
         /* Usuwanie kategorii */
         $entityManager->remove($criterion);
@@ -231,6 +232,6 @@ class CriterionController extends AbstractController
             $criterionLanguageManager->flush();
         }
 
-        return $this->json("Usunięto");
+        return new JsonResponse(['message' => "Usunięto"]);
     }
 }
