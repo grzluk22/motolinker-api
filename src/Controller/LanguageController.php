@@ -43,10 +43,11 @@ class LanguageController extends AbstractController
      *
      */
     #[Route('/language', name: 'app_language_get', methods: ["GET"])]
-    public function index(LanguageRepository $languageRepository): Response
+    public function index(LanguageRepository $languageRepository): JsonResponse
     {
         $languages = $languageRepository->findAll();
-        return $this->json($languages);
+        if(!$languages) return new JsonResponse(['message' => 'Brak języków'], 404);
+        return new JsonResponse($languages);
     }
 
     /**
@@ -68,13 +69,13 @@ class LanguageController extends AbstractController
         $entityManager = $doctrine->getManager();
         $language = $languageRepository->findOneBy(["id" => $id]);
         if($language === null) {
-            return $this->json(["error" => "Nie znaleziono artykułu o podanym kodzie"]);
+            return new JsonResponse(["message" => "Nie znaleziono artykułu o podanym kodzie"], 404);
         }
         /* Usuwanie języka */
         $entityManager->remove($language);
         $entityManager->flush();
 
-        return $this->json("Usunięto");
+        return new JsonResponse(['message' => "Usunięto"]);
     }
 
     /**
@@ -112,7 +113,7 @@ class LanguageController extends AbstractController
      *         })
      * )
      * @OA\Response(
-     *     response=500,
+     *     response=400,
      *     description="Inny język już ma taką nazwę"
      * )
      **/
@@ -123,12 +124,12 @@ class LanguageController extends AbstractController
         $requestArray = $request->toArray();
         $language = $languageRepository->findOneBy(['id' => $requestArray['id']]);
         if($language === null) {
-            return $this->json(["error" => "Nie znaleziono języka o podanym id"]);
+            return new JsonResponse(["message" => "Nie znaleziono języka o podanym id"], 404);
         }
         /* Sprawdzanie czy inny język nie ma już takiej nazwy */
         $otherLanguage = $languageRepository->findOneBy(['name' => $requestArray['name']]);
         if($otherLanguage !== null && $otherLanguage->getId() !== $requestArray['id']) {
-            return $this->json(['error' => "Inny język już ma taką nazwę"]);
+            return new JsonResponse(['message' => "Inny język już ma taką nazwę"], 400);
         }
         /* Ustawianie danych języka */
         $language->setName($requestArray['name']);
@@ -142,7 +143,7 @@ class LanguageController extends AbstractController
             'isoCode' => $language->getIsoCode()
         ];
 
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 
     /**
@@ -179,7 +180,7 @@ class LanguageController extends AbstractController
      *         })
      * )
      * @OA\Response(
-     *     response=500,
+     *     response=400,
      *     description="Inny język już ma taką nazwę"
      * )
      **/
@@ -191,7 +192,7 @@ class LanguageController extends AbstractController
         /* Sprawdzanie czy inny język nie ma już takiej nazwy */
         $otherLanguage = $languageRepository->findOneBy(['name' => $requestArray['name']]);
         if($otherLanguage !== null) {
-            return $this->json(['error' => "Inny język już ma taką nazwę"]);
+            return new JsonResponse(['message' => "Inny język już ma taką nazwę"], 400);
         }
         /* Ustawianie danych języka */
         $language = new Language();
@@ -206,6 +207,6 @@ class LanguageController extends AbstractController
             'isoCode' => $language->getIsoCode()
         ];
 
-        return $this->json($data);
+        return new JsonResponse($data);
     }
 }
