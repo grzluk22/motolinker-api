@@ -109,6 +109,63 @@ class ReferenceController extends AbstractController
         $referenceRepository->save($reference, true);;
         return new JsonResponse($reference);
     }
+
+    /**
+     * Aktualizuje numery referencyjne
+     *
+     * @OA\Tag(name="Reference")
+     * @OA\RequestBody(
+     *     request="ReferencePutBody",
+     *     description="Parametry reference",
+     *     required=true,
+     *     @OA\JsonContent(
+     *                     example={
+     *                      "id":1,
+     *                      "id_article": 26,
+     *                      "type": 2,
+     *                      "brand": "BREMBO",
+     *                      "number": "B156O1"
+     *                     }
+     *    )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Lista numerów referencyjnych",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                      "id": 1,
+     *                      "id_article": 26,
+     *                      "type": 2,
+     *                      "brand": "BREMBO",
+     *                      "number": "B156O1"
+     *                     }
+     *             )
+     *         })
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono artykułu lub numeru referencyjnego o podanym id"
+     * )
+     **/
+    #[Route('/reference', name: 'app_reference_put', methods: ["PUT"])]
+    public function put(ReferenceRepository $referenceRepository, ArticleRepository $articleRepository, Request $request)
+    {
+        $requestArray = $request->toArray();
+        $article = $articleRepository->findOneBy(['id' => $requestArray['id_article']]);
+        if(!$article) return new JsonResponse(['message' => 'Nie znaleziono artykułu o podanym id'], 404);
+        /* Aktualizuje nowy numer referencyjny dla danego artykułu */
+        $reference = $referenceRepository->findOneBy(['id' => $requestArray['id']]);
+        if(!$reference) return new JsonResponse(['message' => 'Nie znaleziono numeru referencyjnego o podanym id'], 404);
+        $reference->setIdArticle($requestArray['id_article']);
+        $reference->setBrand($requestArray['brand']);
+        $reference->setNumber($requestArray['number']);
+        $reference->setType($requestArray['type']);
+        $referenceRepository->save($reference, true);;
+        return new JsonResponse($reference);
+    }
+
     /**
      * Usuwa numery referencyjne
      *
@@ -132,12 +189,11 @@ class ReferenceController extends AbstractController
      *     description="Nie znaleziono numeru referencyjnego o podanym id"
      * )
      **/
-    #[Route('/reference', name: 'app_reference_delete', methods: ["DELETE"])]
-    public function delete(ReferenceRepository $referenceRepository, Request $request)
+    #[Route('/reference/{id_reference}', name: 'app_reference_delete', methods: ["DELETE"])]
+    public function delete(ReferenceRepository $referenceRepository, int $id_reference)
     {
         /* Usuwa numer referencyjny */
-        $requestArray = $request->toArray();
-        $reference = $referenceRepository->findOneBy(['id' => $requestArray['id']]);
+        $reference = $referenceRepository->findOneBy(['id' => $id_reference]);
         if(!$reference) return new JsonResponse(['message' => 'Nie znaleziono numeru referencyjnego'], 404);
         $referenceRepository->remove($reference, true);
         return new JsonResponse(['message' => 'Usunięto']);
