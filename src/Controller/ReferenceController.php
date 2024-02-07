@@ -189,12 +189,11 @@ class ReferenceController extends AbstractController
      *     description="Nie znaleziono numeru referencyjnego o podanym id"
      * )
      **/
-    #[Route('/reference', name: 'app_reference_delete', methods: ["DELETE"])]
-    public function delete(ReferenceRepository $referenceRepository, Request $request)
+    #[Route('/reference/{id_reference}', name: 'app_reference_delete', methods: ["DELETE"])]
+    public function delete(ReferenceRepository $referenceRepository, int $id_reference)
     {
         /* Usuwa numer referencyjny */
-        $requestArray = $request->toArray();
-        $reference = $referenceRepository->findOneBy(['id' => $requestArray['id']]);
+        $reference = $referenceRepository->findOneBy(['id' => $id_reference]);
         if(!$reference) return new JsonResponse(['message' => 'Nie znaleziono numeru referencyjnego'], 404);
         $referenceRepository->remove($reference, true);
         return new JsonResponse(['message' => 'Usunięto']);
