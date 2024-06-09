@@ -111,7 +111,7 @@ class ImageController extends AbstractController
     }
 
     /**
-     * Usuwa Obrazek z produktu
+     * Usuwa Obrazek z produktu. Ten endpoint kasuje tylko powiązanie w bazie danych. W api do wgrywania plików jest osobny endpoint do kasowania plików który należy wywołać osobno po stronie frontendu. W przyszłych wersjach możliwe że będzie to zintegrowane.
      *
      * @OA\Tag(name="ArticleImage")
      * @OA\Response(
