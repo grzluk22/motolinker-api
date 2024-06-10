@@ -67,8 +67,6 @@ class CriterionController extends AbstractController
         return new JsonResponse($data);
     }
 
-    #[Route('/criterion/{id}', name: 'app_criterion_get_one', methods: ['GET'])]
-
     /**
      * Tworzy nowe kryterium
      *
