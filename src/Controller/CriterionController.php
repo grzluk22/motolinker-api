@@ -234,4 +234,31 @@ class CriterionController extends AbstractController
 
         return new JsonResponse(['message' => "Usunięto"]);
     }
+
+    /**
+     * Usuwa pojedyńcze tłumaczenie kryterium
+     *
+     * @OA\Tag(name="Criterion")
+     * @OA\Response(
+     *     response=200,
+     *     description="Usunięto"
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono tłumaczenia kryterium o podanym id"
+     * )
+     **/
+    #[Route('/criterion/translation/{trid}', name: 'app_criterion_translation_delete', methods: ["DELETE"])]
+    public function deleteTranslation(ManagerRegistry $doctrine, CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository, string $trid): JsonResponse
+    {
+        $entityManager = $doctrine->getManager();
+        $criterionLanguageManager = $doctrine->getManagerForClass(CriterionLanguage::class);
+
+        /* Usuwanie tłumaczeń dla tego kryterium */
+        $criterionLanguage = $criterionLanguageRepository->findOneBy(['id' => $trid]);
+        $criterionLanguageManager->remove($criterionLanguage);
+        $criterionLanguageManager->flush();
+
+        return new JsonResponse(['message' => "Usunięto"]);
+    }
 }
