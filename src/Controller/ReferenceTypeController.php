@@ -96,14 +96,57 @@ class ReferenceTypeController extends AbstractController
      *     description="Nie znaleziono typu numeru referencyjnego o podanym id"
      * )
      **/
-    #[Route('/reference_type', name: 'app_reference_type_delete', methods: ["DELETE"])]
-    public function delete(ReferenceTypeRepository $referenceTypeRepository, Request $request)
+    #[Route('/reference_type/{id_reference_type}', name: 'app_reference_type_delete', methods: ["DELETE"])]
+    public function delete(ReferenceTypeRepository $referenceTypeRepository, int $id_reference_type)
     {
         /* Usuwa typ nueru referencyjnego */
-        $requestArray = $request->toArray();
-        $referenceType = $referenceTypeRepository->findOneBy(['id' => $requestArray['id']]);
+        $referenceType = $referenceTypeRepository->findOneBy(['id' => $id_reference_type]);
         if(!$referenceType) return new JsonResponse(['message' => 'Nie znaleziono typu numeru referencyjnego'], 404);
         $referenceTypeRepository->remove($referenceType, true);
         return new JsonResponse(['message' => 'Usunięto']);
+    }
+
+    /**
+     * Aktualizuje typ numeru referencyjnego
+     *
+     * @OA\Tag(name="ReferenceType")
+     * @OA\RequestBody(
+     *     request="ReferenceTypePutBody",
+     *     description="Parametry reference",
+     *     required=true,
+     *     @OA\JsonContent(
+     *                     example={
+     *                      "id":1,
+     *                      "name": "Oryginalny"
+     *                     }
+     *    )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Zmodyfikowany typ numeru referencyjnego",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                      "id": 1,
+     *                      "name": "Oryginalny"
+     *                     }
+     *             )
+     *         })
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono typu numeru referencyjnego o podanym id"
+     * )
+     **/
+    #[Route('/reference_type', name: 'app_reference_type_put', methods: ["PUT"])]
+    public function put(ReferenceTypeRepository $referenceTypeRepository, Request $request)
+    {
+        $requestArray = $request->toArray();
+        $referenceType = $referenceTypeRepository->findOneBy(['id' => $requestArray['id']]);
+        if(!$referenceType) return new JsonResponse(['message' => 'Nie znaleziono typu numeru referencyjnego o podanym id'], 404);
+        $referenceType->setName($requestArray['name']);
+        $referenceTypeRepository->save($referenceType, true);;
+        return new JsonResponse($referenceType);
     }
 }
