@@ -7,11 +7,11 @@ Wymaga PHP
 <ol>
 <li>Pobierz repozytorium za pomocą git clone</li>
 <li>W środku wykonaj instalacje "composer install"</li>
-<li>Aktywuj mod_rewrite za pomocą komendy "sudo a2enmod rewrite"<li>
+<li>Aktywuj mod_rewrite za pomocą komendy "sudo a2enmod rewrite"</li>
 <li>W pliku /etc/apache2/sites-enabled/000-default.conf dodaj linijke:
-><Directory /var/www/html>
->    AllowOverride All
-></Directory>
+> <Directory /var/www/html>
+>     AllowOverride All
+> </Directory>
 </li>
 </ol>
 
