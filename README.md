@@ -1,12 +1,11 @@
 # motolinker-api-local
 MotolinkerApi przy użyciu PHP i MySQL, bez konteneryzacji docker <br>
 <h1>Najważniejsze ścieżki:</h1>
-<h3>/doc - Dokumentacja Swagger</h3>
-<h3>/doc.json - Dokumantacja JSON</h3>
-<h3>/register - przyjmuje dane w postaci JSON z polami email oraz password i służy do rejestracji</h3>
-<h3>/api_login_check - przyjmuje dane w postaci JSON z polami email oraz password i służy do zalogowania się i zwraca JWT Token</h3>
-<h3>/api_refresh_token - przyjmuje dane w postaci JSON z polami token oraz token_refresh</h3>
-Wymaga PHP
+<h5>/doc - Dokumentacja Swagger</h5>
+<h5>/doc.json - Dokumantacja JSON</h5>
+<h5>/register - przyjmuje dane w postaci JSON z polami email oraz password i służy do rejestracji</h5>
+<h5>/login_check - przyjmuje dane w postaci JSON z polami login oraz password i służy do zalogowania się i zwraca JWT Token oraz refresh token</h5>
+<h5>/token/refresh - przyjmuje dane w postaci JSON z polami token oraz refresh_token (takie same które zwraca endpoint /login_check </h5>
 
 <h1>Instrukcja Instalacji: </h1>
 <ol>
