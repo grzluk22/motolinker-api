@@ -10,12 +10,22 @@ MotolinkerApi przy użyciu PHP i MySQL, bez konteneryzacji docker <br>
 <h1>Instrukcja Instalacji: </h1>
 <ol>
 <li>Pobierz repozytorium za pomocą git clone</li>
-<li>W środku wykonaj instalacje "composer install"</li>
+<li>W środku wykonaj instalacje poleceniem "composer install"</li>
 <li>Aktywuj mod_rewrite według tej instrukcji: https://gcore.com/learning/how-enable-apache-mod-rewrite/ </li>
 <li>Edytuj dane dostępowe do bazy danych w pliku .env</li>
-<li>Utwórz bazę danych poleceniem php bin/console doctrine:database:create</li>
-<li>Wykonaj migracje za pomocą polecenia php bin/console doctrine:migrations:migrate</li>
-<li>Wygeneruj klucze JWT za pomocą polecenia: php bin/console lexik:jwt:generate-keypair</li>
+<li>Utwórz bazę danych poleceniem php "bin/console doctrine:database:create"</li>
+<li>Wykonaj migracje za pomocą polecenia "php bin/console doctrine:migrations:migrate"</li>
+<li>Wygeneruj klucze JWT za pomocą polecenia: "php bin/console lexik:jwt:generate-keypair"</li>
+</ol>
+
+<h1>Najczestsze problemy:</h1>
+<ol>
+  <li>Przy generowaniu pary kluczy JWT może wyskoczyć komunikat "error:80000003:system library::No such process"<br>
+  Należy wtedy wygeneroować klucze ręcznie:<br>
+    -Zainstaluj OpenSSH<br>
+    -Wygeneruj klucz prywatny poleceniem "openssl genrsa -out config/jwt/private.pem"<br>
+    -Wygeneruj klucz publiczny poleceniem "openssl rsa -in config/jwt/private.pem -pubout > config/jwt/public.pem"
+  </li>
 </ol>
 
 
