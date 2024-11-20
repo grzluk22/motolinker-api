@@ -22,9 +22,9 @@ MotolinkerApi przy użyciu PHP i MySQL, bez konteneryzacji docker <br>
 <ol>
   <li>Przy generowaniu pary kluczy JWT może wyskoczyć komunikat "error:80000003:system library::No such process"<br>
   Należy wtedy wygeneroować klucze ręcznie:<br>
-    -Zainstaluj OpenSSH<br>
-    -Wygeneruj klucz prywatny poleceniem "openssl genrsa -out config/jwt/private.pem"<br>
-    -Wygeneruj klucz publiczny poleceniem "openssl rsa -in config/jwt/private.pem -pubout > config/jwt/public.pem"
+    -Zainstaluj OpenSSL<br>
+    -Wygeneruj klucz prywatny poleceniem "openssl genrsa -out config/jwt/private.pem -aes256 4096" oraz podaj passphrase (musi być zgodny z tym podanym w pliku .env)<br>
+    -Wygeneruj klucz publiczny poleceniem "openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem"
   </li>
 </ol>
 
