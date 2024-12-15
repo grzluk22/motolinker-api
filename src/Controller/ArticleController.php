@@ -173,17 +173,10 @@ class ArticleController extends AbstractController
             return new JsonResponse(["message" => "Artykuł o takim kodzie już istnieje"], 400);
         }
         /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
-        $requiredFields = ['code', 'ean13', 'price', 'id_category'];
+        $requiredFields = ['code', 'ean13', 'price', 'id_category', 'name', 'description'];
         foreach ($requiredFields as $requiredField) {
             if (!isset($requestArray[$requiredField])) {
                 return new JsonResponse(["message" => "Nie przekazano wymaganego parametru '" . $requiredField . "'"], 400);
-            }
-        }
-        if (!isset($requestArray['translations'])) {
-            return new JsonResponse(["message" => "Nie przekazano tłumaczeń"], 400);
-        } else {
-            if (count($requestArray['translations']) == 0) {
-                return new JsonResponse(["message" => "Nie przekazano tłumaczeń"], 400);
             }
         }
 
@@ -193,20 +186,24 @@ class ArticleController extends AbstractController
         $article->setEan13($requestArray['ean13']);
         $article->setPrice($requestArray['price']);
         $article->setIdCategory($requestArray['id_category']);
+        $article->setName($requestArray['name']);
+        $article->setDescription($requestArray['description']);
         $entityManager->persist($article);
         $entityManager->flush();
 
-        /* Ustawianie tłumaczeń */
-        foreach ($requestArray['translations'] as $translation) {
-            $articleLanguage = new ArticleLanguage();
-            $articleLanguage->setName($translation['name']);
-            $articleLanguage->setDescription($translation['description']);
-            $articleLanguage->setIdArticle($article->getId());
-            $articleLanguage->setIdLanguage($translation['id_language']);
-            $articleLanguageManager->persist($articleLanguage);
-            $articleLanguageManager->flush();
+        /* Ustawianie tłumaczeń jezeli zotaly przekazane */
+        if(isset($requestArray['translations'])) {
+            foreach ($requestArray['translations'] as $translation) {
+                $articleLanguage = new ArticleLanguage();
+                $articleLanguage->setName($translation['name']);
+                $articleLanguage->setDescription($translation['description']);
+                $articleLanguage->setIdArticle($article->getId());
+                $articleLanguage->setIdLanguage($translation['id_language']);
+                $articleLanguageManager->persist($articleLanguage);
+                $articleLanguageManager->flush();
+            }
         }
-
+        
         $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
 
         return new JsonResponse($data);
@@ -281,23 +278,28 @@ class ArticleController extends AbstractController
         $article->setEan13($requestArray['ean13']);
         $article->setPrice($requestArray['price']);
         $article->setIdCategory($requestArray['id_category']);
+        $article->setName($requestArray['name']);
+        $article->setDescription($requestArray['description']);
         $entityManager->persist($article);
         $entityManager->flush();
-        /* Ustawianie tłumaczeń */
-        foreach ($requestArray['translations'] as $translation) {
-            if(!isset($translation['id'])) {
-                /* Nie podano id istniejącego tłumaczenia więc tworzymy nowe, uznając że użytkownik chce stworzyć nowe tłumaczenie dla tego artykułu */
-                $articleLanguage = new ArticleLanguage();
-                $articleLanguage->setIdArticle($article->getId());
-                $articleLanguage->setIdLanguage($translation['id_language']);
-            }else{
-                $articleLanguage = $articleLanguageRepository->findOneBy(['id' => $translation['id']]);
+        /* Ustawianie tłumaczeń jezeli zostaly przekazane */
+        if(isset($requestArray['translations'])) {
+            foreach ($requestArray['translations'] as $translation) {
+                if(!isset($translation['id'])) {
+                    /* Nie podano id istniejącego tłumaczenia więc tworzymy nowe, uznając że użytkownik chce stworzyć nowe tłumaczenie dla tego artykułu */
+                    $articleLanguage = new ArticleLanguage();
+                    $articleLanguage->setIdArticle($article->getId());
+                    $articleLanguage->setIdLanguage($translation['id_language']);
+                }else{
+                    $articleLanguage = $articleLanguageRepository->findOneBy(['id' => $translation['id']]);
+                }
+                $articleLanguage->setName($translation['name']);
+                $articleLanguage->setDescription($translation['description']);
+                $articleLanguageManager->persist($articleLanguage);
+                $articleLanguageManager->flush();
             }
-            $articleLanguage->setName($translation['name']);
-            $articleLanguage->setDescription($translation['description']);
-            $articleLanguageManager->persist($articleLanguage);
-            $articleLanguageManager->flush();
         }
+
 
         $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
 
