@@ -73,6 +73,20 @@ class ArticleRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+    public function findLike(mixed $criteria, mixed $orderBy, mixed $limit, mixed $offset)
+    {
+        $qb = $this->createQueryBuilder('a');
+        foreach ($criteria as $key => $value) {
+            $qb->andWhere($qb->expr()->like('a.'.$key, ':value'.$key))
+                ->setParameter('value' . $key, '%' . $value . '%');
+        }
+        foreach ($orderBy as $key => $value) {
+            $qb->addOrderBy('a.'.$key, $value);
+        }
+        $qb->setFirstResult($offset)
+            ->setMaxResults($limit);
+        return $qb->getQuery()->getResult();
+    }
 
 
 }

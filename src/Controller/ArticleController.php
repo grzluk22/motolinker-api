@@ -63,6 +63,88 @@ class ArticleController extends AbstractController
     }
 
     /**
+     * Wyświetla przefiltrowana liste artykulow.
+     *
+     * @OA\Tag(name="Article")
+     * @OA\RequestBody(
+     * request="ArticleGetByRequestBody",
+     * description="Filtry",
+     * required=true,
+     * @OA\JsonContent(
+     * example={
+     * "code": "36790-SET-MS",
+     * "ean13": "1234567890123",
+     * "price": "367.99",
+     * "id_category": 0,
+     * "translations": {
+     * "id_language": 1,
+     * "name": "Article name",
+     * "description": "Article Description"
+     *                  }
+     *          }
+     *              )
+     *          )
+     *
+     * @OA\Response(
+     *     response=200,
+     *     description="Lista artykułów",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                         "id": 1,
+     *                         "code": "36790-SET-MS",
+     *                         "ean13": "1234567890123",
+     *                         "price": "367.99",
+     *                         "id_category": 0,
+     *                              "translations": {
+     *                               "id": 1,
+     *                               "id_article": 1,
+     *                               "id_language": 1,
+     *                               "name": "New",
+     *                               "description": "asd"
+     *                          }
+     *                     }
+     *             )
+     *         })
+     * )
+     * * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono artykułu"
+     * )
+     *
+     */
+    #[Route('/article/get', name: 'app_article_get_by', methods: ["POST"])]
+    public function getBy(ArticleRepository $articleRepository, Request $request = null): JsonResponse
+    {
+        /* Najprostsza metoda do pobrania artyklow przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
+        /* Jeżeli nie przekazano nic w body request to zwracanie wszystkich artykulow */
+        /* Jezeli żaden aartkul nie pasuje do parametrów przekazanych w RequestBody lub nie ma nic w bazie to 404 */
+        try {
+            $requestArray = $request->toArray();
+            $criteria = $requestArray['criteria'] ?? [];
+            $orderBy = $requestArray['orderBy'] ?? [];
+            $limit = $requestArray['limit'] ?? 50;
+            $offset = $requestArray['offset'] ?? 0;
+            $likeSearch = $requestArray['likeSearch'] ?? false;
+            if($likeSearch) {
+                $articles = $articleRepository->findLike($criteria, $orderBy, $limit, $offset);
+            }else{
+                $articles = $articleRepository->findBy($criteria, $orderBy, $limit, $offset);
+            }
+
+        } catch (\Exception $exception) {
+            if($exception->getMessage() == "Request body is empty.") {
+                $articles = $articleRepository->findAll();
+            }else{
+                throw $exception;
+            }
+        }
+        if(!$articles) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
+        return new JsonResponse($articles);
+    }
+
+    /**
      * Wyświetla konkretny artykuł
      *
      * @OA\Tag(name="Article")
@@ -203,7 +285,7 @@ class ArticleController extends AbstractController
                 $articleLanguageManager->flush();
             }
         }
-        
+
         $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
 
         return new JsonResponse($data);
