@@ -64,18 +64,23 @@ class ArticleController extends AbstractController
      * required=true,
      * @OA\JsonContent(
      * example={
-     * "code": "36790-SET-MS",
-     * "ean13": "1234567890123",
-     * "price": "367.99",
-     * "id_category": 0,
-     * "translations": {
-     * "id_language": 1,
-     * "name": "Article name",
-     * "description": "Article Description"
-     *                  }
-     *          }
-     *              )
-     *          )
+     *     "criteria": {
+     *         "code" :"36790-set-ms",
+     *         "ean13": "1234567890123",
+     *         "price": "367.99",
+     *         "id_category": 0,
+     *         "name":"Zestaw zawieszenia",
+     *         "description":"Zawieszenie do Audi A5 b6"
+     *     },
+     *     "orderBy": {
+     *         "id":"DESC"
+     *     },
+     *     "limit":20,
+     *     "offset":40,
+     *     "likeSearch": true
+     *    }
+     *   )
+     *  )
      *
      * @OA\Response(
      *     response=200,
