@@ -34,14 +34,9 @@ class ArticleController extends AbstractController
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
      *                         "price": "367.99",
-     *                         "id_category": 0,
-     *                              "translations": {
-     *                               "id": 1,
-     *                               "id_article": 1,
-     *                               "id_language": 1,
-     *                               "name": "New",
-     *                               "description": "asd"
-     *                          }
+     *                         "name":"Zestaw zawieszenia",
+     *                         "description":"Zawieszzenie do Audi A3",
+     *                         "id_category": 0
      *                     }
      *             )
      *         })
@@ -56,9 +51,6 @@ class ArticleController extends AbstractController
     public function index(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository): JsonResponse
     {
         $result = $articleRepository->findAll();
-        foreach ($result as $resid=>$res) {
-            $result[$resid]->translations = $articleLanguageRepository->findByArticleId($res->getId());
-        }
         return new JsonResponse($result);
     }
 
