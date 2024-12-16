@@ -123,12 +123,8 @@ class ArticleController extends AbstractController
             $orderBy = $requestArray['orderBy'] ?? [];
             $limit = $requestArray['limit'] ?? 50;
             $offset = $requestArray['offset'] ?? 0;
-            $likeSearch = $requestArray['likeSearch'] ?? false;
-            if($likeSearch) {
-                $articles = $articleRepository->findLike($criteria, $orderBy, $limit, $offset);
-            }else{
-                $articles = $articleRepository->findBy($criteria, $orderBy, $limit, $offset);
-            }
+            /* Poprawka, like search powinno byc przekazane w requestArray a poprawnym przzepisaniem tych parametrow powinno zajac sie repozitory a*/
+            $articles = $articleRepository->findByExtended($criteria, $orderBy, $limit, $offset);
 
         } catch (\Exception $exception) {
             if($exception->getMessage() == "Request body is empty.") {

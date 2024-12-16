@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Article;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\abstract_arg;
 
 /**
  * @extends ServiceEntityRepository<Article>
@@ -73,13 +74,77 @@ class ArticleRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
-    public function findLike(mixed $criteria, mixed $orderBy, mixed $limit, mixed $offset)
+    public function findByExtended(mixed $criteria, mixed $orderBy, mixed $limit, mixed $offset)
     {
+        $extendedCriteria = ['priceMin', 'priceMax', 'quantity', 'quantitySearchMode', 'searchLike'];
+
+        $priceMin = $criteria['priceMin'] ?? false;
+        $priceMax = $criteria['priceMax'] ?? false;
+        $quantity = $criteria['quantity'] ?? false;
+        $quantitySearchMode = $criteria['quantitySearchMode'] ?? false;
+        $searchLike = $criteria['searchLike'] ?? false;
         $qb = $this->createQueryBuilder('a');
         foreach ($criteria as $key => $value) {
-            $qb->andWhere($qb->expr()->like('a.'.$key, ':value'.$key))
-                ->setParameter('value' . $key, '%' . $value . '%');
+            if (in_array($key, $extendedCriteria)) continue;
+            if(!$searchLike) {
+                $qb->andWhere('a.'.$key.' = :'.$key);
+                $qb->setParameter($key, $value);
+            }else{
+                $qb->andWhere($qb->expr()->like('a.'.$key, ':value'.$key))
+                    ->setParameter('value' . $key, '%' . $value . '%');
+            }
         }
+
+        foreach ($extendedCriteria as $key) {
+            if(!isset($criteria[$key])) continue;
+            switch ($key) {
+                case 'priceMin': {
+                    //priceMin
+                    $qb->andWhere('a.price >= :priceMin');
+                    $qb->setParameter('priceMin', $priceMin);
+                }
+                    break;
+
+                case 'priceMax': {
+                    //priceMax
+                    $qb->andWhere('a.price <= :priceMax');
+                    $qb->setParameter('priceMax', $priceMax);
+                }
+                    break;
+
+                case 'quantity': {
+                    //quanatiy
+                    switch ($quantitySearchMode) {
+                        case '=': {
+                            //equals
+                            $qb->andWhere('a.quantity = :quantity');
+                            $qb->setParameter('quantity', $quantity);
+                        }
+                            break;
+                        case '>': {
+                            //more than
+                            $qb->andWhere('a.quantity > :quantity');
+                            $qb->setParameter('quantity', $quantity);
+                        }
+                            break;
+                        case '<': {
+                            //less than
+                            $qb->andWhere('a.quantity < :quantity');
+                            $qb->setParameter('quantity', $quantity);
+                        }
+                            break;
+                        default: {
+
+                        }
+                    }
+                }
+                    break;
+                default: {
+
+                }
+            }
+        }
+
         foreach ($orderBy as $key => $value) {
             $qb->addOrderBy('a.'.$key, $value);
         }
@@ -87,6 +152,4 @@ class ArticleRepository extends ServiceEntityRepository
             ->setMaxResults($limit);
         return $qb->getQuery()->getResult();
     }
-
-
 }
