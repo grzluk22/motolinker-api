@@ -86,6 +86,7 @@ class ArticleRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('a');
         foreach ($criteria as $key => $value) {
             if (in_array($key, $extendedCriteria)) continue;
+            if(!$value or $value == "" or $value == -1) continue;
             if(!$searchLike) {
                 $qb->andWhere('a.'.$key.' = :'.$key);
                 $qb->setParameter($key, $value);
@@ -95,9 +96,13 @@ class ArticleRepository extends ServiceEntityRepository
             }
         }
 
-        foreach ($extendedCriteria as $key) {
-            if(!isset($criteria[$key])) continue;
-            switch ($key) {
+        foreach ($extendedCriteria as $key => $value) {
+            if(!isset($criteria[$value])) {
+                /*dd('anotset for '.$value);*/
+                continue;
+            };
+            if(!$criteria[$value] or $criteria[$value] == "" or $criteria[$value] == -1) continue;
+            switch ($value) {
                 case 'priceMin': {
                     //priceMin
                     $qb->andWhere('a.price >= :priceMin');
