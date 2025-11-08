@@ -1,31 +1,77 @@
 # motolinker-api-local
-MotolinkerApi przy użyciu PHP i MySQL, bez konteneryzacji docker <br>
-<h1>Najważniejsze ścieżki:</h1>
-<h5>/doc - Dokumentacja Swagger</h5>
-<h5>/doc.json - Dokumantacja JSON</h5>
-<h5>/register - przyjmuje dane w postaci JSON z polami email oraz password i służy do rejestracji</h5>
-<h5>/login_check - przyjmuje dane w postaci JSON z polami login oraz password i służy do zalogowania się i zwraca JWT Token oraz refresh token</h5>
-<h5>/token/refresh - przyjmuje dane w postaci JSON z polami token oraz refresh_token (takie same które zwraca endpoint /login_check </h5>
 
-<h1>Instrukcja Instalacji: </h1>
-<ol>
-<li>Pobierz repozytorium za pomocą git clone</li>
-<li>W środku wykonaj instalacje poleceniem "composer install"</li>
-<li>Aktywuj mod_rewrite według tej instrukcji: https://gcore.com/learning/how-enable-apache-mod-rewrite/ </li>
-<li>Edytuj dane dostępowe do bazy danych w pliku .env</li>
-<li>Utwórz bazę danych poleceniem php "bin/console doctrine:database:create"</li>
-<li>Wykonaj migracje za pomocą polecenia "php bin/console doctrine:migrations:migrate"</li>
-<li>Wygeneruj klucze JWT za pomocą polecenia: "php bin/console lexik:jwt:generate-keypair"</li>
-</ol>
+Motolinker API wykorzystujące PHP (Symfony) i MySQL.
 
-<h1>Najczestsze problemy:</h1>
-<ol>
-  <li>Przy generowaniu pary kluczy JWT może wyskoczyć komunikat "error:80000003:system library::No such process"<br>
-  Należy wtedy wygeneroować klucze ręcznie:<br>
-    -Zainstaluj OpenSSL<br>
-    -Wygeneruj klucz prywatny poleceniem "openssl genrsa -out config/jwt/private.pem -aes256 4096" oraz podaj passphrase (musi być zgodny z tym podanym w pliku .env)<br>
-    -Wygeneruj klucz publiczny poleceniem "openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem"
-  </li>
-</ol>
+## Najważniejsze ścieżki
 
+- `/doc` – interfejs Swagger
+- `/doc.json` – dokumentacja JSON
+- `/register` – rejestracja (JSON z polami `email`, `password`)
+- `/login_check` – logowanie (JSON z polami `login`, `password`, zwraca JWT i refresh token)
+- `/token/refresh` – odświeżenie tokenu (JSON z polami `token`, `refresh_token`)
 
+## Środowisko developerskie z Docker
+
+### Szybki start (skrypt)
+
+```bash
+./install-dev.sh
+```
+
+Skrypt poprosi o wartości `APP_SECRET`, `JWT_PASSPHRASE`, zbuduje obraz (opcjonalnie), uruchomi kontenery, zainstaluje zależności, migracje i wygeneruje klucze JWT.
+
+### Ręczny start z Docker
+
+1. Skopiuj plik środowiskowy i dostosuj sekrety (np. `APP_SECRET`):
+   ```bash
+   cd motolinker-api-local
+   cp docker/env.docker .env.local
+   ```
+2. Uruchom kontenery (PHP-Apache + MySQL):
+   ```bash
+   make docker-up
+   ```
+   Aplikacja będzie dostępna pod adresem `http://localhost:8080`.
+3. Zainstaluj zależności PHP, korzystając z kontenera:
+   ```bash
+   make install
+   ```
+4. Wykonaj migracje bazy danych:
+   ```bash
+   make migrate
+   ```
+5. Wygeneruj parę kluczy JWT (przechowywane w `config/jwt/`):
+   ```bash
+   make jwt-keys
+   ```
+6. Pozostałe polecenia dostępne są w pliku `Makefile` (`make docker-stop`, `make docker-down`, `make console <cmd>` itp.).
+
+### Przydatne informacje
+
+- Katalog projektu jest montowany w kontenerze, więc zmiany w kodzie są widoczne natychmiast.
+- Volumne `db_data` przechowuje dane MySQL; aby wyczyścić bazę, wykonaj `make docker-down` i usuń wolumen (`docker volume rm motolinker-api-local_db_data`).
+- Komenda `make console doctrine:database:create` pozwala uruchomić dowolne polecenie `bin/console`.
+
+## Ręczna instalacja (opcjonalnie, bez Docker)
+
+1. `git clone` repozytorium i przejdź do katalogu projektu.
+2. `composer install`
+3. Włącz `mod_rewrite` według instrukcji: <https://gcore.com/learning/how-enable-apache-mod-rewrite/>
+4. Skonfiguruj połączenie z bazą w `.env`.
+5. `php bin/console doctrine:database:create`
+6. `php bin/console doctrine:migrations:migrate`
+7. `php bin/console lexik:jwt:generate-keypair`
+
+## Najczęstsze problemy
+
+1. Podczas generowania pary kluczy JWT może pojawić się komunikat `error:80000003:system library::No such process`.
+   - Zainstaluj OpenSSL.
+   - Wygeneruj klucz prywatny:
+     ```bash
+     openssl genrsa -out config/jwt/private.pem -aes256 4096
+     ```
+     Podaj hasło takie, jak w zmiennej `JWT_PASSPHRASE`.
+   - Wygeneruj klucz publiczny:
+     ```bash
+     openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
+     ```
