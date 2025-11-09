@@ -50,12 +50,12 @@ class Article
         return $this;
     }
 
-    public function getEan13(): ?int
+    public function getEan13(): ?string
     {
         return $this->ean13;
     }
 
-    public function setEan13(int $ean13): static
+    public function setEan13(string $ean13): static
     {
         $this->ean13 = $ean13;
 

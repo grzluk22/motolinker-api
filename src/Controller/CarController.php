@@ -280,7 +280,7 @@ class CarController extends AbstractController
         $car->setEngineType($requestArray['engine_type']);
         $car->setEngineCodes($requestArray['engine_codes']);
         $car->setKba($requestArray['kba']);
-        $car->setTextValue(implode(" ", (array)$car));
+        //$car->setTextValue(implode(" ", (array)$car));
         
         $carRepository->save($car, true);
         return new JsonResponse($car);
