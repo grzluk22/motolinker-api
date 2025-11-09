@@ -91,7 +91,7 @@ fi
 read -rp "Czy wygenerować klucze JWT (y/N)? " jwt_choice
 if [[ "${jwt_choice}" =~ ^[Yy]$ ]]; then
     info "Generowanie kluczy JWT..."
-    "${COMPOSE_CMD[@]}" exec app php bin/console lexik:jwt:generate-keypair --overwrite --skip-if-exists
+    "${COMPOSE_CMD[@]}" exec app php bin/console lexik:jwt:generate-keypair --overwrite
 else
     warn "Generowanie kluczy JWT pominięte."
 fi
