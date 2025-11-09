@@ -52,6 +52,14 @@ class RegistrationController extends AbstractController
         $email = $decoded->username;
         $plaintextPassword = $decoded->password;
 
+        $existingUser = $em->getRepository(User::class)->findOneBy(['email' => $email]);
+        if ($existingUser !== null) {
+            return $this->json(
+                ['message' => 'Użytkownik z takim adresem e-mail już istnieje.'],
+                Response::HTTP_CONFLICT
+            );
+        }
+
         $user = new User();
         $hashedPassword = $passwordHasher->hashPassword(
             $user,
