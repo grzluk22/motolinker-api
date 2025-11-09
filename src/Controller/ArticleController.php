@@ -269,6 +269,11 @@ class ArticleController extends AbstractController
         /* Ustawianie tłumaczeń jezeli zotaly przekazane */
         if(isset($requestArray['translations'])) {
             foreach ($requestArray['translations'] as $translation) {
+                /* Sprawdzanie czy język o podanym id już istnieje */
+                $language = $languageRepository->findOneBy(['id' => $translation['id_language']]);
+                if($language === null) {
+                    return new JsonResponse(["message" => "Nie znaleziono języka o podanym id_language ".$translation['id_language']], 400);
+                }
                 $articleLanguage = new ArticleLanguage();
                 $articleLanguage->setName($translation['name']);
                 $articleLanguage->setDescription($translation['description']);
