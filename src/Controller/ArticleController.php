@@ -34,16 +34,19 @@ class ArticleController extends AbstractController
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                     example={
-     *                         {
-     *                             "id": 1,
-     *                             "code": "36790-SET-MS",
-     *                             "ean13": "1234567890123",
-     *                             "ean13_list": {"1234567890123", "5901234123457"},
-     *                             "price": 367.99,
-     *                             "name":"Zestaw zawieszenia",
-     *                             "description":"Zawieszenie do Audi A3",
-     *                             "id_category": 0
-     *                         }
+     *                         "data": {
+     *                             {
+     *                                 "id": 1,
+     *                                 "code": "36790-SET-MS",
+     *                                 "ean13": "1234567890123",
+     *                                 "ean13_list": {"1234567890123", "5901234123457"},
+     *                                 "price": 367.99,
+     *                                 "name":"Zestaw zawieszenia",
+     *                                 "description":"Zawieszenie do Audi A3",
+     *                                 "id_category": 0
+     *                             }
+     *                         },
+     *                         "total": 1
      *                     }
      *             )
      *         })
@@ -60,8 +63,10 @@ class ArticleController extends AbstractController
     public function index(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService): JsonResponse
     {
         $result = $articleRepository->findAll();
+        $total = count($result);
+        
         if (empty($result)) {
-            return new JsonResponse([]);
+            return new JsonResponse(['data' => [], 'total' => 0]);
         }
         
         // Pobierz wszystkie główne zdjęcia w jednym zapytaniu
@@ -88,7 +93,7 @@ class ArticleController extends AbstractController
             ];
             $withThumbnails[] = (object)$articleArray;
         }
-        return new JsonResponse($withThumbnails);
+        return new JsonResponse(['data' => $withThumbnails, 'total' => $total]);
     }
 
     /**
@@ -127,16 +132,19 @@ class ArticleController extends AbstractController
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                     example={
-     *                         {
-     *                             "id": 1,
-     *                             "code": "36790-SET-MS",
-     *                             "ean13": "1234567890123",
-     *                             "ean13_list": {"1234567890123", "5901234123457"},
-     *                             "price": 367.99,
-     *                             "id_category": 0,
-     *                             "name":"Zestaw zawieszenia",
-     *                             "description":"Zawieszenie do Audi A5 b6"
-     *                         }
+     *                         "data": {
+     *                             {
+     *                                 "id": 1,
+     *                                 "code": "36790-SET-MS",
+     *                                 "ean13": "1234567890123",
+     *                                 "ean13_list": {"1234567890123", "5901234123457"},
+     *                                 "price": 367.99,
+     *                                 "id_category": 0,
+     *                                 "name":"Zestaw zawieszenia",
+     *                                 "description":"Zawieszenie do Audi A5 b6"
+     *                             }
+     *                         },
+     *                         "total": 1
      *                     }
      *             )
      *         })
@@ -161,10 +169,12 @@ class ArticleController extends AbstractController
             $offset = $requestArray['offset'] ?? 0;
             /* Poprawka, like search powinno byc przekazane w requestArray a poprawnym przzepisaniem tych parametrow powinno zajac sie repozitory a*/
             $articles = $articleRepository->findByExtended($criteria, $orderBy, $limit, $offset);
+            $total = $articleRepository->countByExtended($criteria);
 
         } catch (\Exception $exception) {
             if($exception->getMessage() == "Request body is empty.") {
                 $articles = $articleRepository->findAll();
+                $total = count($articles);
             }else{
                 throw $exception;
             }
@@ -195,7 +205,7 @@ class ArticleController extends AbstractController
             ];
             $withThumbnails[] = (object)$articleArray;
         }
-        return new JsonResponse($withThumbnails);
+        return new JsonResponse(['data' => $withThumbnails, 'total' => $total]);
     }
 
     /**
