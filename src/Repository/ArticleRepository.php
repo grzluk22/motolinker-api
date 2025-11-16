@@ -51,13 +51,14 @@ class ArticleRepository extends ServiceEntityRepository
 
     public function findByExtended(mixed $criteria, mixed $orderBy, mixed $limit, mixed $offset)
     {
-        $extendedCriteria = ['priceMin', 'priceMax', 'quantity', 'quantitySearchMode', 'searchLike'];
+        $extendedCriteria = ['priceMin', 'priceMax', 'quantity', 'quantitySearchMode', 'searchLike', 'image'];
 
         $priceMin = $criteria['priceMin'] ?? false;
         $priceMax = $criteria['priceMax'] ?? false;
         $quantity = $criteria['quantity'] ?? false;
         $quantitySearchMode = $criteria['quantitySearchMode'] ?? false;
         $searchLike = $criteria['searchLike'] ?? false;
+        $hasImage = $criteria['image'] ?? null;
         $qb = $this->createQueryBuilder('a');
         foreach ($criteria as $key => $value) {
             if (in_array($key, $extendedCriteria)) continue;
@@ -88,7 +89,14 @@ class ArticleRepository extends ServiceEntityRepository
             if(!isset($criteria[$value])) {
                 continue;
             };
-            if(!$criteria[$value] or $criteria[$value] == "" or $criteria[$value] == -1) continue;
+            
+            // Dla parametru 'image' sprawdzamy czy jest ustawiony (true/false), nie pomijamy false
+            if ($value === 'image') {
+                // Przetwarzamy image osobno, nie pomijamy false
+            } elseif (!$criteria[$value] or $criteria[$value] == "" or $criteria[$value] == -1) {
+                continue;
+            }
+            
             switch ($value) {
                 case 'priceMin': {
                     $qb->andWhere('a.price >= :priceMin');
@@ -124,6 +132,22 @@ class ArticleRepository extends ServiceEntityRepository
                     }
                 }
                     break;
+
+                case 'image': {
+                    // Filtruj artykuły pod kątem posiadania zdjęć
+                    if ($hasImage === true) {
+                        // Tylko artykuły ze zdjęciami - użyj relacji images z encji Article
+                        $qb->innerJoin('a.images', 'img');
+                        $qb->groupBy('a.id');
+                    } elseif ($hasImage === false) {
+                        // Tylko artykuły bez zdjęć
+                        $qb->leftJoin('a.images', 'img')
+                            ->andWhere('img.id IS NULL');
+                    }
+                    // Jeśli hasImage jest null lub nie ustawione, nie filtruj
+                }
+                    break;
+
                 default: {
                 }
             }

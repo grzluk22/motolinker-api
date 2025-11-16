@@ -108,7 +108,8 @@ class ArticleController extends AbstractController
      *         "id_category": 0,
      *         "name":"Zestaw zawieszenia",
      *         "description":"Zawieszenie do Audi A5 b6",
-     *         "searchLike": true
+     *         "searchLike": true,
+     *         "image": true
      *     },
      *     "orderBy": {
      *         "id":"DESC"
