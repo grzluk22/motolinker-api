@@ -8,7 +8,9 @@ use App\Entity\ArticleEan;
 use App\Repository\ArticleLanguageRepository;
 use App\Repository\ArticleEanRepository;
 use App\Repository\ArticleRepository;
+use App\Repository\ImageRepository;
 use App\Repository\LanguageRepository;
+use App\Service\ImageUploadService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -52,16 +54,28 @@ class ArticleController extends AbstractController
      * )
      *
      */
+
+     
     #[Route('/article', name: 'app_article_get', methods: ["GET"])]
-    public function index(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository): JsonResponse
+    public function index(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService): JsonResponse
     {
         $result = $articleRepository->findAll();
-        $withEans = array_map(function ($article) use ($articleEanRepository) {
+        if (empty($result)) {
+            return new JsonResponse([]);
+        }
+        
+        // Pobierz wszystkie główne zdjęcia w jednym zapytaniu
+        $articleIds = array_map(fn($article) => $article->getId(), $result);
+        $mainImages = $imageRepository->findMainImagesForArticles($articleIds);
+        
+        $withThumbnails = array_map(function ($article) use ($mainImages, $imageUploadService) {
+            $mainImage = $mainImages[$article->getId()] ?? null;
+            $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage) : null;
             return (object) array_merge((array)$article, [
-                'ean13_list' => array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()))
+                'thumbnail_url' => $thumbnailUrl
             ]);
         }, $result);
-        return new JsonResponse($withEans);
+        return new JsonResponse($withThumbnails);
     }
 
     /**
@@ -120,7 +134,7 @@ class ArticleController extends AbstractController
      *
      */
     #[Route('/article/get', name: 'app_article_get_by', methods: ["POST"])]
-    public function getBy(ArticleRepository $articleRepository, ArticleEanRepository $articleEanRepository, Request $request = null): JsonResponse
+    public function getBy(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService, Request $request = null): JsonResponse
     {
         /* Najprostsza metoda do pobrania artyklow przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
         /* Jeżeli nie przekazano nic w body request to zwracanie wszystkich artykulow */
@@ -142,12 +156,19 @@ class ArticleController extends AbstractController
             }
         }
         if(!$articles) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
-        $withEans = array_map(function ($article) use ($articleEanRepository) {
+        
+        // Pobierz wszystkie główne zdjęcia w jednym zapytaniu
+        $articleIds = array_map(fn($article) => $article->getId(), $articles);
+        $mainImages = $imageRepository->findMainImagesForArticles($articleIds);
+        
+        $withThumbnails = array_map(function ($article) use ($mainImages, $imageUploadService) {
+            $mainImage = $mainImages[$article->getId()] ?? null;
+            $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage) : null;
             return (object) array_merge((array)$article, [
-                'ean13_list' => array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()))
+                'thumbnail_url' => $thumbnailUrl
             ]);
         }, $articles);
-        return new JsonResponse($withEans);
+        return new JsonResponse($withThumbnails);
     }
 
     /**

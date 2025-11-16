@@ -70,6 +70,61 @@ class ImageRepository extends ServiceEntityRepository
     }
 
     /**
+     * Find main images for multiple articles
+     * Returns array keyed by article ID
+     *
+     * @param int[] $articleIds
+     * @return Image[] Array keyed by article ID
+     */
+    public function findMainImagesForArticles(array $articleIds): array
+    {
+        if (empty($articleIds)) {
+            return [];
+        }
+
+        $mainImages = $this->createQueryBuilder('i')
+            ->innerJoin('i.article', 'a')
+            ->where('a.id IN (:articleIds)')
+            ->andWhere('i.is_main = :isMain')
+            ->setParameter('articleIds', $articleIds)
+            ->setParameter('isMain', true)
+            ->getQuery()
+            ->getResult();
+
+        $result = [];
+        foreach ($mainImages as $image) {
+            $articleId = $image->getArticle()?->getId();
+            if ($articleId) {
+                $result[$articleId] = $image;
+            }
+        }
+
+        // For articles without main image, get first image (by position)
+        $articlesWithoutMain = array_diff($articleIds, array_keys($result));
+        if (!empty($articlesWithoutMain)) {
+            $firstImages = $this->createQueryBuilder('i')
+                ->innerJoin('i.article', 'a')
+                ->where('a.id IN (:articleIds)')
+                ->setParameter('articleIds', $articlesWithoutMain)
+                ->orderBy('i.position', 'ASC')
+                ->getQuery()
+                ->getResult();
+
+            // Group by article and take first for each
+            $firstByArticle = [];
+            foreach ($firstImages as $image) {
+                $articleId = $image->getArticle()?->getId();
+                if ($articleId && !isset($result[$articleId]) && !isset($firstByArticle[$articleId])) {
+                    $firstByArticle[$articleId] = $image;
+                }
+            }
+            $result = array_merge($result, $firstByArticle);
+        }
+
+        return $result;
+    }
+
+    /**
      * Update positions for multiple images
      *
      * @param array $imagePositions Array of ['id' => int, 'position' => int]
