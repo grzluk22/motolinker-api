@@ -12,3 +12,8 @@
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
+
+###> uploads ###
+/public/uploads/articles/*
+!/public/uploads/articles/.gitkeep
+###< uploads ###
