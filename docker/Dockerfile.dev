@@ -12,8 +12,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libicu-dev \
         libzip-dev \
         libpng-dev \
+        libjpeg-dev \
+        libfreetype6-dev \
+        libwebp-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-configure intl \
-    && docker-php-ext-install -j$(nproc) intl pdo_mysql zip \
+    && docker-php-ext-install -j$(nproc) gd intl pdo_mysql zip \
     && docker-php-ext-enable opcache \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,8 +30,12 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 COPY docker/vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/init-uploads.sh /usr/local/bin/init-uploads.sh
 
-RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
+RUN mkdir -p var/cache var/log public/uploads/articles && \
+    chown -R www-data:www-data var public/uploads && \
+    chmod -R 775 public/uploads && \
+    chmod +x /usr/local/bin/init-uploads.sh
 
-CMD ["apache2-foreground"]
+CMD ["/bin/bash", "-c", "/usr/local/bin/init-uploads.sh && apache2-foreground"]
 

@@ -21,28 +21,75 @@ class ImageRepository extends ServiceEntityRepository
         parent::__construct($registry, Image::class);
     }
 
-//    /**
-//     * @return Image[] Returns an array of Image objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('i.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * Find all images for article ordered by position
+     *
+     * @return Image[]
+     */
+    public function findByArticleOrdered(int $articleId): array
+    {
+        return $this->createQueryBuilder('i')
+            ->innerJoin('i.article', 'a')
+            ->where('a.id = :articleId')
+            ->setParameter('articleId', $articleId)
+            ->orderBy('i.position', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 
-//    public function findOneBySomeField($value): ?Image
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    /**
+     * Get maximum position for article
+     */
+    public function getMaxPositionForArticle(int $articleId): int
+    {
+        $result = $this->createQueryBuilder('i')
+            ->innerJoin('i.article', 'a')
+            ->where('a.id = :articleId')
+            ->setParameter('articleId', $articleId)
+            ->select('MAX(i.position) as maxPosition')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $result ?? 0;
+    }
+
+    /**
+     * Find main image for article
+     */
+    public function findMainImageForArticle(int $articleId): ?Image
+    {
+        return $this->createQueryBuilder('i')
+            ->innerJoin('i.article', 'a')
+            ->where('a.id = :articleId')
+            ->andWhere('i.is_main = :isMain')
+            ->setParameter('articleId', $articleId)
+            ->setParameter('isMain', true)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Update positions for multiple images
+     *
+     * @param array $imagePositions Array of ['id' => int, 'position' => int]
+     */
+    public function updatePositions(array $imagePositions): void
+    {
+        $entityManager = $this->getEntityManager();
+
+        foreach ($imagePositions as $imageData) {
+            if (!isset($imageData['id']) || !isset($imageData['position'])) {
+                continue;
+            }
+
+            $image = $this->find($imageData['id']);
+            if ($image) {
+                $image->setPosition($imageData['position']);
+                $entityManager->persist($image);
+            }
+        }
+
+        $entityManager->flush();
+    }
 }
