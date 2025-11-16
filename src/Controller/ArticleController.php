@@ -4,7 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Article;
 use App\Entity\ArticleLanguage;
+use App\Entity\ArticleEan;
 use App\Repository\ArticleLanguageRepository;
+use App\Repository\ArticleEanRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\LanguageRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -30,13 +32,16 @@ class ArticleController extends AbstractController
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                     example={
-     *                         "id": 1,
-     *                         "code": "36790-SET-MS",
-     *                         "ean13": "1234567890123",
-     *                         "price": "367.99",
-     *                         "name":"Zestaw zawieszenia",
-     *                         "description":"Zawieszzenie do Audi A3",
-     *                         "id_category": 0
+     *                         {
+     *                             "id": 1,
+     *                             "code": "36790-SET-MS",
+     *                             "ean13": "1234567890123",
+     *                             "ean13_list": {"1234567890123", "5901234123457"},
+     *                             "price": 367.99,
+     *                             "name":"Zestaw zawieszenia",
+     *                             "description":"Zawieszenie do Audi A3",
+     *                             "id_category": 0
+     *                         }
      *                     }
      *             )
      *         })
@@ -48,10 +53,15 @@ class ArticleController extends AbstractController
      *
      */
     #[Route('/article', name: 'app_article_get', methods: ["GET"])]
-    public function index(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository): JsonResponse
+    public function index(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository): JsonResponse
     {
         $result = $articleRepository->findAll();
-        return new JsonResponse($result);
+        $withEans = array_map(function ($article) use ($articleEanRepository) {
+            return (object) array_merge((array)$article, [
+                'ean13_list' => array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()))
+            ]);
+        }, $result);
+        return new JsonResponse($withEans);
     }
 
     /**
@@ -65,20 +75,20 @@ class ArticleController extends AbstractController
      * @OA\JsonContent(
      * example={
      *     "criteria": {
-     *         "code" :"36790-set-ms",
+     *         "code" :"36790-SET-MS",
      *         "ean13": "1234567890123",
-     *         "price": "367.99",
+     *         "price": 367.99,
      *         "id_category": 0,
      *         "name":"Zestaw zawieszenia",
-     *         "description":"Zawieszenie do Audi A5 b6"
+     *         "description":"Zawieszenie do Audi A5 b6",
+     *         "searchLike": true
      *     },
      *     "orderBy": {
      *         "id":"DESC"
      *     },
      *     "limit":20,
-     *     "offset":40,
-     *     "likeSearch": true
-     *    }
+     *     "offset":40
+     * }
      *   )
      *  )
      *
@@ -89,18 +99,16 @@ class ArticleController extends AbstractController
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                     example={
-     *                         "id": 1,
-     *                         "code": "36790-SET-MS",
-     *                         "ean13": "1234567890123",
-     *                         "price": "367.99",
-     *                         "id_category": 0,
-     *                              "translations": {
-     *                               "id": 1,
-     *                               "id_article": 1,
-     *                               "id_language": 1,
-     *                               "name": "New",
-     *                               "description": "asd"
-     *                          }
+     *                         {
+     *                             "id": 1,
+     *                             "code": "36790-SET-MS",
+     *                             "ean13": "1234567890123",
+     *                             "ean13_list": {"1234567890123", "5901234123457"},
+     *                             "price": 367.99,
+     *                             "id_category": 0,
+     *                             "name":"Zestaw zawieszenia",
+     *                             "description":"Zawieszenie do Audi A5 b6"
+     *                         }
      *                     }
      *             )
      *         })
@@ -112,7 +120,7 @@ class ArticleController extends AbstractController
      *
      */
     #[Route('/article/get', name: 'app_article_get_by', methods: ["POST"])]
-    public function getBy(ArticleRepository $articleRepository, Request $request = null): JsonResponse
+    public function getBy(ArticleRepository $articleRepository, ArticleEanRepository $articleEanRepository, Request $request = null): JsonResponse
     {
         /* Najprostsza metoda do pobrania artyklow przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
         /* Jeżeli nie przekazano nic w body request to zwracanie wszystkich artykulow */
@@ -134,7 +142,12 @@ class ArticleController extends AbstractController
             }
         }
         if(!$articles) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
-        return new JsonResponse($articles);
+        $withEans = array_map(function ($article) use ($articleEanRepository) {
+            return (object) array_merge((array)$article, [
+                'ean13_list' => array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()))
+            ]);
+        }, $articles);
+        return new JsonResponse($withEans);
     }
 
     /**
@@ -151,15 +164,27 @@ class ArticleController extends AbstractController
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
-     *                         "price": "367.99",
+     *                         "ean13_list": {"1234567890123", "5901234123457"},
+     *                         "price": 367.99,
      *                         "id_category": 0,
-     *                              "translations": {
-     *                               "id": 1,
-     *                               "id_article": 1,
-     *                               "id_language": 1,
-     *                               "name": "New",
-     *                               "description": "asd"
-     *                          }
+     *                         "name":"Zestaw zawieszenia",
+     *                         "description":"Zawieszenie do Audi A3",
+     *                         "translations": {
+     *                              {
+     *                                  "id": 1,
+     *                                  "id_article": 1,
+     *                                  "id_language": 1,
+     *                                  "name": "PL nazwa",
+     *                                  "description": "PL opis"
+     *                              },
+     *                              {
+     *                                  "id": 2,
+     *                                  "id_article": 1,
+     *                                  "id_language": 2,
+     *                                  "name": "EN name",
+     *                                  "description": "EN description"
+     *                              }
+     *                         }
      *                     }
      *             )
      *         })
@@ -171,13 +196,13 @@ class ArticleController extends AbstractController
      *
      */
     #[Route('/article/{id_article}', name: 'app_article_get_one', methods: ["GET"])]
-    public function getOne(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, int $id_article): JsonResponse
+    public function getOne(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, int $id_article): JsonResponse
     {
         $article = $articleRepository->findOneBy(['id' => $id_article]);
-        $translations = $articleLanguageRepository->findByArticleId($article->getId());
-        $data = (object) array_merge( (array)$article, array( 'translations' => $translations ) );
-
         if(!$article) return new JsonResponse(["message" => 'Nie znaleziono produktu'], 404);
+        $translations = $articleLanguageRepository->findByArticleId($article->getId());
+        $eanList = array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()));
+        $data = (object) array_merge( (array)$article, array( 'translations' => $translations, 'ean13_list' => $eanList ) );
         return new JsonResponse($data);
     }
 
@@ -194,13 +219,15 @@ class ArticleController extends AbstractController
      *                     example={
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
-     *                         "price": "367.99",
+     *                         "ean13_list": {"1234567890123", "5901234123457"},
+     *                         "price": 367.99,
      *                         "id_category": 0,
-     *                              "translations": {
-     *                               "id_language": 1,
-     *                               "name": "Article name",
-     *                               "description": "Article Description"
-     *                          }
+     *                         "name": "Article name",
+     *                         "description": "Article description",
+     *                         "translations": {
+     *                              {"id_language": 1, "name": "PL nazwa", "description": "PL opis"},
+     *                              {"id_language": 2, "name": "EN name", "description": "EN description"}
+     *                         }
      *                     }
      *    )
      * )
@@ -216,15 +243,15 @@ class ArticleController extends AbstractController
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
-     *                         "price": "367.99",
+     *                         "ean13_list": {"1234567890123", "5901234123457"},
+     *                         "price": 367.99,
      *                         "id_category": 0,
-     *                              "translations": {
-     *                               "id": 1,
-     *                               "id_article": 1,
-     *                               "id_language": 1,
-     *                               "name": "Article name",
-     *                               "description": "Article description"
-     *                          }
+     *                         "name": "Article name",
+     *                         "description": "Article description",
+     *                         "translations": {
+     *                              {"id": 1, "id_article": 1, "id_language": 1, "name": "PL nazwa", "description": "PL opis"},
+     *                              {"id": 2, "id_article": 1, "id_language": 2, "name": "EN name", "description": "EN description"}
+     *                         }
      *                     }
      *                 )
      *             )
@@ -236,11 +263,12 @@ class ArticleController extends AbstractController
      * )
      **/
     #[Route('/article', name: 'app_article_create', methods: ["POST"])]
-    public function create(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, Request $request): JsonResponse
+    public function create(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, Request $request): JsonResponse
     {
         $entityManager = $doctrine->getManager();
         $languageManager = $doctrine->getManagerForClass(Language::class);
         $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
+        $articleEanManager = $doctrine->getManagerForClass(ArticleEan::class);
         $requestArray = $request->toArray();
         /* Sprawdzanie czy artykuł o podanym kodzie nie istnieje juz w bazie danych */
         $articleResult = $articleRepository->findOneByCode($requestArray['code']);
@@ -248,23 +276,47 @@ class ArticleController extends AbstractController
             return new JsonResponse(["message" => "Artykuł o takim kodzie już istnieje"], 400);
         }
         /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
-        $requiredFields = ['code', 'ean13', 'price', 'id_category', 'name', 'description'];
+        $requiredFields = ['code', 'price', 'id_category', 'name', 'description'];
         foreach ($requiredFields as $requiredField) {
             if (!isset($requestArray[$requiredField])) {
                 return new JsonResponse(["message" => "Nie przekazano wymaganego parametru '" . $requiredField . "'"], 400);
             }
         }
+        if (!isset($requestArray['ean13']) && !isset($requestArray['ean13_list'])) {
+            return new JsonResponse(["message" => "Nie przekazano żadnego kodu EAN (ean13 lub ean13_list)"], 400);
+        }
 
         /* Ustawianie podstawowych danych artykułu */
         $article = new Article();
         $article->setCode($requestArray['code']);
-        $article->setEan13($requestArray['ean13']);
+        // Przygotowanie listy EAN
+        $eanList = [];
+        if (isset($requestArray['ean13_list']) && is_array($requestArray['ean13_list'])) {
+            $eanList = $requestArray['ean13_list'];
+        }
+        if (isset($requestArray['ean13'])) {
+            $eanList[] = $requestArray['ean13'];
+        }
+        $eanList = array_values(array_unique(array_values(array_filter(array_map('strval', $eanList), fn($v) => trim($v) !== ''))));
+        if (count($eanList) === 0) {
+            return new JsonResponse(["message" => "Lista kodów EAN jest pusta"], 400);
+        }
+        $article->setEan13($eanList[0]);
         $article->setPrice($requestArray['price']);
         $article->setIdCategory($requestArray['id_category']);
         $article->setName($requestArray['name']);
         $article->setDescription($requestArray['description']);
         $entityManager->persist($article);
         $entityManager->flush();
+
+        // Zapis listy EAN do tabeli article_ean
+        foreach ($eanList as $ean) {
+            $ae = new ArticleEan();
+            $ae->setIdArticle($article->getId());
+            $ae->setEan13($ean);
+            $articleEanManager->persist($ae);
+            $articleEanManager->flush();
+        }
 
         /* Ustawianie tłumaczeń jezeli zotaly przekazane */
         if(isset($requestArray['translations'])) {
@@ -284,7 +336,10 @@ class ArticleController extends AbstractController
             }
         }
 
-        $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
+        $data = (object)array_merge((array)$article, [
+            "translations" => $articleLanguageRepository->findByArticleId($article->getId()),
+            "ean13_list" => array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()))
+        ]);
 
         return new JsonResponse($data);
     }
@@ -302,15 +357,18 @@ class ArticleController extends AbstractController
      *     required=true,
      *     @OA\JsonContent(
      *                     example={
+     *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
-     *                         "price": "367.99",
+     *                         "ean13_list": {"1234567890123", "5901234123457"},
+     *                         "price": 367.99,
      *                         "id_category": 0,
-     *                              "translations": {
-     *                               "id_language": 1,
-     *                               "name": "Article name",
-     *                               "description": "Article Description"
-     *                          }
+     *                         "name": "Article name",
+     *                         "description": "Article description",
+     *                         "translations": {
+     *                              {"id": 10, "id_language": 1, "name": "PL nazwa", "description": "PL opis"},
+     *                              {"id": 11, "id_language": 2, "name": "EN name", "description": "EN description"}
+     *                         }
      *                     }
      *    )
      * )
@@ -325,15 +383,15 @@ class ArticleController extends AbstractController
      *                         "id": 1,
      *                         "code": "36790-SET-MS",
      *                         "ean13": "1234567890123",
-     *                         "price": "367.99",
+     *                         "ean13_list": {"1234567890123", "5901234123457"},
+     *                         "price": 367.99,
      *                         "id_category": 0,
-     *                              "translations": {
-     *                               "id": 1,
-     *                               "id_article": 1,
-     *                               "id_language": 1,
-     *                               "name": "Article name",
-     *                               "description": "Article description"
-     *                          }
+     *                         "name": "Article name",
+     *                         "description": "Article description",
+     *                         "translations": {
+     *                              {"id": 10, "id_article": 1, "id_language": 1, "name": "PL nazwa", "description": "PL opis"},
+     *                              {"id": 11, "id_article": 1, "id_language": 2, "name": "EN name", "description": "EN description"}
+     *                         }
      *                     }
      *             )
      *         })
@@ -344,10 +402,11 @@ class ArticleController extends AbstractController
      * )
      **/
     #[Route('/article', name: 'app_article_edit', methods: ["PUT"])]
-    public function edit(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, Request $request): JsonResponse
+    public function edit(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, Request $request): JsonResponse
     {
         $entityManager = $doctrine->getManager();
         $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
+        $articleEanManager = $doctrine->getManagerForClass(ArticleEan::class);
         $requestArray = $request->toArray();
         $article = $articleRepository->findOneBy(['id' => $requestArray['id']]);
         if($article === null) {
@@ -355,13 +414,50 @@ class ArticleController extends AbstractController
         }
         /* Ustawianie danych artykułu */
         $article->setCode($requestArray['code']);
-        $article->setEan13($requestArray['ean13']);
         $article->setPrice($requestArray['price']);
         $article->setIdCategory($requestArray['id_category']);
         $article->setName($requestArray['name']);
         $article->setDescription($requestArray['description']);
         $entityManager->persist($article);
         $entityManager->flush();
+
+        // Synchronizacja listy EAN jeśli przekazana
+        if (isset($requestArray['ean13_list']) || isset($requestArray['ean13'])) {
+            $eanList = [];
+            if (isset($requestArray['ean13_list']) && is_array($requestArray['ean13_list'])) {
+                $eanList = $requestArray['ean13_list'];
+            }
+            if (isset($requestArray['ean13'])) {
+                $eanList[] = $requestArray['ean13'];
+            }
+            $eanList = array_values(array_unique(array_values(array_filter(array_map('strval', $eanList), fn($v) => trim($v) !== ''))));
+            if (count($eanList) > 0) {
+                // zaktualizuj główny ean
+                $article->setEan13($eanList[0]);
+                $entityManager->persist($article);
+                $entityManager->flush();
+
+                $existing = $articleEanRepository->findByArticleId($article->getId());
+                $existingValues = array_map(fn($e) => $e->getEan13(), $existing);
+                // usuń nieobecne
+                foreach ($existing as $existingEan) {
+                    if (!in_array($existingEan->getEan13(), $eanList, true)) {
+                        $articleEanManager->remove($existingEan);
+                        $articleEanManager->flush();
+                    }
+                }
+                // dodaj nowe
+                foreach ($eanList as $ean) {
+                    if (!in_array($ean, $existingValues, true)) {
+                        $ae = new ArticleEan();
+                        $ae->setIdArticle($article->getId());
+                        $ae->setEan13($ean);
+                        $articleEanManager->persist($ae);
+                        $articleEanManager->flush();
+                    }
+                }
+            }
+        }
         /* Ustawianie tłumaczeń jezeli zostaly przekazane */
         if(isset($requestArray['translations'])) {
             foreach ($requestArray['translations'] as $translation) {
@@ -381,7 +477,10 @@ class ArticleController extends AbstractController
         }
 
 
-        $data = (object)array_merge((array)$article, ["translations" => $articleLanguageRepository->findByArticleId($article->getId())]);
+        $data = (object)array_merge((array)$article, [
+            "translations" => $articleLanguageRepository->findByArticleId($article->getId()),
+            "ean13_list" => array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()))
+        ]);
 
         return new JsonResponse($data);
     }
@@ -392,7 +491,15 @@ class ArticleController extends AbstractController
      * @OA\Tag(name="Article")
      * @OA\Response(
      *     response=200,
-     *     description="Usunięto"
+     *     description="Usunięto",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                 @OA\Schema(
+     *                     example={"message": "Usunięto"}
+     *                 )
+     *             )
+     *     }
      * )
      * @OA\Response(
      *     response=404,
@@ -400,10 +507,11 @@ class ArticleController extends AbstractController
      * )
      **/
     #[Route('/article/{id_article}', name: 'app_article_delete', methods: ["DELETE"])]
-    public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, int $id_article): JsonResponse
+    public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, int $id_article): JsonResponse
     {
         $entityManager = $doctrine->getManager();
         $articleLanguageManager = $doctrine->getManagerForClass(ArticleLanguage::class);
+        $articleEanManager = $doctrine->getManagerForClass(ArticleEan::class);
         $article = $articleRepository->findOneBy(['id' => $id_article]);
         if($article === null) {
             return new JsonResponse(["message" => "Nie znaleziono artykułu o podanym id"], 404);
@@ -413,6 +521,12 @@ class ArticleController extends AbstractController
         foreach ($translations as $translation) {
             $articleLanguageManager->remove($translation);
             $articleLanguageManager->flush();
+        }
+        /* Usuwanie eanów artykułu */
+        $eans = $articleEanRepository->findBy(['id_article' => $article->getId()]);
+        foreach ($eans as $ean) {
+            $articleEanManager->remove($ean);
+            $articleEanManager->flush();
         }
         /* Usuwanie samego artykułu */
         $entityManager->remove($article);

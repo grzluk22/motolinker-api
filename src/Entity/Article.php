@@ -17,7 +17,7 @@ class Article
     #[ORM\Column(length: 255, unique: true)]
     public ?string $code = null;
 
-    #[ORM\Column(length: 13)]
+    #[ORM\Column(length: 255)]
     public ?string $ean13 = null;
 
     #[ORM\Column]
