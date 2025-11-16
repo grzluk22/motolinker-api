@@ -137,4 +137,65 @@ class ArticleCategoryController extends AbstractController
         $articleCategoryManager->flush();
         return new JsonResponse(['message' => "Usunięto"]);
     }
+
+    /**
+     * Zwraca listę kategorii przypisanych do artykułu.
+     *
+     * @OA\Tag(name="ArticleCategory")
+     * @OA\Response(
+     *     response=200,
+     *     description="Lista kategorii artykułu"
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono artykułu o podanym id"
+     * )
+     */
+    #[Route('/article/{id}/category', name: 'app_article_categories_list', methods: ['GET'])]
+    public function getArticleCategories(
+        int $id,
+        ArticleRepository $articleRepository,
+        ArticleCategoryRepository $articleCategoryRepository,
+        CategoryRepository $categoryRepository
+    ): JsonResponse {
+        $article = $articleRepository->find($id);
+        if ($article === null) {
+            return new JsonResponse(['message' => 'Nie znaleziono artykułu o podanym id'], 404);
+        }
+
+        $categoryIds = [];
+        $defaultCategoryId = $article->getIdCategory();
+        if ($defaultCategoryId !== null) {
+            $categoryIds[] = $defaultCategoryId;
+        }
+
+        $additionalCategories = $articleCategoryRepository->findBy(['id_article' => $id]);
+        foreach ($additionalCategories as $link) {
+            $categoryIds[] = $link->getIdCategory();
+        }
+
+        $categoryIds = array_values(array_unique(array_filter($categoryIds, static fn ($value) => $value !== null)));
+
+        if (count($categoryIds) === 0) {
+            return new JsonResponse([]);
+        }
+
+        $categories = $categoryRepository->findBy(['id' => $categoryIds]);
+        $categoriesById = [];
+        foreach ($categories as $category) {
+            $categoriesById[$category->getId()] = [
+                'id' => $category->getId(),
+                'id_parent' => $category->getIdParent()
+            ];
+        }
+
+        $orderedCategories = [];
+        foreach ($categoryIds as $categoryId) {
+            if (isset($categoriesById[$categoryId])) {
+                $orderedCategories[] = $categoriesById[$categoryId];
+            }
+        }
+
+        return new JsonResponse($orderedCategories);
+    }
 }
