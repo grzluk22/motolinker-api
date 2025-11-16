@@ -341,19 +341,31 @@ class ImageUploadService
     /**
      * Get thumbnail URL for image
      */
-    public function getThumbnailUrl(Image $image): ?string
+    public function getThumbnailUrl(Image $image, ?int $articleId = null): ?string
     {
-        $articleId = $image->getArticle()?->getId();
-        if (!$articleId) {
+        // Jeśli articleId nie jest podane, spróbuj pobrać z relacji
+        if ($articleId === null) {
+            $article = $image->article;
+            if (!$article) {
+                return null;
+            }
+            $articleId = $article->getId();
+            if (!$articleId) {
+                return null;
+            }
+        }
+
+        $filename = $image->getFilename();
+        if (!$filename) {
             return null;
         }
 
-        $thumbnailPath = $this->getUploadDirectory($articleId) . '/thumbnails/' . $image->getFilename();
+        $thumbnailPath = $this->getUploadDirectory($articleId) . '/thumbnails/' . $filename;
         if (!file_exists($thumbnailPath)) {
             return null;
         }
 
-        return '/uploads/articles/' . $articleId . '/thumbnails/' . $image->getFilename();
+        return '/uploads/articles/' . $articleId . '/thumbnails/' . $filename;
     }
 }
 

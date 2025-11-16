@@ -82,7 +82,11 @@ class ImageRepository extends ServiceEntityRepository
             return [];
         }
 
-        $mainImages = $this->createQueryBuilder('i')
+        $result = [];
+
+        // Pobierz główne zdjęcia (is_main = true) używając bezpośredniego dostępu do id_article przez DQL
+        $mainImagesData = $this->createQueryBuilder('i')
+            ->select('i.id as image_id, a.id as article_id')
             ->innerJoin('i.article', 'a')
             ->where('a.id IN (:articleIds)')
             ->andWhere('i.is_main = :isMain')
@@ -91,18 +95,37 @@ class ImageRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
 
-        $result = [];
-        foreach ($mainImages as $image) {
-            $articleId = $image->getArticle()?->getId();
-            if ($articleId) {
-                $result[$articleId] = $image;
+        // Pobierz pełne obiekty Image dla znalezionych ID
+        if (!empty($mainImagesData)) {
+            $imageIds = array_map(fn($row) => $row['image_id'], $mainImagesData);
+            $mainImages = $this->createQueryBuilder('i')
+                ->innerJoin('i.article', 'a')
+                ->addSelect('a')
+                ->where('i.id IN (:imageIds)')
+                ->setParameter('imageIds', $imageIds)
+                ->getQuery()
+                ->getResult();
+
+            // Mapuj obrazy do article_id
+            $imageIdToArticleId = [];
+            foreach ($mainImagesData as $row) {
+                $imageIdToArticleId[$row['image_id']] = $row['article_id'];
+            }
+
+            foreach ($mainImages as $image) {
+                $imageId = $image->getId();
+                if (isset($imageIdToArticleId[$imageId])) {
+                    $articleId = $imageIdToArticleId[$imageId];
+                    $result[$articleId] = $image;
+                }
             }
         }
 
-        // For articles without main image, get first image (by position)
-        $articlesWithoutMain = array_diff($articleIds, array_keys($result));
+        // Dla artykułów bez głównego zdjęcia, pobierz pierwsze zdjęcie (pozycja ASC)
+        $articlesWithoutMain = array_values(array_diff($articleIds, array_keys($result)));
         if (!empty($articlesWithoutMain)) {
-            $firstImages = $this->createQueryBuilder('i')
+            $firstImagesData = $this->createQueryBuilder('i')
+                ->select('i.id as image_id, a.id as article_id, i.position')
                 ->innerJoin('i.article', 'a')
                 ->where('a.id IN (:articleIds)')
                 ->setParameter('articleIds', $articlesWithoutMain)
@@ -110,15 +133,45 @@ class ImageRepository extends ServiceEntityRepository
                 ->getQuery()
                 ->getResult();
 
-            // Group by article and take first for each
-            $firstByArticle = [];
-            foreach ($firstImages as $image) {
-                $articleId = $image->getArticle()?->getId();
-                if ($articleId && !isset($result[$articleId]) && !isset($firstByArticle[$articleId])) {
-                    $firstByArticle[$articleId] = $image;
+            if (!empty($firstImagesData)) {
+                // Grupuj po artykule i weź pierwsze dla każdego
+                $firstByArticleId = [];
+                foreach ($firstImagesData as $row) {
+                    $articleId = $row['article_id'];
+                    if (!isset($result[$articleId]) && !isset($firstByArticleId[$articleId])) {
+                        $firstByArticleId[$articleId] = $row['image_id'];
+                    }
+                }
+
+                if (!empty($firstByArticleId)) {
+                    $firstImageIds = array_values($firstByArticleId);
+                    $firstImages = $this->createQueryBuilder('i')
+                        ->innerJoin('i.article', 'a')
+                        ->addSelect('a')
+                        ->where('i.id IN (:imageIds)')
+                        ->setParameter('imageIds', $firstImageIds)
+                        ->getQuery()
+                        ->getResult();
+
+                    // Mapuj obrazy do article_id
+                    $imageIdToArticleId = [];
+                    foreach ($firstImagesData as $row) {
+                        if (in_array($row['image_id'], $firstImageIds)) {
+                            $imageIdToArticleId[$row['image_id']] = $row['article_id'];
+                        }
+                    }
+
+                    foreach ($firstImages as $image) {
+                        $imageId = $image->getId();
+                        if (isset($imageIdToArticleId[$imageId])) {
+                            $articleId = $imageIdToArticleId[$imageId];
+                            if (!isset($result[$articleId])) {
+                                $result[$articleId] = $image;
+                            }
+                        }
+                    }
                 }
             }
-            $result = array_merge($result, $firstByArticle);
         }
 
         return $result;

@@ -68,13 +68,26 @@ class ArticleController extends AbstractController
         $articleIds = array_map(fn($article) => $article->getId(), $result);
         $mainImages = $imageRepository->findMainImagesForArticles($articleIds);
         
-        $withThumbnails = array_map(function ($article) use ($mainImages, $imageUploadService) {
-            $mainImage = $mainImages[$article->getId()] ?? null;
-            $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage) : null;
-            return (object) array_merge((array)$article, [
+        $withThumbnails = [];
+        foreach ($result as $article) {
+            $articleId = $article->getId();
+            $mainImage = $mainImages[$articleId] ?? null;
+            // Przekaż articleId bezpośrednio, aby uniknąć problemów z relacjami Doctrine
+            $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage, $articleId) : null;
+            
+            // Ręcznie buduj tablicę z właściwości Article
+            $articleArray = [
+                'id' => $article->id,
+                'code' => $article->code,
+                'ean13' => $article->ean13,
+                'price' => $article->price,
+                'id_category' => $article->id_category,
+                'name' => $article->name,
+                'description' => $article->description,
                 'thumbnail_url' => $thumbnailUrl
-            ]);
-        }, $result);
+            ];
+            $withThumbnails[] = (object)$articleArray;
+        }
         return new JsonResponse($withThumbnails);
     }
 
@@ -161,13 +174,26 @@ class ArticleController extends AbstractController
         $articleIds = array_map(fn($article) => $article->getId(), $articles);
         $mainImages = $imageRepository->findMainImagesForArticles($articleIds);
         
-        $withThumbnails = array_map(function ($article) use ($mainImages, $imageUploadService) {
-            $mainImage = $mainImages[$article->getId()] ?? null;
-            $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage) : null;
-            return (object) array_merge((array)$article, [
+        $withThumbnails = [];
+        foreach ($articles as $article) {
+            $articleId = $article->getId();
+            $mainImage = $mainImages[$articleId] ?? null;
+            // Przekaż articleId bezpośrednio, aby uniknąć problemów z relacjami Doctrine
+            $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage, $articleId) : null;
+            
+            // Ręcznie buduj tablicę z właściwości Article
+            $articleArray = [
+                'id' => $article->id,
+                'code' => $article->code,
+                'ean13' => $article->ean13,
+                'price' => $article->price,
+                'id_category' => $article->id_category,
+                'name' => $article->name,
+                'description' => $article->description,
                 'thumbnail_url' => $thumbnailUrl
-            ]);
-        }, $articles);
+            ];
+            $withThumbnails[] = (object)$articleArray;
+        }
         return new JsonResponse($withThumbnails);
     }
 
