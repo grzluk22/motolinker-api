@@ -419,6 +419,112 @@ class CarController extends AbstractController
         if(!$result) return new JsonResponse(['message' => 'Nie znaleziono samochodu na podstawie wpisanej frazy'], 404);
         return new JsonResponse($result);
     }
+
+    /**
+     * Zwraca listę samochodów pasujących do filtrów w RequestBody
+     *
+     *
+     * @OA\Tag(name="Car")
+     * @OA\RequestBody(
+     *     request="CarSearchRequestBody",
+     *     description="Filtry do wyszukiwania samochodów",
+     *     required=false,
+     *     @OA\JsonContent(
+     *                     example={
+     *                              "criteria": {
+     *                                  "manufacturer": "Opel",
+     *                                  "model": "Vectra",
+     *                                  "type": "C",
+     *                                  "model_from": "2002-09",
+     *                                  "model_to": "2004-5",
+     *                                  "body_type": "Sedan",
+     *                                  "drive_type": "FWD",
+     *                                  "displacement_liters": "1655",
+     *                                  "displacement_cmm": "1655",
+     *                                  "fuel_type": "Gas",
+     *                                  "kw": "90",
+     *                                  "hp": "120",
+     *                                  "cylinders": 4,
+     *                                  "valves": "8",
+     *                                  "engine_type": "V2",
+     *                                  "engine_codes": "KWA456",
+     *                                  "kba": "45689722",
+     *                                  "searchLike": true
+     *                              },
+     *                              "orderBy": {
+     *                                  "id": "DESC"
+     *                              },
+     *                              "limit": 20,
+     *                              "offset": 0
+     *                     }
+     *    )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Lista znalezionych samochodów pasujących do filtrów",
+     *     content={
+     *             @OA\MediaType(
+     *                 mediaType="application/json",
+     *                     example={
+     *                         "data": {
+     *                             {
+     *                                 "id": 1,
+     *                                 "manufacturer": "Opel",
+     *                                 "model": "Vectra",
+     *                                 "type": "C",
+     *                                 "model_from": "2002-09",
+     *                                 "model_to": "2004-5",
+     *                                 "body_type": "Sedan",
+     *                                 "drive_type": "FWD",
+     *                                 "displacement_liters": "1655",
+     *                                 "displacement_cmm": "1655",
+     *                                 "fuel_type": "Gas",
+     *                                 "kw": "90",
+     *                                 "hp": "120",
+     *                                 "cylinders": 4,
+     *                                 "valves": "8",
+     *                                 "engine_type": "V2",
+     *                                 "engine_codes": "KWA456",
+     *                                 "kba": "45689722"
+     *                             }
+     *                         },
+     *                         "total": 1
+     *                     }
+     *             )
+     *         })
+     * )
+     * @OA\Response(
+     *     response=404,
+     *     description="Nie znaleziono samochodów pasujących do filtrów"
+     * )
+     **/
+    #[Route('/car/search', name: 'app_car_search_post', methods: ["POST"])]
+    public function searchPost(CarRepository $carRepository, Request $request = null)
+    {
+        /* Metoda wyszukuje samochody na podstawie filtrów przekazanych w RequestBody */
+        try {
+            $requestArray = $request->toArray();
+            $criteria = $requestArray['criteria'] ?? [];
+            $orderBy = $requestArray['orderBy'] ?? [];
+            $limit = $requestArray['limit'] ?? 50;
+            $offset = $requestArray['offset'] ?? 0;
+            
+            $cars = $carRepository->findByExtended($criteria, $orderBy, $limit, $offset);
+            $total = $carRepository->countByExtended($criteria);
+
+        } catch (\Exception $exception) {
+            if($exception->getMessage() == "Request body is empty.") {
+                $cars = $carRepository->findAll();
+                $total = count($cars);
+            } else {
+                throw $exception;
+            }
+        }
+        
+        if(!$cars) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
+        
+        return new JsonResponse(['data' => $cars, 'total' => $total]);
+    }
 }
 
 

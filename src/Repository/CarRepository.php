@@ -76,4 +76,58 @@ class CarRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findByExtended(mixed $criteria, mixed $orderBy, mixed $limit, mixed $offset)
+    {
+        $extendedCriteria = ['searchLike'];
+        $searchLike = $criteria['searchLike'] ?? false;
+        
+        $qb = $this->createQueryBuilder('c');
+        
+        foreach ($criteria as $key => $value) {
+            if (in_array($key, $extendedCriteria)) continue;
+            if(!$value or $value == "" or $value == -1) continue;
+            
+            if(!$searchLike) {
+                $qb->andWhere('c.'.$key.' = :'.$key);
+                $qb->setParameter($key, $value);
+            } else {
+                $qb->andWhere($qb->expr()->like('c.'.$key, ':value'.$key))
+                    ->setParameter('value' . $key, '%' . $value . '%');
+            }
+        }
+
+        foreach ($orderBy as $key => $value) {
+            $qb->addOrderBy('c.'.$key, $value);
+        }
+        
+        $qb->setFirstResult($offset)
+            ->setMaxResults($limit);
+            
+        return $qb->getQuery()->getResult();
+    }
+
+    public function countByExtended(mixed $criteria): int
+    {
+        $extendedCriteria = ['searchLike'];
+        $searchLike = $criteria['searchLike'] ?? false;
+        
+        $qb = $this->createQueryBuilder('c')
+            ->select('COUNT(DISTINCT c.id)');
+        
+        foreach ($criteria as $key => $value) {
+            if (in_array($key, $extendedCriteria)) continue;
+            if(!$value or $value == "" or $value == -1) continue;
+            
+            if(!$searchLike) {
+                $qb->andWhere('c.'.$key.' = :'.$key);
+                $qb->setParameter($key, $value);
+            } else {
+                $qb->andWhere($qb->expr()->like('c.'.$key, ':value'.$key))
+                    ->setParameter('value' . $key, '%' . $value . '%');
+            }
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
 }
