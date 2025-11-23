@@ -8,7 +8,9 @@ use App\Entity\ArticleEan;
 use App\Repository\ArticleLanguageRepository;
 use App\Repository\ArticleEanRepository;
 use App\Repository\ArticleRepository;
+use App\Repository\ImageRepository;
 use App\Repository\LanguageRepository;
+use App\Service\ImageUploadService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -32,16 +34,19 @@ class ArticleController extends AbstractController
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                     example={
-     *                         {
-     *                             "id": 1,
-     *                             "code": "36790-SET-MS",
-     *                             "ean13": "1234567890123",
-     *                             "ean13_list": {"1234567890123", "5901234123457"},
-     *                             "price": 367.99,
-     *                             "name":"Zestaw zawieszenia",
-     *                             "description":"Zawieszenie do Audi A3",
-     *                             "id_category": 0
-     *                         }
+     *                         "data": {
+     *                             {
+     *                                 "id": 1,
+     *                                 "code": "36790-SET-MS",
+     *                                 "ean13": "1234567890123",
+     *                                 "ean13_list": {"1234567890123", "5901234123457"},
+     *                                 "price": 367.99,
+     *                                 "name":"Zestaw zawieszenia",
+     *                                 "description":"Zawieszenie do Audi A3",
+     *                                 "id_category": 0
+     *                             }
+     *                         },
+     *                         "total": 1
      *                     }
      *             )
      *         })
@@ -52,16 +57,43 @@ class ArticleController extends AbstractController
      * )
      *
      */
+
+     
     #[Route('/article', name: 'app_article_get', methods: ["GET"])]
-    public function index(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository): JsonResponse
+    public function index(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService): JsonResponse
     {
         $result = $articleRepository->findAll();
-        $withEans = array_map(function ($article) use ($articleEanRepository) {
-            return (object) array_merge((array)$article, [
-                'ean13_list' => array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()))
-            ]);
-        }, $result);
-        return new JsonResponse($withEans);
+        $total = count($result);
+        
+        if (empty($result)) {
+            return new JsonResponse(['data' => [], 'total' => 0]);
+        }
+        
+        // Pobierz wszystkie główne zdjęcia w jednym zapytaniu
+        $articleIds = array_map(fn($article) => $article->getId(), $result);
+        $mainImages = $imageRepository->findMainImagesForArticles($articleIds);
+        
+        $withThumbnails = [];
+        foreach ($result as $article) {
+            $articleId = $article->getId();
+            $mainImage = $mainImages[$articleId] ?? null;
+            // Przekaż articleId bezpośrednio, aby uniknąć problemów z relacjami Doctrine
+            $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage, $articleId) : null;
+            
+            // Ręcznie buduj tablicę z właściwości Article
+            $articleArray = [
+                'id' => $article->id,
+                'code' => $article->code,
+                'ean13' => $article->ean13,
+                'price' => $article->price,
+                'id_category' => $article->id_category,
+                'name' => $article->name,
+                'description' => $article->description,
+                'thumbnail_url' => $thumbnailUrl
+            ];
+            $withThumbnails[] = (object)$articleArray;
+        }
+        return new JsonResponse(['data' => $withThumbnails, 'total' => $total]);
     }
 
     /**
@@ -81,7 +113,8 @@ class ArticleController extends AbstractController
      *         "id_category": 0,
      *         "name":"Zestaw zawieszenia",
      *         "description":"Zawieszenie do Audi A5 b6",
-     *         "searchLike": true
+     *         "searchLike": true,
+     *         "image": true
      *     },
      *     "orderBy": {
      *         "id":"DESC"
@@ -99,16 +132,19 @@ class ArticleController extends AbstractController
      *             @OA\MediaType(
      *                 mediaType="application/json",
      *                     example={
-     *                         {
-     *                             "id": 1,
-     *                             "code": "36790-SET-MS",
-     *                             "ean13": "1234567890123",
-     *                             "ean13_list": {"1234567890123", "5901234123457"},
-     *                             "price": 367.99,
-     *                             "id_category": 0,
-     *                             "name":"Zestaw zawieszenia",
-     *                             "description":"Zawieszenie do Audi A5 b6"
-     *                         }
+     *                         "data": {
+     *                             {
+     *                                 "id": 1,
+     *                                 "code": "36790-SET-MS",
+     *                                 "ean13": "1234567890123",
+     *                                 "ean13_list": {"1234567890123", "5901234123457"},
+     *                                 "price": 367.99,
+     *                                 "id_category": 0,
+     *                                 "name":"Zestaw zawieszenia",
+     *                                 "description":"Zawieszenie do Audi A5 b6"
+     *                             }
+     *                         },
+     *                         "total": 1
      *                     }
      *             )
      *         })
@@ -120,7 +156,7 @@ class ArticleController extends AbstractController
      *
      */
     #[Route('/article/get', name: 'app_article_get_by', methods: ["POST"])]
-    public function getBy(ArticleRepository $articleRepository, ArticleEanRepository $articleEanRepository, Request $request = null): JsonResponse
+    public function getBy(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService, Request $request = null): JsonResponse
     {
         /* Najprostsza metoda do pobrania artyklow przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
         /* Jeżeli nie przekazano nic w body request to zwracanie wszystkich artykulow */
@@ -133,21 +169,43 @@ class ArticleController extends AbstractController
             $offset = $requestArray['offset'] ?? 0;
             /* Poprawka, like search powinno byc przekazane w requestArray a poprawnym przzepisaniem tych parametrow powinno zajac sie repozitory a*/
             $articles = $articleRepository->findByExtended($criteria, $orderBy, $limit, $offset);
+            $total = $articleRepository->countByExtended($criteria);
 
         } catch (\Exception $exception) {
             if($exception->getMessage() == "Request body is empty.") {
                 $articles = $articleRepository->findAll();
+                $total = count($articles);
             }else{
                 throw $exception;
             }
         }
         if(!$articles) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
-        $withEans = array_map(function ($article) use ($articleEanRepository) {
-            return (object) array_merge((array)$article, [
-                'ean13_list' => array_map(fn($e) => $e->getEan13(), $articleEanRepository->findByArticleId($article->getId()))
-            ]);
-        }, $articles);
-        return new JsonResponse($withEans);
+        
+        // Pobierz wszystkie główne zdjęcia w jednym zapytaniu
+        $articleIds = array_map(fn($article) => $article->getId(), $articles);
+        $mainImages = $imageRepository->findMainImagesForArticles($articleIds);
+        
+        $withThumbnails = [];
+        foreach ($articles as $article) {
+            $articleId = $article->getId();
+            $mainImage = $mainImages[$articleId] ?? null;
+            // Przekaż articleId bezpośrednio, aby uniknąć problemów z relacjami Doctrine
+            $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage, $articleId) : null;
+            
+            // Ręcznie buduj tablicę z właściwości Article
+            $articleArray = [
+                'id' => $article->id,
+                'code' => $article->code,
+                'ean13' => $article->ean13,
+                'price' => $article->price,
+                'id_category' => $article->id_category,
+                'name' => $article->name,
+                'description' => $article->description,
+                'thumbnail_url' => $thumbnailUrl
+            ];
+            $withThumbnails[] = (object)$articleArray;
+        }
+        return new JsonResponse(['data' => $withThumbnails, 'total' => $total]);
     }
 
     /**
