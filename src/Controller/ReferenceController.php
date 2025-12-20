@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
 
 class ReferenceController extends AbstractController
 {
@@ -17,36 +17,15 @@ class ReferenceController extends AbstractController
      * Pobiera numery referencyjne
      *
      * Parametr type w RequestBody nie jest obowiązkowy, w przypadku jego braku metoda zwróci wszystkie numery referencjne
-     *
-     * @OA\Tag(name="Reference")
-     * @OA\RequestBody(
-     *     request="ReferenceGetBody",
-     *     description="Parametry reference",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "id_article": 26,
-     *                         "type": 2,
-     *                     }
-     *    )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista numerów referencyjnych",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                      "id_article": 26,
-     *                      "type": 2,
-     *                      "brand": "BREMBO",
-     *                      "number": "B156O1"
-     *                     }
-     *             )
-     *         })
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Reference")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista numerów referencyjnych",
+        content: new OA\JsonContent(
+            example: ["id" => 1, "id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
+        )
+    )]
     #[Route('/reference/{id_article}', name: 'app_article_reference_get', methods: ["GET"])]
     public function index(ReferenceRepository $referenceRepository, int $id_article)
     {
@@ -58,42 +37,26 @@ class ReferenceController extends AbstractController
     }
     /**
      * Wstawia numery referencyjne
-     *
-     * @OA\Tag(name="Reference")
-     * @OA\RequestBody(
-     *     request="ReferencePostBody",
-     *     description="Parametry reference",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                      "id_article": 26,
-     *                      "type": 2,
-     *                      "brand": "BREMBO",
-     *                      "number": "B156O1"
-     *                     }
-     *    )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista numerów referencyjnych",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                      "id_article": 26,
-     *                      "type": 2,
-     *                      "brand": "BREMBO",
-     *                      "number": "B156O1"
-     *                     }
-     *             )
-     *         })
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Reference")]
+    #[OA\RequestBody(
+        description: "Parametry reference",
+        required: true,
+        content: new OA\JsonContent(
+            example: ["id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Lista numerów referencyjnych",
+        content: new OA\JsonContent(
+            example: ["id" => 1, "id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu o podanym id"
+    )]
     #[Route('/reference', name: 'app_reference_post', methods: ["POST"])]
     public function post(ReferenceRepository $referenceRepository, ArticleRepository $articleRepository, Request $request)
     {
@@ -112,43 +75,26 @@ class ReferenceController extends AbstractController
 
     /**
      * Aktualizuje numery referencyjne
-     *
-     * @OA\Tag(name="Reference")
-     * @OA\RequestBody(
-     *     request="ReferencePutBody",
-     *     description="Parametry reference",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                      "id":1,
-     *                      "id_article": 26,
-     *                      "type": 2,
-     *                      "brand": "BREMBO",
-     *                      "number": "B156O1"
-     *                     }
-     *    )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista numerów referencyjnych",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                      "id_article": 26,
-     *                      "type": 2,
-     *                      "brand": "BREMBO",
-     *                      "number": "B156O1"
-     *                     }
-     *             )
-     *         })
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu lub numeru referencyjnego o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Reference")]
+    #[OA\RequestBody(
+        description: "Parametry reference",
+        required: true,
+        content: new OA\JsonContent(
+            example: ["id" => 1, "id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Lista numerów referencyjnych",
+        content: new OA\JsonContent(
+            example: ["id" => 1, "id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu lub numeru referencyjnego o podanym id"
+    )]
     #[Route('/reference', name: 'app_reference_put', methods: ["PUT"])]
     public function put(ReferenceRepository $referenceRepository, ArticleRepository $articleRepository, Request $request)
     {
@@ -168,27 +114,16 @@ class ReferenceController extends AbstractController
 
     /**
      * Usuwa numery referencyjne
-     *
-     * @OA\Tag(name="Reference")
-     * @OA\RequestBody(
-     *     request="ReferenceDeleteBody",
-     *     description="Parametry reference",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "id": 1
-     *                     }
-     *    )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunieto",
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono numeru referencyjnego o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Reference")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunieto"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono numeru referencyjnego o podanym id"
+    )]
     #[Route('/reference/{id_reference}', name: 'app_reference_delete', methods: ["DELETE"])]
     public function delete(ReferenceRepository $referenceRepository, int $id_reference)
     {

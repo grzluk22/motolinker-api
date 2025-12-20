@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use function Symfony\Config\toArray;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use App\Entity\Language;
 
@@ -25,40 +25,33 @@ class ArticleController extends AbstractController
 {
     /**
      * Wyświetla liste artykułów
-     *
-     * @OA\Tag(name="Article")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista artykułów",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "data": {
-     *                             {
-     *                                 "id": 1,
-     *                                 "code": "36790-SET-MS",
-     *                                 "ean13": "1234567890123",
-     *                                 "ean13_list": {"1234567890123", "5901234123457"},
-     *                                 "price": 367.99,
-     *                                 "name":"Zestaw zawieszenia",
-     *                                 "description":"Zawieszenie do Audi A3",
-     *                                 "id_category": 0
-     *                             }
-     *                         },
-     *                         "total": 1
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Brak artykułów"
-     * )
-     *
      */
-
-     
+    #[OA\Tag(name: "Article")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista artykułów",
+        content: new OA\JsonContent(
+            example: [
+                "data" => [
+                    [
+                        "id" => 1,
+                        "code" => "36790-SET-MS",
+                        "ean13" => "1234567890123",
+                        "ean13_list" => ["1234567890123", "5901234123457"],
+                        "price" => 367.99,
+                        "name" => "Zestaw zawieszenia",
+                        "description" => "Zawieszenie do Audi A3",
+                        "id_category" => 0
+                    ]
+                ],
+                "total" => 1
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak artykułów"
+    )]
     #[Route('/article', name: 'app_article_get', methods: ["GET"])]
     public function index(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService): JsonResponse
     {
@@ -98,63 +91,54 @@ class ArticleController extends AbstractController
 
     /**
      * Wyświetla przefiltrowana liste artykulow.
-     *
-     * @OA\Tag(name="Article")
-     * @OA\RequestBody(
-     * request="ArticleGetByRequestBody",
-     * description="Filtry",
-     * required=true,
-     * @OA\JsonContent(
-     * example={
-     *     "criteria": {
-     *         "code" :"36790-SET-MS",
-     *         "ean13": "1234567890123",
-     *         "price": 367.99,
-     *         "id_category": 0,
-     *         "name":"Zestaw zawieszenia",
-     *         "description":"Zawieszenie do Audi A5 b6",
-     *         "searchLike": true,
-     *         "image": true
-     *     },
-     *     "orderBy": {
-     *         "id":"DESC"
-     *     },
-     *     "limit":20,
-     *     "offset":40
-     * }
-     *   )
-     *  )
-     *
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista artykułów",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "data": {
-     *                             {
-     *                                 "id": 1,
-     *                                 "code": "36790-SET-MS",
-     *                                 "ean13": "1234567890123",
-     *                                 "ean13_list": {"1234567890123", "5901234123457"},
-     *                                 "price": 367.99,
-     *                                 "id_category": 0,
-     *                                 "name":"Zestaw zawieszenia",
-     *                                 "description":"Zawieszenie do Audi A5 b6"
-     *                             }
-     *                         },
-     *                         "total": 1
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu"
-     * )
-     *
      */
+    #[OA\Tag(name: "Article")]
+    #[OA\RequestBody(
+        description: "Filtry",
+        required: true,
+        content: new OA\JsonContent(
+            example: [
+                "criteria" => [
+                    "code" => "36790-SET-MS",
+                    "ean13" => "1234567890123",
+                    "price" => 367.99,
+                    "id_category" => 0,
+                    "name" => "Zestaw zawieszenia",
+                    "description" => "Zawieszenie do Audi A5 b6",
+                    "searchLike" => true,
+                    "image" => true
+                ],
+                "orderBy" => ["id" => "DESC"],
+                "limit" => 20,
+                "offset" => 40
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Lista artykułów",
+        content: new OA\JsonContent(
+            example: [
+                "data" => [
+                    [
+                        "id" => 1,
+                        "code" => "36790-SET-MS",
+                        "ean13" => "1234567890123",
+                        "ean13_list" => ["1234567890123", "5901234123457"],
+                        "price" => 367.99,
+                        "id_category" => 0,
+                        "name" => "Zestaw zawieszenia",
+                        "description" => "Zawieszenie do Audi A5 b6"
+                    ]
+                ],
+                "total" => 1
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu"
+    )]
     #[Route('/article/get', name: 'app_article_get_by', methods: ["POST"])]
     public function getBy(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService, Request $request = null): JsonResponse
     {
@@ -210,49 +194,44 @@ class ArticleController extends AbstractController
 
     /**
      * Wyświetla konkretny artykuł
-     *
-     * @OA\Tag(name="Article")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista artykułów",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "code": "36790-SET-MS",
-     *                         "ean13": "1234567890123",
-     *                         "ean13_list": {"1234567890123", "5901234123457"},
-     *                         "price": 367.99,
-     *                         "id_category": 0,
-     *                         "name":"Zestaw zawieszenia",
-     *                         "description":"Zawieszenie do Audi A3",
-     *                         "translations": {
-     *                              {
-     *                                  "id": 1,
-     *                                  "id_article": 1,
-     *                                  "id_language": 1,
-     *                                  "name": "PL nazwa",
-     *                                  "description": "PL opis"
-     *                              },
-     *                              {
-     *                                  "id": 2,
-     *                                  "id_article": 1,
-     *                                  "id_language": 2,
-     *                                  "name": "EN name",
-     *                                  "description": "EN description"
-     *                              }
-     *                         }
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu"
-     * )
-     *
      */
+    #[OA\Tag(name: "Article")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista artykułów",
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "code" => "36790-SET-MS",
+                "ean13" => "1234567890123",
+                "ean13_list" => ["1234567890123", "5901234123457"],
+                "price" => 367.99,
+                "id_category" => 0,
+                "name" => "Zestaw zawieszenia",
+                "description" => "Zawieszenie do Audi A3",
+                "translations" => [
+                    [
+                        "id" => 1,
+                        "id_article" => 1,
+                        "id_language" => 1,
+                        "name" => "PL nazwa",
+                        "description" => "PL opis"
+                    ],
+                    [
+                        "id" => 2,
+                        "id_article" => 1,
+                        "id_language" => 2,
+                        "name" => "EN name",
+                        "description" => "EN description"
+                    ]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu"
+    )]
     #[Route('/article/{id_article}', name: 'app_article_get_one', methods: ["GET"])]
     public function getOne(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, int $id_article): JsonResponse
     {
@@ -266,60 +245,51 @@ class ArticleController extends AbstractController
 
     /**
      * Tworzy nowy artykuł
-     *
-     *
-     * @OA\Tag(name="Article")
-     * @OA\RequestBody(
-     *     request="ArticleCreateRequestBody",
-     *     description="Artykuł",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "code": "36790-SET-MS",
-     *                         "ean13": "1234567890123",
-     *                         "ean13_list": {"1234567890123", "5901234123457"},
-     *                         "price": 367.99,
-     *                         "id_category": 0,
-     *                         "name": "Article name",
-     *                         "description": "Article description",
-     *                         "translations": {
-     *                              {"id_language": 1, "name": "PL nazwa", "description": "PL opis"},
-     *                              {"id_language": 2, "name": "EN name", "description": "EN description"}
-     *                         }
-     *                     }
-     *    )
-     * )
-     *
-     * @OA\Response(
-     *     response=200,
-     *     description="Stworzony artykuł",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     example={
-     *                         "id": 1,
-     *                         "code": "36790-SET-MS",
-     *                         "ean13": "1234567890123",
-     *                         "ean13_list": {"1234567890123", "5901234123457"},
-     *                         "price": 367.99,
-     *                         "id_category": 0,
-     *                         "name": "Article name",
-     *                         "description": "Article description",
-     *                         "translations": {
-     *                              {"id": 1, "id_article": 1, "id_language": 1, "name": "PL nazwa", "description": "PL opis"},
-     *                              {"id": 2, "id_article": 1, "id_language": 2, "name": "EN name", "description": "EN description"}
-     *                         }
-     *                     }
-     *                 )
-     *             )
-     *         })
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="Artykuł o podanym kodzie juz istnieje"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Article")]
+    #[OA\RequestBody(
+        description: "Artykuł",
+        required: true,
+        content: new OA\JsonContent(
+            example: [
+                "code" => "36790-SET-MS",
+                "ean13" => "1234567890123",
+                "ean13_list" => ["1234567890123", "5901234123457"],
+                "price" => 367.99,
+                "id_category" => 0,
+                "name" => "Article name",
+                "description" => "Article description",
+                "translations" => [
+                    ["id_language" => 1, "name" => "PL nazwa", "description" => "PL opis"],
+                    ["id_language" => 2, "name" => "EN name", "description" => "EN description"]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Stworzony artykuł",
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "code" => "36790-SET-MS",
+                "ean13" => "1234567890123",
+                "ean13_list" => ["1234567890123", "5901234123457"],
+                "price" => 367.99,
+                "id_category" => 0,
+                "name" => "Article name",
+                "description" => "Article description",
+                "translations" => [
+                    ["id" => 1, "id_article" => 1, "id_language" => 1, "name" => "PL nazwa", "description" => "PL opis"],
+                    ["id" => 2, "id_article" => 1, "id_language" => 2, "name" => "EN name", "description" => "EN description"]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Artykuł o podanym kodzie juz istnieje"
+    )]
     #[Route('/article', name: 'app_article_create', methods: ["POST"])]
     public function create(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, Request $request): JsonResponse
     {
@@ -406,59 +376,52 @@ class ArticleController extends AbstractController
      * Edytuje istniejący artykuł
      *
      * Jeżeli chcesz dodać nowe tłumaczenie do artykułu możesz również skorzystać z tej metody. Poprostu w tabeli z tłumaczeniami przekaż jedno bez id, a zostanie ono automatycznie utworzone
-     *
-     *
-     * @OA\Tag(name="Article")
-     * @OA\RequestBody(
-     *     request="ArticleUpdateRequestBody",
-     *     description="Artykuł",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "id": 1,
-     *                         "code": "36790-SET-MS",
-     *                         "ean13": "1234567890123",
-     *                         "ean13_list": {"1234567890123", "5901234123457"},
-     *                         "price": 367.99,
-     *                         "id_category": 0,
-     *                         "name": "Article name",
-     *                         "description": "Article description",
-     *                         "translations": {
-     *                              {"id": 10, "id_language": 1, "name": "PL nazwa", "description": "PL opis"},
-     *                              {"id": 11, "id_language": 2, "name": "EN name", "description": "EN description"}
-     *                         }
-     *                     }
-     *    )
-     * )
-     *
-     * @OA\Response(
-     *     response=200,
-     *     description="Zaktualizowany artykuł",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "code": "36790-SET-MS",
-     *                         "ean13": "1234567890123",
-     *                         "ean13_list": {"1234567890123", "5901234123457"},
-     *                         "price": 367.99,
-     *                         "id_category": 0,
-     *                         "name": "Article name",
-     *                         "description": "Article description",
-     *                         "translations": {
-     *                              {"id": 10, "id_article": 1, "id_language": 1, "name": "PL nazwa", "description": "PL opis"},
-     *                              {"id": 11, "id_article": 1, "id_language": 2, "name": "EN name", "description": "EN description"}
-     *                         }
-     *                     }
-     *             )
-     *         })
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Article")]
+    #[OA\RequestBody(
+        description: "Artykuł",
+        required: true,
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "code" => "36790-SET-MS",
+                "ean13" => "1234567890123",
+                "ean13_list" => ["1234567890123", "5901234123457"],
+                "price" => 367.99,
+                "id_category" => 0,
+                "name" => "Article name",
+                "description" => "Article description",
+                "translations" => [
+                    ["id" => 10, "id_language" => 1, "name" => "PL nazwa", "description" => "PL opis"],
+                    ["id" => 11, "id_language" => 2, "name" => "EN name", "description" => "EN description"]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Zaktualizowany artykuł",
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "code" => "36790-SET-MS",
+                "ean13" => "1234567890123",
+                "ean13_list" => ["1234567890123", "5901234123457"],
+                "price" => 367.99,
+                "id_category" => 0,
+                "name" => "Article name",
+                "description" => "Article description",
+                "translations" => [
+                    ["id" => 10, "id_article" => 1, "id_language" => 1, "name" => "PL nazwa", "description" => "PL opis"],
+                    ["id" => 11, "id_article" => 1, "id_language" => 2, "name" => "EN name", "description" => "EN description"]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu o podanym id"
+    )]
     #[Route('/article', name: 'app_article_edit', methods: ["PUT"])]
     public function edit(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, Request $request): JsonResponse
     {
@@ -545,25 +508,19 @@ class ArticleController extends AbstractController
 
     /**
      * Usuwa istniejący artykuł
-     *
-     * @OA\Tag(name="Article")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                 @OA\Schema(
-     *                     example={"message": "Usunięto"}
-     *                 )
-     *             )
-     *     }
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu o podanym kodzie"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Article")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto",
+        content: new OA\JsonContent(
+            example: ["message" => "Usunięto"]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu o podanym kodzie"
+    )]
     #[Route('/article/{id_article}', name: 'app_article_delete', methods: ["DELETE"])]
     public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, int $id_article): JsonResponse
     {

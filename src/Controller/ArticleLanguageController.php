@@ -10,23 +10,22 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
 
 class ArticleLanguageController extends AbstractController
 {
     /**
      * Lista tłumaczeń wskazanego artykułu.
-     *
-     * @OA\Tag(name="ArticleLanguage")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista tłumaczeń artykułu"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono tłumaczeń dla artykułu"
-     * )
      */
+    #[OA\Tag(name: "ArticleLanguage")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista tłumaczeń artykułu"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono tłumaczeń dla artykułu"
+    )]
     #[Route('/article/{id_article}/language', name: 'app_article_language_list', methods: ['GET'])]
     public function list(ArticleLanguageRepository $articleLanguageRepository, int $id_article): JsonResponse
     {
@@ -40,30 +39,31 @@ class ArticleLanguageController extends AbstractController
 
     /**
      * Tworzy tłumaczenie artykułu.
-     *
-     * @OA\Tag(name="ArticleLanguage")
-     * @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *         required={"id_language", "name", "description"},
-     *         @OA\Property(property="id_language", type="integer", example=1),
-     *         @OA\Property(property="name", type="string", example="Komplet hamulcowy"),
-     *         @OA\Property(property="description", type="string", example="Opis produktu w wybranym języku")
-     *     )
-     * )
-     * @OA\Response(
-     *     response=201,
-     *     description="Dodano tłumaczenie"
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="Błędne dane wejściowe lub tłumaczenie istnieje"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu lub języka"
-     * )
      */
+    #[OA\Tag(name: "ArticleLanguage")]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ["id_language", "name", "description"],
+            properties: [
+                new OA\Property(property: "id_language", type: "integer", example: 1),
+                new OA\Property(property: "name", type: "string", example: "Komplet hamulcowy"),
+                new OA\Property(property: "description", type: "string", example: "Opis produktu w wybranym języku")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 201,
+        description: "Dodano tłumaczenie"
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Błędne dane wejściowe lub tłumaczenie istnieje"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu lub języka"
+    )]
     #[Route('/article/{id_article}/language', name: 'app_article_language_create', methods: ['POST'])]
     public function create(
         int $id_article,
@@ -113,24 +113,25 @@ class ArticleLanguageController extends AbstractController
 
     /**
      * Aktualizuje tłumaczenie artykułu.
-     *
-     * @OA\Tag(name="ArticleLanguage")
-     * @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *         @OA\Property(property="name", type="string", example="Nowa nazwa produktu"),
-     *         @OA\Property(property="description", type="string", example="Nowy opis produktu")
-     *     )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Zaktualizowano tłumaczenie"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono tłumaczenia o podanym id"
-     * )
      */
+    #[OA\Tag(name: "ArticleLanguage")]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "name", type: "string", example: "Nowa nazwa produktu"),
+                new OA\Property(property: "description", type: "string", example: "Nowy opis produktu")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Zaktualizowano tłumaczenie"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono tłumaczenia o podanym id"
+    )]
     #[Route('/article/language/{id}', name: 'app_article_language_update', methods: ['PUT'])]
     public function update(
         int $id,
@@ -159,17 +160,16 @@ class ArticleLanguageController extends AbstractController
 
     /**
      * Usuwa tłumaczenie dla artykułu
-     *
-     * @OA\Tag(name="ArticleLanguage")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono tłumaczenia o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "ArticleLanguage")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono tłumaczenia o podanym id"
+    )]
     #[Route('/article/language/{id}', name: 'app_article_language_delete', methods: ['DELETE'])]
     public function delete(ArticleLanguageRepository $articleLanguageRepository, string $id)
     {

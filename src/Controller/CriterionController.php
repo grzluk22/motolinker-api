@@ -19,40 +19,36 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
 use function Symfony\Component\Cache\Traits\object;
 
 class CriterionController extends AbstractController
 {
     /**
      * Lista wszystkich kryteriów wraz z tłumaczeniami
-     *
-     * @OA\Tag(name="Criterion")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista kryteriów",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                     "translations":{
-     *                          "id": 3,
-     *                          "id_criterion": 1,
-     *                          "id_language": 6,
-     *                          "name": "Strona mocowania"
-     *                      }
-     *
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Brak kryteriów"
-     * )
-     *
      */
+    #[OA\Tag(name: "Criterion")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista kryteriów",
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "translations" => [
+                    [
+                        "id" => 3,
+                        "id_criterion" => 1,
+                        "id_language" => 6,
+                        "name" => "Strona mocowania"
+                    ]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak kryteriów"
+    )]
     #[Route('/criterion', name: 'app_criterion_get', methods: ['GET'])]
     public function index(CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository): JsonResponse
     {
@@ -69,48 +65,43 @@ class CriterionController extends AbstractController
 
     /**
      * Tworzy nowe kryterium
-     *
-     * @OA\Tag(name="Criterion")
-     * @OA\RequestBody(
-     *     request="CriterionAddRequestBody",
-     *     description="Kryterium",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                     "translations":{
-     *                          "id_language": 6,
-     *                          "name": "Strona mocowania"
-     *                      }
-     *
-     *                     }
-     *    )
-     * )
-
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista kryteriów",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                     "translations":{
-     *                          "id": 3,
-     *                          "id_criterion": 1,
-     *                          "id_language": 6,
-     *                          "name": "Strona mocowania"
-     *                      }
-     *
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Brak kryteriów"
-     * )
-     *
      */
+    #[OA\Tag(name: "Criterion")]
+    #[OA\RequestBody(
+        description: "Kryterium",
+        required: true,
+        content: new OA\JsonContent(
+            example: [
+                "translations" => [
+                    [
+                        "id_language" => 6,
+                        "name" => "Strona mocowania"
+                    ]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Lista kryteriów",
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "translations" => [
+                    [
+                        "id" => 3,
+                        "id_criterion" => 1,
+                        "id_language" => 6,
+                        "name" => "Strona mocowania"
+                    ]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak kryteriów"
+    )]
     #[Route('/criterion', name: 'app_criterion_add', methods: ['POST'])]
     public function add(CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository, Request $request) {
         /* Żadanie dodania nowego kryterium przyjmuje tylko tłumaczenia nazw dla danego kryterium */
@@ -130,51 +121,46 @@ class CriterionController extends AbstractController
 
     /**
      * Edytuje kryterium
-     *
-     * @OA\Tag(name="Criterion")
-     * @OA\RequestBody(
-     *     request="CriterionAddRequestBody",
-     *     description="Kryterium",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                      "id": 1,
-     *                     "translations":{
-     *                          "id": 3,
-     *                          "id_criterion": 1,
-     *                          "id_language": 6,
-     *                          "name": "Strona mocowania"
-     *                      }
-     *
-     *                     }
-     *    )
-     * )
-
-     * @OA\Response(
-     *     response=200,
-     *     description="Zaktualizowane kryterium",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                     "translations":{
-     *                          "id": 3,
-     *                          "id_criterion": 1,
-     *                          "id_language": 6,
-     *                          "name": "Strona mocowania"
-     *                      }
-     *
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono kryterium o podanym id"
-     * )
-     *
      */
+    #[OA\Tag(name: "Criterion")]
+    #[OA\RequestBody(
+        description: "Kryterium",
+        required: true,
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "translations" => [
+                    [
+                        "id" => 3,
+                        "id_criterion" => 1,
+                        "id_language" => 6,
+                        "name" => "Strona mocowania"
+                    ]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Zaktualizowane kryterium",
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "translations" => [
+                    [
+                        "id" => 3,
+                        "id_criterion" => 1,
+                        "id_language" => 6,
+                        "name" => "Strona mocowania"
+                    ]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono kryterium o podanym id"
+    )]
     #[Route('/criterion', name: 'app_criterion_edit', methods: ["PUT"])]
     public function edit(CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository, Request $request)
     {
@@ -199,17 +185,16 @@ class CriterionController extends AbstractController
 
     /**
      * Usuwa kryterium
-     *
-     * @OA\Tag(name="Criterion")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono kryterium o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Criterion")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono kryterium o podanym id"
+    )]
     #[Route('/criterion/{id}', name: 'app_criterion_delete', methods: ["DELETE"])]
     public function delete(ManagerRegistry $doctrine, CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository, string $id): JsonResponse
     {
@@ -235,17 +220,16 @@ class CriterionController extends AbstractController
 
     /**
      * Usuwa pojedyńcze tłumaczenie kryterium
-     *
-     * @OA\Tag(name="Criterion")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono tłumaczenia kryterium o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Criterion")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono tłumaczenia kryterium o podanym id"
+    )]
     #[Route('/criterion/translation/{trid}', name: 'app_criterion_translation_delete', methods: ["DELETE"])]
     public function deleteTranslation(ManagerRegistry $doctrine, CriterionRepository $criterionRepository, CriterionLanguageRepository $criterionLanguageRepository, string $trid): JsonResponse
     {

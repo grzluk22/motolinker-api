@@ -17,42 +17,39 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
 
 class ArtileCriterionController extends AbstractController
 {
     /**
      * Lista kryteriów wraz z tłumaczeniami dla danego artykułu
-     *
-     * @OA\Tag(name="Article")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista kryteriow",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "id_article": 26,
-     *                         "id_crterion": 2,
-     *                         "value": "F",
-     *                         "value_description": "Front",
-     *                         "translations": {
-     *                               "id": 1,
-     *                               "id_article_criterion": 1,
-     *                               "id_language": 1,
-     *                               "value_description": "Przód"
-     *                          }
-     *                       }
-     *             )
-     *         })
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Brak kryteriów"
-     * )
-     *
      */
+    #[OA\Tag(name: "Article")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista kryteriow",
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "id_article" => 26,
+                "id_crterion" => 2,
+                "value" => "F",
+                "value_description" => "Front",
+                "translations" => [
+                    [
+                        "id" => 1,
+                        "id_article_criterion" => 1,
+                        "id_language" => 1,
+                        "value_description" => "Przód"
+                    ]
+                ]
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak kryteriów"
+    )]
     #[Route('/article/{id_article}/criterion', name: 'app_article_criterion', methods: ['GET'])]
     public function index(ArticleRepository $articleRepository, ArticleCriterionRepository $articleCriterionRepository, CriterionLanguageRepository $criterionLanguageRepository, ArticleCriterionValueDescriptionLanguageRepository $articleCriterionValueDescriptionLanguageRepository, int $id_article)
     {
@@ -66,47 +63,40 @@ class ArtileCriterionController extends AbstractController
 
     /**
      * Dodaje nowe kryterium do artykulu
-     *
-     * @OA\Tag(name="Article")
-     *
-     * @OA\RequestBody(
-     *     request="ArticleCriterionAddRequestBody",
-     *     description="Kategoria",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "id_article": 6,
-     *                         "id_criterion": 1,
-     *                         "value": "P",
-     *                         "value_description": "Przód"
-     *                     }
-     *    )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Dodane kryterium do artykułu",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id_article": 6,
-     *                         "id_criterion": 1,
-     *                         "value": "P",
-     *                         "value_description": "Przód"
-     *                     }
-     *                 )
-     *
-     *         })
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu/kryterium o podanym id"
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="Dla danego artykułu już istnieje kryterium o podanym id"
-     * )
      */
+    #[OA\Tag(name: "Article")]
+    #[OA\RequestBody(
+        description: "Kategoria",
+        required: true,
+        content: new OA\JsonContent(
+            example: [
+                "id_article" => 6,
+                "id_criterion" => 1,
+                "value" => "P",
+                "value_description" => "Przód"
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Dodane kryterium do artykułu",
+        content: new OA\JsonContent(
+            example: [
+                "id_article" => 6,
+                "id_criterion" => 1,
+                "value" => "P",
+                "value_description" => "Przód"
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu/kryterium o podanym id"
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Dla danego artykułu już istnieje kryterium o podanym id"
+    )]
     #[Route('/article/criterion', name: 'app_article_criterion_add', methods: ['POST'])]
     public function add(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, ArticleCriterionValueDescriptionLanguageRepository $articleCriterionValueDescriptionLanguageRepository, Request $request)
     {
@@ -141,45 +131,38 @@ class ArtileCriterionController extends AbstractController
 
     /**
      * Aktualizuje kryterium artykułu
-     *
-     * @OA\Tag(name="Article")
-     *
-     * @OA\RequestBody(
-     *     request="ArticleCriterionAddRequestBody",
-     *     description="Kategoria",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "id": 1,
-     *                         "id_article": 6,
-     *                         "id_criterion": 1,
-     *                         "value": "P",
-     *                         "value_description": "Przód"
-     *                     }
-     *    )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Dodane kryterium do artykułu",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "id_article": 6,
-     *                         "id_criterion": 1,
-     *                         "value": "P",
-     *                         "value_description": "Przód"
-     *                     }
-     *                 )
-     *
-     *         })
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu/kryterium o podanym id"
-     * )
      */
+    #[OA\Tag(name: "Article")]
+    #[OA\RequestBody(
+        description: "Kategoria",
+        required: true,
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "id_article" => 6,
+                "id_criterion" => 1,
+                "value" => "P",
+                "value_description" => "Przód"
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Dodane kryterium do artykułu",
+        content: new OA\JsonContent(
+            example: [
+                "id" => 1,
+                "id_article" => 6,
+                "id_criterion" => 1,
+                "value" => "P",
+                "value_description" => "Przód"
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu/kryterium o podanym id"
+    )]
     #[Route('/article/criterion', name: 'app_article_criterion_update', methods: ['PUT'])]
     public function update(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, ArticleCriterionValueDescriptionLanguageRepository $articleCriterionValueDescriptionLanguageRepository, Request $request)
     {
@@ -219,17 +202,16 @@ class ArtileCriterionController extends AbstractController
 
     /**
      * Usuwa kryterium z artykułu
-     *
-     * @OA\Tag(name="Article")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono kryterium/artykułu o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Article")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono kryterium/artykułu o podanym id"
+    )]
     #[Route('/article/criterion/{id_article_criterion}', name: 'app_article_criterion_delete', methods: ["DELETE"])]
     public function delete(ArticleCriterionRepository $articleCriterionRepository, ArticleRepository $articleRepository, CriterionRepository $criterionRepository, int $id_article_criterion): JsonResponse
     {

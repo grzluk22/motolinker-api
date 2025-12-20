@@ -10,36 +10,27 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
 use function Symfony\Component\Cache\Traits\object;
 
 class StockController extends AbstractController
 {
     /**
-         * Lista wszystkich magazynów
-         *
-         * @OA\Tag(name="Stock")
-         * @OA\Response(
-         *     response=200,
-         *     description="Lista kryteriów",
-         *     content={
-         *             @OA\MediaType(
-         *                 mediaType="application/json",
-         *                     example={
-         *                      "id": 1,
-         *                      "name":"Antwerpia"
-         *
-         *                     }
-         *             )
-         *         })
-         * )
-         * * @OA\Response(
-         *     response=404,
-         *     description="Brak Magazynów"
-         * )
-         *
-         */
-        #[Route('/stock', name: 'app_stock_get', methods: ['GET'])]
+     * Lista wszystkich magazynów
+     */
+    #[OA\Tag(name: "Stock")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista kryteriów",
+        content: new OA\JsonContent(
+            example: ["id" => 1, "name" => "Antwerpia"]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak Magazynów"
+    )]
+    #[Route('/stock', name: 'app_stock_get', methods: ['GET'])]
         public function index(StockRepository $stockRepository): JsonResponse
         {
             $repositories = $stockRepository->findAll();
@@ -48,40 +39,26 @@ class StockController extends AbstractController
 
     /**
      * Tworzy nowy magazyn
-     *
-     * @OA\Tag(name="Stock")
-     * @OA\RequestBody(
-     *     request="StockAddRequestBody",
-     *     description="Magazyn",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                          "name":"Antwerpia"
-     *
-     *                     }
-     *    )
-     * )
-
-     * @OA\Response(
-     *     response=200,
-     *     description="Dodany magazyn",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                      "name":"Antwerpia"
-     *
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Brak Magazynu"
-     * )
-     *
      */
+    #[OA\Tag(name: "Stock")]
+    #[OA\RequestBody(
+        description: "Magazyn",
+        required: true,
+        content: new OA\JsonContent(
+            example: ["name" => "Antwerpia"]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Dodany magazyn",
+        content: new OA\JsonContent(
+            example: ["id" => 1, "name" => "Antwerpia"]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak Magazynu"
+    )]
     #[Route('/stock', name: 'app_stock_add', methods: ['POST'])]
     public function add(StockRepository $stockRepository, Request $request) {
         /* Żadanie dodania nowego kryterium przyjmuje tylko tłumaczenia nazw dla danego kryterium */
@@ -94,41 +71,26 @@ class StockController extends AbstractController
 
     /**
      * Edytuje magazyn
-     *
-     * @OA\Tag(name="Stock")
-     * @OA\RequestBody(
-     *     request="StockAddRequestBody",
-     *     description="Magazyn",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                          "id":1,
-     *                          "name":"Antwerpia"
-     *
-     *                     }
-     *    )
-     * )
-
-     * @OA\Response(
-     *     response=200,
-     *     description="Zaktualizowany magazyn",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                      "name":"Antwerpia"
-     *
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono magzynu o podanym id"
-     * )
-     *
      */
+    #[OA\Tag(name: "Stock")]
+    #[OA\RequestBody(
+        description: "Magazyn",
+        required: true,
+        content: new OA\JsonContent(
+            example: ["id" => 1, "name" => "Antwerpia"]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Zaktualizowany magazyn",
+        content: new OA\JsonContent(
+            example: ["id" => 1, "name" => "Antwerpia"]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono magzynu o podanym id"
+    )]
     #[Route('/stock', name: 'app_stock_edit', methods: ['PUT'])]
     public function edit(StockRepository $stockRepository, Request $request) {
         /* Żadanie dodania nowego kryterium przyjmuje tylko tłumaczenia nazw dla danego kryterium */
@@ -142,17 +104,16 @@ class StockController extends AbstractController
 
     /**
      * Usuwa magazyn
-     *
-     * @OA\Tag(name="Stock")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono magazynu o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Stock")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono magazynu o podanym id"
+    )]
     #[Route('/stock/{id}', name: 'app_stock_delete', methods: ["DELETE"])]
     public function delete(ManagerRegistry $doctrine, StockRepository $stockRepository, string $id): JsonResponse
     {
