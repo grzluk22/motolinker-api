@@ -9,7 +9,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ..:/var/www/html
+      - ..:/var/www/html:z
       - composer_cache:/tmp/composer
     depends_on:
       db:
