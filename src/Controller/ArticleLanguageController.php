@@ -11,6 +11,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\ArticleLanguageCreateRequest;
+use App\HttpRequestModel\ArticleLanguageUpdateRequest;
+use App\HttpResponseModel\MessageResponse;
 
 class ArticleLanguageController extends AbstractController
 {
@@ -20,7 +24,11 @@ class ArticleLanguageController extends AbstractController
     #[OA\Tag(name: "ArticleLanguage")]
     #[OA\Response(
         response: 200,
-        description: "Lista tłumaczeń artykułu"
+        description: "Lista tłumaczeń artykułu",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: ArticleLanguage::class))
+        )
     )]
     #[OA\Response(
         response: 404,
@@ -117,16 +125,12 @@ class ArticleLanguageController extends AbstractController
     #[OA\Tag(name: "ArticleLanguage")]
     #[OA\RequestBody(
         required: true,
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: "name", type: "string", example: "Nowa nazwa produktu"),
-                new OA\Property(property: "description", type: "string", example: "Nowy opis produktu")
-            ]
-        )
+        content: new Model(type: ArticleLanguageUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
-        description: "Zaktualizowano tłumaczenie"
+        description: "Zaktualizowano tłumaczenie",
+        content: new Model(type: ArticleLanguage::class)
     )]
     #[OA\Response(
         response: 404,
@@ -164,7 +168,8 @@ class ArticleLanguageController extends AbstractController
     #[OA\Tag(name: "ArticleLanguage")]
     #[OA\Response(
         response: 200,
-        description: "Usunięto"
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,

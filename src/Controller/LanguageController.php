@@ -15,6 +15,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\LanguageCreateRequest;
+use App\HttpRequestModel\LanguageUpdateRequest;
+use App\HttpResponseModel\LanguageResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class LanguageController extends AbstractController
 {
@@ -26,7 +31,8 @@ class LanguageController extends AbstractController
         response: 200,
         description: "Lista języków",
         content: new OA\JsonContent(
-            example: ["id" => 1, "name" => "Polski", "isoCode" => "pl-PL"]
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Language::class))
         )
     )]
     #[OA\Response(
@@ -47,7 +53,8 @@ class LanguageController extends AbstractController
     #[OA\Tag(name: "Language")]
     #[OA\Response(
         response: 200,
-        description: "Usunięto"
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -73,18 +80,14 @@ class LanguageController extends AbstractController
      */
     #[OA\Tag(name: "Language")]
     #[OA\RequestBody(
-        description: "Artykuł",
+        description: "Język",
         required: true,
-        content: new OA\JsonContent(
-            example: ["id" => "1", "name" => "Polski", "isoCode" => "pl-PL"]
-        )
+        content: new Model(type: LanguageUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Zaktualizowany język",
-        content: new OA\JsonContent(
-            example: ["id" => "1", "name" => "Polski", "isoCode" => "pl-PL"]
-        )
+        content: new Model(type: LanguageResponse::class)
     )]
     #[OA\Response(
         response: 400,
@@ -126,16 +129,12 @@ class LanguageController extends AbstractController
     #[OA\RequestBody(
         description: "Język",
         required: true,
-        content: new OA\JsonContent(
-            example: ["name" => "Polski", "isoCode" => "pl-PL"]
-        )
+        content: new Model(type: LanguageCreateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Dodany język",
-        content: new OA\JsonContent(
-            example: ["id" => "1", "name" => "Polski", "isoCode" => "pl-PL"]
-        )
+        content: new Model(type: LanguageResponse::class)
     )]
     #[OA\Response(
         response: 400,

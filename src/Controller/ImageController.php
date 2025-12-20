@@ -14,6 +14,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\ImageUpdateRequest;
+use App\HttpRequestModel\ImageReorderRequest;
+use App\HttpResponseModel\ImageResponse;
+use App\HttpResponseModel\ImageSetMainResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class ImageController extends AbstractController
 {
@@ -26,19 +32,7 @@ class ImageController extends AbstractController
         description: "Lista obrazków dla danego produktu",
         content: new OA\JsonContent(
             type: "array",
-            items: new OA\Items(
-                properties: [
-                    new OA\Property(property: "id", type: "integer", example: 1),
-                    new OA\Property(property: "id_article", type: "integer", example: 1),
-                    new OA\Property(property: "position", type: "integer", example: 1),
-                    new OA\Property(property: "url", type: "string", example: "/uploads/articles/1/abc123.jpg"),
-                    new OA\Property(property: "thumbnail_url", type: "string", example: "/uploads/articles/1/thumbnails/abc123.jpg"),
-                    new OA\Property(property: "is_main", type: "boolean", example: true),
-                    new OA\Property(property: "width", type: "integer", example: 1920),
-                    new OA\Property(property: "height", type: "integer", example: 1080),
-                    new OA\Property(property: "file_size", type: "integer", example: 524288)
-                ]
-            )
+            items: new OA\Items(ref: new Model(type: ImageResponse::class))
         )
     )]
     #[Route('/article/{id_article}/images', name: 'app_article_image_get', methods: ['GET'])]
@@ -103,15 +97,7 @@ class ImageController extends AbstractController
     #[OA\Response(
         response: 201,
         description: "Dodany obrazek artykułu",
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: "id", type: "integer", example: 1),
-                new OA\Property(property: "id_article", type: "integer", example: 1),
-                new OA\Property(property: "position", type: "integer", example: 1),
-                new OA\Property(property: "url", type: "string", example: "/uploads/articles/1/abc123.jpg"),
-                new OA\Property(property: "thumbnail_url", type: "string", example: "/uploads/articles/1/thumbnails/abc123.jpg")
-            ]
-        )
+        content: new Model(type: ImageResponse::class)
     )]
     #[OA\Response(
         response: 400,
@@ -196,11 +182,7 @@ class ImageController extends AbstractController
     #[OA\Response(
         response: 200,
         description: "Usunięto",
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: "message", type: "string", example: "Usunięto")
-            ]
-        )
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -316,12 +298,7 @@ class ImageController extends AbstractController
     #[OA\Response(
         response: 200,
         description: "Zdjęcie ustawione jako główne",
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: "id", type: "integer", example: 1),
-                new OA\Property(property: "is_main", type: "boolean", example: true)
-            ]
-        )
+        content: new Model(type: ImageSetMainResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -368,12 +345,7 @@ class ImageController extends AbstractController
     #[OA\Tag(name: "ArticleImage")]
     #[OA\RequestBody(
         required: true,
-        content: new OA\JsonContent(
-            type: "object",
-            properties: [
-                new OA\Property(property: "position", type: "integer", example: 2)
-            ]
-        )
+        content: new Model(type: ImageUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,

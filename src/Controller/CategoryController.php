@@ -15,6 +15,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\CategoryCreateRequest;
+use App\HttpRequestModel\CategoryUpdateRequest;
+use App\HttpResponseModel\CategoryResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class CategoryController extends AbstractController
 {
@@ -26,17 +31,8 @@ class CategoryController extends AbstractController
         response: 200,
         description: "Lista kategorii",
         content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "id_parent" => 1,
-                "translations" => [
-                    "id" => 5,
-                    "id_category" => 3,
-                    "id_language" => 1,
-                    "name" => "Układ Hamulcowy 2",
-                    "description" => "Części układu hamulcowego"
-                ]
-            ]
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: CategoryResponse::class))
         )
     )]
     #[OA\Response(
@@ -66,37 +62,12 @@ class CategoryController extends AbstractController
     #[OA\RequestBody(
         description: "Kategoria",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "id_parent" => 1,
-                "translations" => [
-                    [
-                        "id_language" => 1,
-                        "name" => "Układ Hamulcowy 2",
-                        "description" => "Części układu hamulcowego"
-                    ]
-                ]
-            ]
-        )
+        content: new Model(type: CategoryCreateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Dodana kategoria",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "id_parent" => 1,
-                "translations" => [
-                    [
-                        "id" => 5,
-                        "id_category" => 3,
-                        "id_language" => 1,
-                        "name" => "Układ Hamulcowy 2",
-                        "description" => "Części układu hamulcowego"
-                    ]
-                ]
-            ]
-        )
+        content: new Model(type: CategoryResponse::class)
     )]
     #[OA\Response(
         response: 400,
@@ -134,7 +105,8 @@ class CategoryController extends AbstractController
     #[OA\Tag(name: "Category")]
     #[OA\Response(
         response: 200,
-        description: "Usunięto"
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -170,40 +142,12 @@ class CategoryController extends AbstractController
     #[OA\RequestBody(
         description: "Kategoria",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "id_parent" => 1,
-                "translations" => [
-                    [
-                        "id" => 5,
-                        "id_category" => 3,
-                        "id_language" => 1,
-                        "name" => "Układ Hamulcowy 2",
-                        "description" => "Części układu hamulcowego"
-                    ]
-                ]
-            ]
-        )
+        content: new Model(type: CategoryUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Zaktualizowana kategoria",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "id_parent" => 1,
-                "translations" => [
-                    [
-                        "id" => 5,
-                        "id_category" => 3,
-                        "id_language" => 1,
-                        "name" => "Układ Hamulcowy 2",
-                        "description" => "Części układu hamulcowego"
-                    ]
-                ]
-            ]
-        )
+        content: new Model(type: CategoryResponse::class)
     )]
     #[OA\Response(
         response: 404,

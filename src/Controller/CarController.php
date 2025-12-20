@@ -10,6 +10,13 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\CarSearchRequest;
+use App\HttpRequestModel\CarCreateRequest;
+use App\HttpRequestModel\CarUpdateRequest;
+use App\HttpRequestModel\CarSearchExtendedRequest;
+use App\HttpResponseModel\CarListResponse;
+use App\HttpResponseModel\CarDeleteResponse;
 
 class CarController extends AbstractController
 {
@@ -21,53 +28,14 @@ class CarController extends AbstractController
     #[OA\RequestBody(
         description: "Parametry samochodu do wyszukania",
         required: false,
-        content: new OA\JsonContent(
-            example: [
-                "manufacturer" => "Opel",
-                "model" => "Vectra",
-                "type" => "C",
-                "model_from" => "2002-09",
-                "model_to" => "2004-5",
-                "body_type" => "Sedan",
-                "drive_type" => "FWD",
-                "displacement_liters" => "1655",
-                "displacement_cmm" => "1655",
-                "fuel_type" => "Gas",
-                "kw" => "90",
-                "hp" => "120",
-                "cylinders" => 4,
-                "valves" => "8",
-                "engine_type" => "V2",
-                "engine_codes" => "KWA456",
-                "kba" => "45689722"
-            ]
-        )
+        content: new Model(type: CarSearchRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Lista znalezionych samochodów pasujących do danego kryterium",
         content: new OA\JsonContent(
-            example: [
-                [
-                    "manufacturer" => "Opel",
-                    "model" => "Vectra",
-                    "type" => "C",
-                    "model_from" => "2002-09",
-                    "model_to" => "2004-5",
-                    "body_type" => "Sedan",
-                    "drive_type" => "FWD",
-                    "displacement_liters" => "1655",
-                    "displacement_cmm" => "1655",
-                    "fuel_type" => "Gas",
-                    "kw" => "90",
-                    "hp" => "120",
-                    "cylinders" => 4,
-                    "valves" => "8",
-                    "engine_type" => "V2",
-                    "engine_codes" => "KWA456",
-                    "kba" => "45689722"
-                ]
-            ]
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Car::class))
         )
     )]
     #[Route('/car/get', name: 'app_car_get', methods: ["POST"])]
@@ -97,53 +65,12 @@ class CarController extends AbstractController
     #[OA\RequestBody(
         description: "Właściwości samochodu",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "manufacturer" => "Opel",
-                "model" => "Vectra",
-                "type" => "C",
-                "model_from" => "2002-09",
-                "model_to" => "2004-5",
-                "body_type" => "Sedan",
-                "drive_type" => "FWD",
-                "displacement_liters" => "1655",
-                "displacement_cmm" => "1655",
-                "fuel_type" => "Gas",
-                "kw" => "90",
-                "hp" => "120",
-                "cylinders" => 4,
-                "valves" => "8",
-                "engine_type" => "V2",
-                "engine_codes" => "KWA456",
-                "kba" => "45689722"
-            ]
-        )
+        content: new Model(type: CarCreateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Stworzony samochód",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "manufacturer" => "Opel",
-                "model" => "Vectra",
-                "type" => "C",
-                "model_from" => "2002-09",
-                "model_to" => "2004-5",
-                "body_type" => "Sedan",
-                "drive_type" => "FWD",
-                "displacement_liters" => "1655",
-                "displacement_cmm" => "1655",
-                "fuel_type" => "Gas",
-                "kw" => "90",
-                "hp" => "120",
-                "cylinders" => 4,
-                "valves" => "8",
-                "engine_type" => "V2",
-                "engine_codes" => "KWA456",
-                "kba" => "45689722"
-            ]
-        )
+        content: new Model(type: Car::class)
     )]
     #[OA\Response(
         response: 400,
@@ -187,54 +114,12 @@ class CarController extends AbstractController
     #[OA\RequestBody(
         description: "Właściwości samochodu",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "manufacturer" => "Opel",
-                "model" => "Vectra",
-                "type" => "C",
-                "model_from" => "2002-09",
-                "model_to" => "2004-5",
-                "body_type" => "Sedan",
-                "drive_type" => "FWD",
-                "displacement_liters" => "1655",
-                "displacement_cmm" => "1655",
-                "fuel_type" => "Gas",
-                "kw" => "90",
-                "hp" => "120",
-                "cylinders" => 4,
-                "valves" => "8",
-                "engine_type" => "V2",
-                "engine_codes" => "KWA456",
-                "kba" => "45689722"
-            ]
-        )
+        content: new Model(type: CarUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
-        description: "Stworzony samochód",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "manufacturer" => "Opel",
-                "model" => "Vectra",
-                "type" => "C",
-                "model_from" => "2002-09",
-                "model_to" => "2004-5",
-                "body_type" => "Sedan",
-                "drive_type" => "FWD",
-                "displacement_liters" => "1655",
-                "displacement_cmm" => "1655",
-                "fuel_type" => "Gas",
-                "kw" => "90",
-                "hp" => "120",
-                "cylinders" => 4,
-                "valves" => "8",
-                "engine_type" => "V2",
-                "engine_codes" => "KWA456",
-                "kba" => "45689722"
-            ]
-        )
+        description: "Zaktualizowany samochód",
+        content: new Model(type: Car::class)
     )]
     #[OA\Response(
         response: 404,
@@ -277,28 +162,7 @@ class CarController extends AbstractController
     #[OA\Response(
         response: 200,
         description: "Usunięty samochód",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "manufacturer" => "Opel",
-                "model" => "Vectra",
-                "type" => "C",
-                "model_from" => "2002-09",
-                "model_to" => "2004-5",
-                "body_type" => "Sedan",
-                "drive_type" => "FWD",
-                "displacement_liters" => "1655",
-                "displacement_cmm" => "1655",
-                "fuel_type" => "Gas",
-                "kw" => "90",
-                "hp" => "120",
-                "cylinders" => 4,
-                "valves" => "8",
-                "engine_type" => "V2",
-                "engine_codes" => "KWA456",
-                "kba" => "45689722"
-            ]
-        )
+        content: new Model(type: CarDeleteResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -328,27 +192,8 @@ class CarController extends AbstractController
         response: 200,
         description: "Lista znalezionych samochodów pasujących do danego ciągu txt",
         content: new OA\JsonContent(
-            example: [
-                [
-                    "manufacturer" => "Opel",
-                    "model" => "Vectra",
-                    "type" => "C",
-                    "model_from" => "2002-09",
-                    "model_to" => "2004-5",
-                    "body_type" => "Sedan",
-                    "drive_type" => "FWD",
-                    "displacement_liters" => "1655",
-                    "displacement_cmm" => "1655",
-                    "fuel_type" => "Gas",
-                    "kw" => "90",
-                    "hp" => "120",
-                    "cylinders" => 4,
-                    "valves" => "8",
-                    "engine_type" => "V2",
-                    "engine_codes" => "KWA456",
-                    "kba" => "45689722"
-                ]
-            ]
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Car::class))
         )
     )]
     #[OA\Response(
@@ -371,64 +216,12 @@ class CarController extends AbstractController
     #[OA\RequestBody(
         description: "Filtry do wyszukiwania samochodów",
         required: false,
-        content: new OA\JsonContent(
-            example: [
-                "criteria" => [
-                    "manufacturer" => "Opel",
-                    "model" => "Vectra",
-                    "type" => "C",
-                    "model_from" => "2002-09",
-                    "model_to" => "2004-5",
-                    "body_type" => "Sedan",
-                    "drive_type" => "FWD",
-                    "displacement_liters" => "1655",
-                    "displacement_cmm" => "1655",
-                    "fuel_type" => "Gas",
-                    "kw" => "90",
-                    "hp" => "120",
-                    "cylinders" => 4,
-                    "valves" => "8",
-                    "engine_type" => "V2",
-                    "engine_codes" => "KWA456",
-                    "kba" => "45689722",
-                    "searchLike" => true
-                ],
-                "orderBy" => ["id" => "DESC"],
-                "limit" => 20,
-                "offset" => 0
-            ]
-        )
+        content: new Model(type: CarSearchExtendedRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Lista znalezionych samochodów pasujących do filtrów",
-        content: new OA\JsonContent(
-            example: [
-                "data" => [
-                    [
-                        "id" => 1,
-                        "manufacturer" => "Opel",
-                        "model" => "Vectra",
-                        "type" => "C",
-                        "model_from" => "2002-09",
-                        "model_to" => "2004-5",
-                        "body_type" => "Sedan",
-                        "drive_type" => "FWD",
-                        "displacement_liters" => "1655",
-                        "displacement_cmm" => "1655",
-                        "fuel_type" => "Gas",
-                        "kw" => "90",
-                        "hp" => "120",
-                        "cylinders" => 4,
-                        "valves" => "8",
-                        "engine_type" => "V2",
-                        "engine_codes" => "KWA456",
-                        "kba" => "45689722"
-                    ]
-                ],
-                "total" => 1
-            ]
-        )
+        content: new Model(type: CarListResponse::class)
     )]
     #[OA\Response(
         response: 404,

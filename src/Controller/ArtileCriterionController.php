@@ -18,6 +18,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\ArticleCriterionCreateRequest;
+use App\HttpRequestModel\ArticleCriterionUpdateRequest;
+use App\HttpResponseModel\ArticleCriterionResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class ArtileCriterionController extends AbstractController
 {
@@ -29,21 +34,8 @@ class ArtileCriterionController extends AbstractController
         response: 200,
         description: "Lista kryteriow",
         content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "id_article" => 26,
-                "id_crterion" => 2,
-                "value" => "F",
-                "value_description" => "Front",
-                "translations" => [
-                    [
-                        "id" => 1,
-                        "id_article_criterion" => 1,
-                        "id_language" => 1,
-                        "value_description" => "Przód"
-                    ]
-                ]
-            ]
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: ArticleCriterionResponse::class))
         )
     )]
     #[OA\Response(
@@ -66,28 +58,14 @@ class ArtileCriterionController extends AbstractController
      */
     #[OA\Tag(name: "Article")]
     #[OA\RequestBody(
-        description: "Kategoria",
+        description: "Kryterium artykułu",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "id_article" => 6,
-                "id_criterion" => 1,
-                "value" => "P",
-                "value_description" => "Przód"
-            ]
-        )
+        content: new Model(type: ArticleCriterionCreateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Dodane kryterium do artykułu",
-        content: new OA\JsonContent(
-            example: [
-                "id_article" => 6,
-                "id_criterion" => 1,
-                "value" => "P",
-                "value_description" => "Przód"
-            ]
-        )
+        content: new Model(type: ArticleCriterionResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -134,30 +112,14 @@ class ArtileCriterionController extends AbstractController
      */
     #[OA\Tag(name: "Article")]
     #[OA\RequestBody(
-        description: "Kategoria",
+        description: "Kryterium artykułu",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "id_article" => 6,
-                "id_criterion" => 1,
-                "value" => "P",
-                "value_description" => "Przód"
-            ]
-        )
+        content: new Model(type: ArticleCriterionUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
-        description: "Dodane kryterium do artykułu",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "id_article" => 6,
-                "id_criterion" => 1,
-                "value" => "P",
-                "value_description" => "Przód"
-            ]
-        )
+        description: "Zaktualizowane kryterium artykułu",
+        content: new Model(type: ArticleCriterionResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -206,7 +168,8 @@ class ArtileCriterionController extends AbstractController
     #[OA\Tag(name: "Article")]
     #[OA\Response(
         response: 200,
-        description: "Usunięto"
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,

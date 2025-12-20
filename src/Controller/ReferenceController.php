@@ -10,6 +10,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\ReferenceCreateRequest;
+use App\HttpRequestModel\ReferenceUpdateRequest;
+use App\HttpResponseModel\ReferenceResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class ReferenceController extends AbstractController
 {
@@ -23,7 +28,8 @@ class ReferenceController extends AbstractController
         response: 200,
         description: "Lista numerów referencyjnych",
         content: new OA\JsonContent(
-            example: ["id" => 1, "id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Reference::class))
         )
     )]
     #[Route('/reference/{id_article}', name: 'app_article_reference_get', methods: ["GET"])]
@@ -42,16 +48,12 @@ class ReferenceController extends AbstractController
     #[OA\RequestBody(
         description: "Parametry reference",
         required: true,
-        content: new OA\JsonContent(
-            example: ["id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
-        )
+        content: new Model(type: ReferenceCreateRequest::class)
     )]
     #[OA\Response(
         response: 200,
-        description: "Lista numerów referencyjnych",
-        content: new OA\JsonContent(
-            example: ["id" => 1, "id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
-        )
+        description: "Dodany numer referencyjny",
+        content: new Model(type: Reference::class)
     )]
     #[OA\Response(
         response: 404,
@@ -80,16 +82,12 @@ class ReferenceController extends AbstractController
     #[OA\RequestBody(
         description: "Parametry reference",
         required: true,
-        content: new OA\JsonContent(
-            example: ["id" => 1, "id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
-        )
+        content: new Model(type: ReferenceUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
-        description: "Lista numerów referencyjnych",
-        content: new OA\JsonContent(
-            example: ["id" => 1, "id_article" => 26, "type" => 2, "brand" => "BREMBO", "number" => "B156O1"]
-        )
+        description: "Zaktualizowany numer referencyjny",
+        content: new Model(type: Reference::class)
     )]
     #[OA\Response(
         response: 404,
@@ -118,7 +116,8 @@ class ReferenceController extends AbstractController
     #[OA\Tag(name: "Reference")]
     #[OA\Response(
         response: 200,
-        description: "Usunieto"
+        description: "Usunieto",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,

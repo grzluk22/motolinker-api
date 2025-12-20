@@ -18,8 +18,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use function Symfony\Config\toArray;
 use OpenApi\Attributes as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Attribute\Model;
 use App\Entity\Language;
+use App\HttpRequestModel\ArticleGetByRequest;
+use App\HttpRequestModel\ArticleCreateRequest;
+use App\HttpRequestModel\ArticleUpdateRequest;
+use App\HttpResponseModel\ArticleListResponse;
+use App\HttpResponseModel\ArticleDetailResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class ArticleController extends AbstractController
 {
@@ -30,23 +36,7 @@ class ArticleController extends AbstractController
     #[OA\Response(
         response: 200,
         description: "Lista artykułów",
-        content: new OA\JsonContent(
-            example: [
-                "data" => [
-                    [
-                        "id" => 1,
-                        "code" => "36790-SET-MS",
-                        "ean13" => "1234567890123",
-                        "ean13_list" => ["1234567890123", "5901234123457"],
-                        "price" => 367.99,
-                        "name" => "Zestaw zawieszenia",
-                        "description" => "Zawieszenie do Audi A3",
-                        "id_category" => 0
-                    ]
-                ],
-                "total" => 1
-            ]
-        )
+        content: new Model(type: ArticleListResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -96,44 +86,12 @@ class ArticleController extends AbstractController
     #[OA\RequestBody(
         description: "Filtry",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "criteria" => [
-                    "code" => "36790-SET-MS",
-                    "ean13" => "1234567890123",
-                    "price" => 367.99,
-                    "id_category" => 0,
-                    "name" => "Zestaw zawieszenia",
-                    "description" => "Zawieszenie do Audi A5 b6",
-                    "searchLike" => true,
-                    "image" => true
-                ],
-                "orderBy" => ["id" => "DESC"],
-                "limit" => 20,
-                "offset" => 40
-            ]
-        )
+        content: new Model(type: ArticleGetByRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Lista artykułów",
-        content: new OA\JsonContent(
-            example: [
-                "data" => [
-                    [
-                        "id" => 1,
-                        "code" => "36790-SET-MS",
-                        "ean13" => "1234567890123",
-                        "ean13_list" => ["1234567890123", "5901234123457"],
-                        "price" => 367.99,
-                        "id_category" => 0,
-                        "name" => "Zestaw zawieszenia",
-                        "description" => "Zawieszenie do Audi A5 b6"
-                    ]
-                ],
-                "total" => 1
-            ]
-        )
+        content: new Model(type: ArticleListResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -198,35 +156,8 @@ class ArticleController extends AbstractController
     #[OA\Tag(name: "Article")]
     #[OA\Response(
         response: 200,
-        description: "Lista artykułów",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "code" => "36790-SET-MS",
-                "ean13" => "1234567890123",
-                "ean13_list" => ["1234567890123", "5901234123457"],
-                "price" => 367.99,
-                "id_category" => 0,
-                "name" => "Zestaw zawieszenia",
-                "description" => "Zawieszenie do Audi A3",
-                "translations" => [
-                    [
-                        "id" => 1,
-                        "id_article" => 1,
-                        "id_language" => 1,
-                        "name" => "PL nazwa",
-                        "description" => "PL opis"
-                    ],
-                    [
-                        "id" => 2,
-                        "id_article" => 1,
-                        "id_language" => 2,
-                        "name" => "EN name",
-                        "description" => "EN description"
-                    ]
-                ]
-            ]
-        )
+        description: "Szczegóły artykułu",
+        content: new Model(type: ArticleDetailResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -250,41 +181,12 @@ class ArticleController extends AbstractController
     #[OA\RequestBody(
         description: "Artykuł",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "code" => "36790-SET-MS",
-                "ean13" => "1234567890123",
-                "ean13_list" => ["1234567890123", "5901234123457"],
-                "price" => 367.99,
-                "id_category" => 0,
-                "name" => "Article name",
-                "description" => "Article description",
-                "translations" => [
-                    ["id_language" => 1, "name" => "PL nazwa", "description" => "PL opis"],
-                    ["id_language" => 2, "name" => "EN name", "description" => "EN description"]
-                ]
-            ]
-        )
+        content: new Model(type: ArticleCreateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Stworzony artykuł",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "code" => "36790-SET-MS",
-                "ean13" => "1234567890123",
-                "ean13_list" => ["1234567890123", "5901234123457"],
-                "price" => 367.99,
-                "id_category" => 0,
-                "name" => "Article name",
-                "description" => "Article description",
-                "translations" => [
-                    ["id" => 1, "id_article" => 1, "id_language" => 1, "name" => "PL nazwa", "description" => "PL opis"],
-                    ["id" => 2, "id_article" => 1, "id_language" => 2, "name" => "EN name", "description" => "EN description"]
-                ]
-            ]
-        )
+        content: new Model(type: ArticleDetailResponse::class)
     )]
     #[OA\Response(
         response: 400,
@@ -381,42 +283,12 @@ class ArticleController extends AbstractController
     #[OA\RequestBody(
         description: "Artykuł",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "code" => "36790-SET-MS",
-                "ean13" => "1234567890123",
-                "ean13_list" => ["1234567890123", "5901234123457"],
-                "price" => 367.99,
-                "id_category" => 0,
-                "name" => "Article name",
-                "description" => "Article description",
-                "translations" => [
-                    ["id" => 10, "id_language" => 1, "name" => "PL nazwa", "description" => "PL opis"],
-                    ["id" => 11, "id_language" => 2, "name" => "EN name", "description" => "EN description"]
-                ]
-            ]
-        )
+        content: new Model(type: ArticleUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Zaktualizowany artykuł",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "code" => "36790-SET-MS",
-                "ean13" => "1234567890123",
-                "ean13_list" => ["1234567890123", "5901234123457"],
-                "price" => 367.99,
-                "id_category" => 0,
-                "name" => "Article name",
-                "description" => "Article description",
-                "translations" => [
-                    ["id" => 10, "id_article" => 1, "id_language" => 1, "name" => "PL nazwa", "description" => "PL opis"],
-                    ["id" => 11, "id_article" => 1, "id_language" => 2, "name" => "EN name", "description" => "EN description"]
-                ]
-            ]
-        )
+        content: new Model(type: ArticleDetailResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -513,9 +385,7 @@ class ArticleController extends AbstractController
     #[OA\Response(
         response: 200,
         description: "Usunięto",
-        content: new OA\JsonContent(
-            example: ["message" => "Usunięto"]
-        )
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,

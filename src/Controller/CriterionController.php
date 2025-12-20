@@ -20,6 +20,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\CriterionCreateRequest;
+use App\HttpRequestModel\CriterionUpdateRequest;
+use App\HttpResponseModel\CriterionResponse;
+use App\HttpResponseModel\MessageResponse;
 use function Symfony\Component\Cache\Traits\object;
 
 class CriterionController extends AbstractController
@@ -32,17 +37,8 @@ class CriterionController extends AbstractController
         response: 200,
         description: "Lista kryteriów",
         content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "translations" => [
-                    [
-                        "id" => 3,
-                        "id_criterion" => 1,
-                        "id_language" => 6,
-                        "name" => "Strona mocowania"
-                    ]
-                ]
-            ]
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: CriterionResponse::class))
         )
     )]
     #[OA\Response(
@@ -70,33 +66,12 @@ class CriterionController extends AbstractController
     #[OA\RequestBody(
         description: "Kryterium",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "translations" => [
-                    [
-                        "id_language" => 6,
-                        "name" => "Strona mocowania"
-                    ]
-                ]
-            ]
-        )
+        content: new Model(type: CriterionCreateRequest::class)
     )]
     #[OA\Response(
         response: 200,
-        description: "Lista kryteriów",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "translations" => [
-                    [
-                        "id" => 3,
-                        "id_criterion" => 1,
-                        "id_language" => 6,
-                        "name" => "Strona mocowania"
-                    ]
-                ]
-            ]
-        )
+        description: "Utworzone kryterium",
+        content: new Model(type: CriterionResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -126,36 +101,12 @@ class CriterionController extends AbstractController
     #[OA\RequestBody(
         description: "Kryterium",
         required: true,
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "translations" => [
-                    [
-                        "id" => 3,
-                        "id_criterion" => 1,
-                        "id_language" => 6,
-                        "name" => "Strona mocowania"
-                    ]
-                ]
-            ]
-        )
+        content: new Model(type: CriterionUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Zaktualizowane kryterium",
-        content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "translations" => [
-                    [
-                        "id" => 3,
-                        "id_criterion" => 1,
-                        "id_language" => 6,
-                        "name" => "Strona mocowania"
-                    ]
-                ]
-            ]
-        )
+        content: new Model(type: CriterionResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -224,7 +175,8 @@ class CriterionController extends AbstractController
     #[OA\Tag(name: "Criterion")]
     #[OA\Response(
         response: 200,
-        description: "Usunięto"
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,

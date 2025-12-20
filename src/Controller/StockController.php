@@ -11,6 +11,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\StockCreateRequest;
+use App\HttpRequestModel\StockUpdateRequest;
+use App\HttpResponseModel\StockResponse;
+use App\HttpResponseModel\MessageResponse;
 use function Symfony\Component\Cache\Traits\object;
 
 class StockController extends AbstractController
@@ -44,16 +49,12 @@ class StockController extends AbstractController
     #[OA\RequestBody(
         description: "Magazyn",
         required: true,
-        content: new OA\JsonContent(
-            example: ["name" => "Antwerpia"]
-        )
+        content: new Model(type: StockCreateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Dodany magazyn",
-        content: new OA\JsonContent(
-            example: ["id" => 1, "name" => "Antwerpia"]
-        )
+        content: new Model(type: StockResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -76,16 +77,12 @@ class StockController extends AbstractController
     #[OA\RequestBody(
         description: "Magazyn",
         required: true,
-        content: new OA\JsonContent(
-            example: ["id" => 1, "name" => "Antwerpia"]
-        )
+        content: new Model(type: StockUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Zaktualizowany magazyn",
-        content: new OA\JsonContent(
-            example: ["id" => 1, "name" => "Antwerpia"]
-        )
+        content: new Model(type: StockResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -108,7 +105,8 @@ class StockController extends AbstractController
     #[OA\Tag(name: "Stock")]
     #[OA\Response(
         response: 200,
-        description: "Usunięto"
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,

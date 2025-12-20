@@ -10,6 +10,9 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Entity\User;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\RegistrationRequest;
+use App\HttpResponseModel\RegistrationResponse;
 
 class RegistrationController extends AbstractController
 {
@@ -20,16 +23,12 @@ class RegistrationController extends AbstractController
     #[OA\RequestBody(
         description: "Login oraz hasło do rejestracji",
         required: true,
-        content: new OA\JsonContent(
-            example: ["username" => "admin@motolinker.local", "password" => "superSecretPassword"]
-        )
+        content: new Model(type: RegistrationRequest::class)
     )]
     #[OA\Response(
         response: 200,
         description: "Zarejestrowano pomyślnie",
-        content: new OA\JsonContent(
-            example: ["message" => "Registered Successfully"]
-        )
+        content: new Model(type: RegistrationResponse::class)
     )]
     #[Route('/register', name: 'app_register', methods: ["POST"])]
     public function index(ManagerRegistry $doctrine, Request $request, UserPasswordHasherInterface $passwordHasher): Response

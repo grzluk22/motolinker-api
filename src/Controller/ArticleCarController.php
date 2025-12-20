@@ -14,8 +14,9 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use function Symfony\Config\toArray;
 use OpenApi\Attributes as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Attribute\Model;
 use App\Entity\Language;
+use App\HttpResponseModel\MessageResponse;
 
 class ArticleCarController extends AbstractController
 {
@@ -26,7 +27,10 @@ class ArticleCarController extends AbstractController
     #[OA\Response(
         response: 200,
         description: "Lista samochodów podpiętych do danego artykułu",
-        content: new OA\JsonContent(example: [])
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: ArticleCar::class))
+        )
     )]
     #[OA\Response(
         response: 404,
@@ -87,7 +91,8 @@ class ArticleCarController extends AbstractController
     #[OA\Tag(name: "ArticleCar")]
     #[OA\Response(
         response: 200,
-        description: "Pomyślnie usunięto"
+        description: "Pomyślnie usunięto",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,

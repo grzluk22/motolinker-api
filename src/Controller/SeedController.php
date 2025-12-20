@@ -22,6 +22,9 @@ use App\Repository\ReferenceRepository;
 use App\Repository\ReferenceTypeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\SeedSampleDataRequest;
+use App\HttpResponseModel\SeedSampleDataResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,16 +42,12 @@ class SeedController extends AbstractController
     )]
     #[OA\RequestBody(
         required: false,
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: "numCars", type: "integer", example: 20, description: "Liczba samochodów do wygenerowania (domyślnie: 20)"),
-                new OA\Property(property: "numArticles", type: "integer", example: 30, description: "Liczba artykułów do wygenerowania (domyślnie: 30)")
-            ]
-        )
+        content: new Model(type: SeedSampleDataRequest::class)
     )]
     #[OA\Response(
         response: 201,
-        description: "Dane zostały dodane"
+        description: "Dane zostały dodane",
+        content: new Model(type: SeedSampleDataResponse::class)
     )]
     #[OA\Response(
         response: 500,

@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\Entity\Article;
+use App\HttpResponseModel\MessageResponse;
 
 class ArticleCategoryController extends AbstractController
 {
@@ -25,22 +28,8 @@ class ArticleCategoryController extends AbstractController
         response: 200,
         description: "Lista artykułów w danej kategorii",
         content: new OA\JsonContent(
-            example: [
-                "id" => 1,
-                "code" => "36790-SET-MS",
-                "ean13" => "1234567890123",
-                "price" => "367.99",
-                "id_category" => 0,
-                "translations" => [
-                    [
-                        "id" => 1,
-                        "id_article" => 1,
-                        "id_language" => 1,
-                        "name" => "New",
-                        "description" => "asd"
-                    ]
-                ]
-            ]
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Article::class))
         )
     )]
     #[OA\Response(
@@ -72,7 +61,8 @@ class ArticleCategoryController extends AbstractController
     #[OA\Tag(name: "Category")]
     #[OA\Response(
         response: 200,
-        description: "Dodano"
+        description: "Dodano",
+        content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,
@@ -137,7 +127,16 @@ class ArticleCategoryController extends AbstractController
     #[OA\Tag(name: "ArticleCategory")]
     #[OA\Response(
         response: 200,
-        description: "Lista kategorii artykułu"
+        description: "Lista kategorii artykułu",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(
+                properties: [
+                    new OA\Property(property: "id", type: "integer", example: 1),
+                    new OA\Property(property: "id_parent", type: "integer", example: 1)
+                ]
+            )
+        )
     )]
     #[OA\Response(
         response: 404,
