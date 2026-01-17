@@ -298,6 +298,25 @@ class CarController extends AbstractController
         $models = $carRepository->getModels($manufacturer);
         return new JsonResponse($models);
     }
+    /**
+     * Zwraca ilość artykułów powiązanych z danym samochodem
+     */
+    #[OA\Tag(name: "Car")]
+    #[OA\Response(
+        response: 200,
+        description: "Liczba artykułów powiązanych z samochodem",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "count", type: "integer", example: 5)
+            ]
+        )
+    )]
+    #[Route('/car/affected-parts/{id}', name: 'app_car_affected_parts', methods: ["GET"])]
+    public function getAffectedPartsCount(int $id, ArticleCarRepository $articleCarRepository): JsonResponse
+    {
+        $count = $articleCarRepository->count(['id_car' => $id]);
+        return new JsonResponse(['count' => $count]);
+    }
 }
 
 
