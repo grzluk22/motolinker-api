@@ -280,6 +280,24 @@ class CarController extends AbstractController
         $manufacturers = $carRepository->getManufacturers();
         return new JsonResponse($manufacturers);
     }
+    /**
+     * Zwraca listę modeli dla danego producenta
+     */
+    #[OA\Tag(name: "Car")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista modeli dla danego producenta",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(type: 'string')
+        )
+    )]
+    #[Route('/car/{manufacturer}/models', name: 'app_car_models', methods: ["GET"])]
+    public function getModels(CarRepository $carRepository, string $manufacturer)
+    {
+        $models = $carRepository->getModels($manufacturer);
+        return new JsonResponse($models);
+    }
 }
 
 
