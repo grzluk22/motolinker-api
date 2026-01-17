@@ -39,7 +39,7 @@ class CarRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
+    //    /**
 //     * @return Car[] Returns an array of Car objects
 //     */
 //    public function findByExampleField($value): array
@@ -54,7 +54,7 @@ class CarRepository extends ServiceEntityRepository
 //        ;
 //    }
 
-//    public function findOneBySomeField($value): ?Car
+    //    public function findOneBySomeField($value): ?Car
 //    {
 //        return $this->createQueryBuilder('c')
 //            ->andWhere('c.exampleField = :val')
@@ -69,7 +69,7 @@ class CarRepository extends ServiceEntityRepository
         /* Metoda wyszukuje samochód na podstawie wprowadzonego tekstu */
         $queryBuilder = $this->createQueryBuilder('c');
         $queryBuilder->andWhere('c.text_value LIKE :text_value')
-            ->setParameter('text_value', '%'.$text_value.'%');
+            ->setParameter('text_value', '%' . $text_value . '%');
 
         return $queryBuilder
             ->setMaxResults(10)
@@ -81,29 +81,31 @@ class CarRepository extends ServiceEntityRepository
     {
         $extendedCriteria = ['searchLike'];
         $searchLike = $criteria['searchLike'] ?? false;
-        
+
         $qb = $this->createQueryBuilder('c');
-        
+
         foreach ($criteria as $key => $value) {
-            if (in_array($key, $extendedCriteria)) continue;
-            if(!$value or $value == "" or $value == -1) continue;
-            
-            if(!$searchLike) {
-                $qb->andWhere('c.'.$key.' = :'.$key);
+            if (in_array($key, $extendedCriteria))
+                continue;
+            if (!$value or $value == "" or $value == -1)
+                continue;
+
+            if (!$searchLike) {
+                $qb->andWhere('c.' . $key . ' = :' . $key);
                 $qb->setParameter($key, $value);
             } else {
-                $qb->andWhere($qb->expr()->like('c.'.$key, ':value'.$key))
+                $qb->andWhere($qb->expr()->like('c.' . $key, ':value' . $key))
                     ->setParameter('value' . $key, '%' . $value . '%');
             }
         }
 
         foreach ($orderBy as $key => $value) {
-            $qb->addOrderBy('c.'.$key, $value);
+            $qb->addOrderBy('c.' . $key, $value);
         }
-        
+
         $qb->setFirstResult($offset)
             ->setMaxResults($limit);
-            
+
         return $qb->getQuery()->getResult();
     }
 
@@ -111,23 +113,45 @@ class CarRepository extends ServiceEntityRepository
     {
         $extendedCriteria = ['searchLike'];
         $searchLike = $criteria['searchLike'] ?? false;
-        
+
         $qb = $this->createQueryBuilder('c')
             ->select('COUNT(DISTINCT c.id)');
-        
+
         foreach ($criteria as $key => $value) {
-            if (in_array($key, $extendedCriteria)) continue;
-            if(!$value or $value == "" or $value == -1) continue;
-            
-            if(!$searchLike) {
-                $qb->andWhere('c.'.$key.' = :'.$key);
+            if (in_array($key, $extendedCriteria))
+                continue;
+            if (!$value or $value == "" or $value == -1)
+                continue;
+
+            if (!$searchLike) {
+                $qb->andWhere('c.' . $key . ' = :' . $key);
                 $qb->setParameter($key, $value);
             } else {
-                $qb->andWhere($qb->expr()->like('c.'.$key, ':value'.$key))
+                $qb->andWhere($qb->expr()->like('c.' . $key, ':value' . $key))
                     ->setParameter('value' . $key, '%' . $value . '%');
             }
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    public function getManufacturers()
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select('DISTINCT c.manufacturer')
+            ->orderBy('c.manufacturer', 'ASC');
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function getModels(string $manufacturer)
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select('DISTINCT c.model')
+            ->where('c.manufacturer = :manufacturer')
+            ->orderBy('c.model', 'ASC')
+            ->setParameter('manufacturer', $manufacturer);
+
+        return $qb->getQuery()->getResult();
     }
 }

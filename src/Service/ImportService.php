@@ -209,12 +209,20 @@ class ImportService
             }
 
             $hash = $car->calculateHash();
+            $car->setHash($hash);
 
             // Find existing Car
             $existingCar = $this->carRepository->findOneBy(['hash' => $hash]);
 
+            if (!$existingCar) {
+                // Create new Car if not found
+                $this->entityManager->persist($car);
+                $this->entityManager->flush(); // Flush to get ID for the new car
+                $existingCar = $car;
+            }
+
+            // Link Article to Car
             if ($existingCar) {
-                // Link Article to Car
                 // Check if link exists
                 $existingLink = $this->entityManager->getRepository(ArticleCar::class)->findOneBy([
                     'id_article' => $article->getId(),
