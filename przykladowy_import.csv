@@ -1,0 +1,5 @@
+code;ean13;price;id_category;name;description;zastosowania
+"ART-DEMO-001";"5901234567890";"123.45";"1";"Przykładowy Artykuł";"Opis artykułu";"manufacturer,model,type,model_from,model_to,body_type,drive_type,displacement_liters,displacement_cmm,fuel_type,kw,hp,cylinders,valves,engine_type,engine_codes,kba,text_value
+Audi,A4,B8,2008,2015,Sedan,FWD,2.0,1984,Petrol,155,211,4,16,TFSI,CDNC,0588/AGW,Audi A4 B8 2.0 TFSI"
+"ART-DEMO-002";"5909876543210";"99.99";"1";"Inny Artykuł";"Opis innego artykułu";"manufacturer,model,type,model_from,model_to,body_type,drive_type,displacement_liters,displacement_cmm,fuel_type,kw,hp,cylinders,valves,engine_type,engine_codes,kba,text_value
+BMW,320,F30,2012,2018,Sedan,RWD,2.0,1995,Diesel,135,184,4,16,dCi,N47,0005/123,BMW 320d F30"

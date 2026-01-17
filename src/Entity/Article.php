@@ -26,7 +26,7 @@ class Article
     public ?float $price = null;
 
     #[ORM\Column]
-    public ?int $id_category = null;
+    public ?int $id_catego1ry = null;
 
     #[ORM\Column(length: 255)]
     public ?string $name = null;
