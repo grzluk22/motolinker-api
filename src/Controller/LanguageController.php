@@ -14,34 +14,31 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\LanguageCreateRequest;
+use App\HttpRequestModel\LanguageUpdateRequest;
+use App\HttpResponseModel\LanguageResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class LanguageController extends AbstractController
 {
     /**
      * Wyświetla liste języków
-     *
-     * @OA\Tag(name="Language")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista języków",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "name": "Polski",
-     *                         "isoCode": "pl-PL"
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Brak języków"
-     * )
-     *
      */
+    #[OA\Tag(name: "Language")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista języków",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Language::class))
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak języków"
+    )]
     #[Route('/language', name: 'app_language_get', methods: ["GET"])]
     public function index(LanguageRepository $languageRepository): JsonResponse
     {
@@ -52,17 +49,17 @@ class LanguageController extends AbstractController
 
     /**
      * Usuwa język
-     *
-     * @OA\Tag(name="Language")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono języka o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Language")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono języka o podanym id"
+    )]
     #[Route('/language/{id}', name: 'app_language_delete', methods: ["DELETE"])]
     public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, string $id): JsonResponse
     {
@@ -80,43 +77,22 @@ class LanguageController extends AbstractController
 
     /**
      * Edytuje język
-     *
-     *
-     *
-     * @OA\Tag(name="Language")
-     * @OA\RequestBody(
-     *     request="LanguageEditRequestBody",
-     *     description="Artykuł",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "id": "1",
-     *                         "name": "Polski",
-     *                         "isoCode": "pl-PL"
-     *                     }
-     *    )
-     * )
-     *
-     * @OA\Response(
-     *     response=200,
-     *     description="Zaktualizowany język",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": "1",
-     *                         "name": "Polski",
-     *                         "isoCode": "pl-PL"
-     *                     }
-     *                 )
-     *
-     *         })
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="Inny język już ma taką nazwę"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Language")]
+    #[OA\RequestBody(
+        description: "Język",
+        required: true,
+        content: new Model(type: LanguageUpdateRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Zaktualizowany język",
+        content: new Model(type: LanguageResponse::class)
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Inny język już ma taką nazwę"
+    )]
     #[Route('/language', name: 'app_language_edit', methods: ["PUT"])]
     public function edit(ManagerRegistry $doctrine, LanguageRepository $languageRepository, Request $request): JsonResponse
     {
@@ -148,42 +124,22 @@ class LanguageController extends AbstractController
 
     /**
      * Tworzy język
-     *
-     *
-     *
-     * @OA\Tag(name="Language")
-     * @OA\RequestBody(
-     *     request="LanguageCreateRequestBody",
-     *     description="Język",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "name": "Polski",
-     *                         "isoCode": "pl-PL"
-     *                     }
-     *    )
-     * )
-     *
-     * @OA\Response(
-     *     response=200,
-     *     description="Dodany język",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": "1",
-     *                         "name": "Polski",
-     *                         "isoCode": "pl-PL"
-     *                     }
-     *                 )
-     *
-     *         })
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="Inny język już ma taką nazwę"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Language")]
+    #[OA\RequestBody(
+        description: "Język",
+        required: true,
+        content: new Model(type: LanguageCreateRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Dodany język",
+        content: new Model(type: LanguageResponse::class)
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Inny język już ma taką nazwę"
+    )]
     #[Route('/language', name: 'app_language_create', methods: ["POST"])]
     public function create(ManagerRegistry $doctrine, LanguageRepository $languageRepository, Request $request): JsonResponse
     {

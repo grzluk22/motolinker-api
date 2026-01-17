@@ -21,7 +21,10 @@ use App\Repository\LanguageRepository;
 use App\Repository\ReferenceRepository;
 use App\Repository\ReferenceTypeRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\SeedSampleDataRequest;
+use App\HttpResponseModel\SeedSampleDataResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,28 +34,25 @@ class SeedController extends AbstractController
 {
     /**
      * Inicjuje bazę danych przykładowymi rekordami.
-     *
-     * @OA\Post(
-     *     path="/seed/sample-data",
-     *     summary="Uzupełnia bazę danymi demonstracyjnymi",
-     *     tags={"Seed"},
-     *     @OA\RequestBody(
-     *         required=false,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="numCars", type="integer", example=20, description="Liczba samochodów do wygenerowania (domyślnie: 20)"),
-     *             @OA\Property(property="numArticles", type="integer", example=30, description="Liczba artykułów do wygenerowania (domyślnie: 30)")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Dane zostały dodane"
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Wystąpił błąd podczas inicjalizacji danych"
-     *     )
-     * )
      */
+    #[OA\Post(
+        path: "/seed/sample-data",
+        summary: "Uzupełnia bazę danymi demonstracyjnymi",
+        tags: ["Seed"]
+    )]
+    #[OA\RequestBody(
+        required: false,
+        content: new Model(type: SeedSampleDataRequest::class)
+    )]
+    #[OA\Response(
+        response: 201,
+        description: "Dane zostały dodane",
+        content: new Model(type: SeedSampleDataResponse::class)
+    )]
+    #[OA\Response(
+        response: 500,
+        description: "Wystąpił błąd podczas inicjalizacji danych"
+    )]
     #[Route('/seed/sample-data', name: 'app_seed_sample_data', methods: ['POST'])]
     public function seedSampleData(
         Request $request,

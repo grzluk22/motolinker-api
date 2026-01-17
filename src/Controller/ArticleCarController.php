@@ -13,34 +13,29 @@ use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use function Symfony\Config\toArray;
-use OpenApi\Annotations as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
 use App\Entity\Language;
+use App\HttpResponseModel\MessageResponse;
 
 class ArticleCarController extends AbstractController
 {
     /**
      * Wyświetla liste samochodów podpiętych do danego artykułu
-     *
-     * @OA\Tag(name="ArticleCar")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista samochodów podpiętych do danego artykułu",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Brak samochodów dla danego artykułów"
-     * )
-     *
      */
+    #[OA\Tag(name: "ArticleCar")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista samochodów podpiętych do danego artykułu",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: ArticleCar::class))
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak samochodów dla danego artykułów"
+    )]
     #[Route('/article/{article_id}/car', name: 'app_article_car_get', methods: ["GET"])]
     public function index(ArticleCarRepository $articleCarRepository, int $article_id): JsonResponse
     {
@@ -51,18 +46,16 @@ class ArticleCarController extends AbstractController
 
     /**
      * Podpina samochód o danym id do artykułu o podanym id
-     *
-     * @OA\Tag(name="ArticleCar")
-     * @OA\Response(
-     *     response=200,
-     *     description="Pomyślnie dodano")
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono samochodu lub artykułu o podanym id"
-     * )
-     *
      */
+    #[OA\Tag(name: "ArticleCar")]
+    #[OA\Response(
+        response: 200,
+        description: "Pomyślnie dodano"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono samochodu lub artykułu o podanym id"
+    )]
     #[Route('/article/{article_id}/car/{car_id}', name: 'app_article_car_post', methods: ["POST"])]
     public function post(ArticleRepository $articleRepository, CarRepository $carRepository, ArticleCarRepository $articleCarRepository, int $article_id, int $car_id): JsonResponse
     {
@@ -94,18 +87,17 @@ class ArticleCarController extends AbstractController
 
     /**
      * Odpina samochód o danym id od artykułu o podanym id
-     *
-     * @OA\Tag(name="ArticleCar")
-     * @OA\Response(
-     *     response=200,
-     *     description="Pomyślnie usunięto")
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono samochodu lub artykułu o podanym id"
-     * )
-     *
      */
+    #[OA\Tag(name: "ArticleCar")]
+    #[OA\Response(
+        response: 200,
+        description: "Pomyślnie usunięto",
+        content: new Model(type: MessageResponse::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono samochodu lub artykułu o podanym id"
+    )]
     #[Route('/article/{article_id}/car/{car_id}', name: 'app_article_car_delete', methods: ["DELETE"])]
     public function delete(ArticleCarRepository $articleCarRepository, int $article_id, int $car_id): JsonResponse
     {

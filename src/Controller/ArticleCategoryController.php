@@ -13,43 +13,29 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\Entity\Article;
+use App\HttpResponseModel\MessageResponse;
 
 class ArticleCategoryController extends AbstractController
 {
     /**
      * Wyświetla liste artykułów dla danej kategorii
-     *
-     * @OA\Tag(name="Category")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista artykułów w danej kategorii",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "code": "36790-SET-MS",
-     *                         "ean13": "1234567890123",
-     *                         "price": "367.99",
-     *                         "id_category": 0,
-     *                              "translations": {
-     *                               "id": 1,
-     *                               "id_article": 1,
-     *                               "id_language": 1,
-     *                               "name": "New",
-     *                               "description": "asd"
-     *                          }
-     *                     }
-     *             )
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Brak artykułów"
-     * )
-     *
      */
+    #[OA\Tag(name: "Category")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista artykułów w danej kategorii",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Article::class))
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak artykułów"
+    )]
     #[Route('/category/{id_category}/articles', name: 'app_category_articles', methods: ['GET'])]
     public function index(ArticleCategoryRepository $articleCategoryRepository,ArticleLanguageRepository $articleLanguageRepository, ArticleRepository $articleRepository, int $id_category): JsonResponse
     {
@@ -71,22 +57,21 @@ class ArticleCategoryController extends AbstractController
 
     /**
      * Dodaje artykuł do kategorii
-     *
-     * @OA\Tag(name="Category")
-     * @OA\Response(
-     *     response=200,
-     *     description="Dodano"
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu/kategorii o podanym id"
-     * )
-     * * @OA\Response(
-     *     response=400,
-     *     description="Artykuł już przypisany do tej kategorii"
-     * )
-     *
      */
+    #[OA\Tag(name: "Category")]
+    #[OA\Response(
+        response: 200,
+        description: "Dodano",
+        content: new Model(type: MessageResponse::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu/kategorii o podanym id"
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Artykuł już przypisany do tej kategorii"
+    )]
     #[Route('/category/{id_category}/article/{id_article}', name: 'app_category_article_delete_add', methods: ['POST'])]
     public function add(ManagerRegistry $managerRegistry, CategoryRepository $categoryRepository, ArticleCategoryRepository $articleCategoryRepository, ArticleRepository $articleRepository, int $id_category, int $id_article): JsonResponse
     {
@@ -111,18 +96,16 @@ class ArticleCategoryController extends AbstractController
 
     /**
      * Usuwa artykuł z kategorii
-     *
-     * @OA\Tag(name="Category")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunieto"
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu/kategorii o podanym id"
-     * )
-     *
      */
+    #[OA\Tag(name: "Category")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunieto"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu/kategorii o podanym id"
+    )]
     #[Route('/category/{id_category}/article/{id_article}', name: 'app_category_article_delete', methods: ['DELETE'])]
     public function delete(ManagerRegistry $managerRegistry, CategoryRepository $categoryRepository, ArticleCategoryRepository $articleCategoryRepository, ArticleRepository $articleRepository, int $id_category, int $id_article): JsonResponse
     {
@@ -140,17 +123,25 @@ class ArticleCategoryController extends AbstractController
 
     /**
      * Zwraca listę kategorii przypisanych do artykułu.
-     *
-     * @OA\Tag(name="ArticleCategory")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista kategorii artykułu"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono artykułu o podanym id"
-     * )
      */
+    #[OA\Tag(name: "ArticleCategory")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista kategorii artykułu",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(
+                properties: [
+                    new OA\Property(property: "id", type: "integer", example: 1),
+                    new OA\Property(property: "id_parent", type: "integer", example: 1)
+                ]
+            )
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono artykułu o podanym id"
+    )]
     #[Route('/article/{id}/category', name: 'app_article_categories_list', methods: ['GET'])]
     public function getArticleCategories(
         int $id,

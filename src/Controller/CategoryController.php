@@ -14,43 +14,31 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\CategoryCreateRequest;
+use App\HttpRequestModel\CategoryUpdateRequest;
+use App\HttpResponseModel\CategoryResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class CategoryController extends AbstractController
 {
     /**
      * Wyświetla liste kategorii
-     *
-     * @OA\Tag(name="Category")
-     *
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista kategorii",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "id_parent": 1,
-     *                         "translations": {
-     *                              "id": 5,
-     *                              "id_category": 3,
-     *                              "id_language": 1,
-     *                              "name": "Układ Hamulcowy 2",
-     *                              "description": "Części układu hamulcowego"
-     *                          }
-     *                     }
-     *                 )
-     *
-     *         })
-     * )
-     * * @OA\Response(
-     *     response=404,
-     *     description="Brak kategorii"
-     * )
-     *
-     *
-     * */
+     */
+    #[OA\Tag(name: "Category")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista kategorii",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: CategoryResponse::class))
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Brak kategorii"
+    )]
     #[Route('/category', name: 'app_category_get', methods:['GET'])]
     public function index(CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository): JsonResponse
     {
@@ -69,52 +57,22 @@ class CategoryController extends AbstractController
 
     /**
      * Tworzy kategorie
-     *
-     *
-     *
-     * @OA\Tag(name="Category")
-     * @OA\RequestBody(
-     *     request="CategoryCreateRequestBody",
-     *     description="Kategoria",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "id_parent": 1,
-     *                         "translations": {
-     *                              "id_language": 1,
-     *                              "name": "Układ Hamulcowy 2",
-     *                              "description": "Części układu hamulcowego"
-     *                          }
-     *                     }
-     *    )
-     * )
-     *
-     * @OA\Response(
-     *     response=200,
-     *     description="Dodana kategoria",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "id_parent": 1,
-     *                         "translations": {
-     *                              "id": 5,
-     *                              "id_category": 3,
-     *                              "id_language": 1,
-     *                              "name": "Układ Hamulcowy 2",
-     *                              "description": "Części układu hamulcowego"
-     *                          }
-     *                     }
-     *                 )
-     *
-     *         })
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="Nie przekazano tłumaczeń"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Category")]
+    #[OA\RequestBody(
+        description: "Kategoria",
+        required: true,
+        content: new Model(type: CategoryCreateRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Dodana kategoria",
+        content: new Model(type: CategoryResponse::class)
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Nie przekazano tłumaczeń"
+    )]
     #[Route('/category', name: 'app_category_create', methods: ["POST"])]
     public function create(ManagerRegistry $managerRegistry, CategoryLanguageRepository $categoryLanguageRepository, Request $request): JsonResponse
     {
@@ -143,17 +101,17 @@ class CategoryController extends AbstractController
 
     /**
      * Usuwa kategorie
-     *
-     * @OA\Tag(name="Category")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono kategorii o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Category")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono kategorii o podanym id"
+    )]
     #[Route('/category/{id}', name: 'app_category_delete', methods: ["DELETE"])]
     public function delete(ManagerRegistry $doctrine, CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository, string $id): JsonResponse
     {
@@ -179,55 +137,22 @@ class CategoryController extends AbstractController
 
     /**
      * Edytuje kategorie
-     *
-     *
-     *
-     * @OA\Tag(name="Category")
-     * @OA\RequestBody(
-     *     request="CategoryEditRequestBody",
-     *     description="Kategoria",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                         "id": 1,
-     *                         "id_parent": 1,
-     *                         "translations": {
-     *                              "id": 5,
-     *                              "id_category": 3,
-     *                              "id_language": 1,
-     *                              "name": "Układ Hamulcowy 2",
-     *                              "description": "Części układu hamulcowego"
-     *                          }
-     *                     }
-     *    )
-     * )
-     *
-     * @OA\Response(
-     *     response=200,
-     *     description="Zaktualizowana kategoria",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                         "id": 1,
-     *                         "id_parent": 1,
-     *                         "translations": {
-     *                              "id": 5,
-     *                              "id_category": 3,
-     *                              "id_language": 1,
-     *                              "name": "Układ Hamulcowy 2",
-     *                              "description": "Części układu hamulcowego"
-     *                          }
-     *                     }
-     *                 )
-     *
-     *         })
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono kategorii o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "Category")]
+    #[OA\RequestBody(
+        description: "Kategoria",
+        required: true,
+        content: new Model(type: CategoryUpdateRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Zaktualizowana kategoria",
+        content: new Model(type: CategoryResponse::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono kategorii o podanym id"
+    )]
     #[Route('/category', name: 'app_category_edit', methods: ["PUT"])]
     public function edit(ManagerRegistry $managerRegistry, CategoryRepository $categoryRepository, CategoryLanguageRepository $categoryLanguageRepository, Request $request): JsonResponse
     {

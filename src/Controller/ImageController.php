@@ -13,39 +13,28 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\ImageUpdateRequest;
+use App\HttpRequestModel\ImageReorderRequest;
+use App\HttpResponseModel\ImageResponse;
+use App\HttpResponseModel\ImageSetMainResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class ImageController extends AbstractController
 {
     /**
      * Wyświetla listę obrazków dla danego produktu
-     *
-     * @OA\Tag(name="ArticleImage")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista obrazków dla danego produktu",
-     *     content={
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *             @OA\Schema(
-     *                 type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="id_article", type="integer", example=1),
-     *                     @OA\Property(property="position", type="integer", example=1),
-     *                     @OA\Property(property="url", type="string", example="/uploads/articles/1/abc123.jpg"),
-     *                     @OA\Property(property="thumbnail_url", type="string", example="/uploads/articles/1/thumbnails/abc123.jpg"),
-     *                     @OA\Property(property="is_main", type="boolean", example=true),
-     *                     @OA\Property(property="width", type="integer", example=1920),
-     *                     @OA\Property(property="height", type="integer", example=1080),
-     *                     @OA\Property(property="file_size", type="integer", example=524288)
-     *                 )
-     *             )
-     *         )
-     *     }
-     * )
      */
+    #[OA\Tag(name: "ArticleImage")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista obrazków dla danego produktu",
+        content: new OA\JsonContent(
+            type: "array",
+            items: new OA\Items(ref: new Model(type: ImageResponse::class))
+        )
+    )]
     #[Route('/article/{id_article}/images', name: 'app_article_image_get', methods: ['GET'])]
     public function index(ImageRepository $imageRepository, ImageUploadService $imageUploadService, string $id_article): JsonResponse
     {
@@ -74,61 +63,50 @@ class ImageController extends AbstractController
 
     /**
      * Wgrywa obrazek dla danego artykułu
-     *
-     * @OA\Tag(name="ArticleImage")
-     * @OA\RequestBody(
-     *     required=true,
-     *     description="Plik obrazu do wgrania",
-     *     @OA\MediaType(
-     *         mediaType="multipart/form-data",
-     *         @OA\Schema(
-     *             type="object",
-     *             required={"file"},
-     *             @OA\Property(
-     *                 property="file",
-     *                 type="string",
-     *                 format="binary",
-     *                 description="Plik obrazu (JPG, PNG, WebP, max 10MB)"
-     *             ),
-     *             @OA\Property(
-     *                 property="position",
-     *                 type="integer",
-     *                 description="Pozycja obrazu (opcjonalne, domyślnie na końcu)"
-     *             ),
-     *             @OA\Property(
-     *                 property="is_main",
-     *                 type="boolean",
-     *                 description="Czy to główne zdjęcie (opcjonalne, domyślnie false)"
-     *             )
-     *         )
-     *     )
-     * )
-     * @OA\Response(
-     *     response=201,
-     *     description="Dodany obrazek artykułu",
-     *     content={
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *             @OA\Schema(
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="id_article", type="integer", example=1),
-     *                 @OA\Property(property="position", type="integer", example=1),
-     *                 @OA\Property(property="url", type="string", example="/uploads/articles/1/abc123.jpg"),
-     *                 @OA\Property(property="thumbnail_url", type="string", example="/uploads/articles/1/thumbnails/abc123.jpg")
-     *             )
-     *         )
-     *     }
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="Błąd walidacji pliku"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Artykuł nie istnieje"
-     * )
      */
+    #[OA\Tag(name: "ArticleImage")]
+    #[OA\RequestBody(
+        required: true,
+        description: "Plik obrazu do wgrania",
+        content: new OA\MediaType(
+            mediaType: "multipart/form-data",
+            schema: new OA\Schema(
+                type: "object",
+                required: ["file"],
+                properties: [
+                    new OA\Property(
+                        property: "file",
+                        type: "string",
+                        format: "binary",
+                        description: "Plik obrazu (JPG, PNG, WebP, max 10MB)"
+                    ),
+                    new OA\Property(
+                        property: "position",
+                        type: "integer",
+                        description: "Pozycja obrazu (opcjonalne, domyślnie na końcu)"
+                    ),
+                    new OA\Property(
+                        property: "is_main",
+                        type: "boolean",
+                        description: "Czy to główne zdjęcie (opcjonalne, domyślnie false)"
+                    )
+                ]
+            )
+        )
+    )]
+    #[OA\Response(
+        response: 201,
+        description: "Dodany obrazek artykułu",
+        content: new Model(type: ImageResponse::class)
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Błąd walidacji pliku"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Artykuł nie istnieje"
+    )]
     #[Route('/article/{id_article}/image', name: 'app_article_image_post', methods: ['POST'])]
     public function post(
         ManagerRegistry $doctrine,
@@ -199,26 +177,17 @@ class ImageController extends AbstractController
 
     /**
      * Usuwa obrazek z produktu (plik i rekord w bazie)
-     *
-     * @OA\Tag(name="ArticleImage")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunięto",
-     *     content={
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *             @OA\Schema(
-     *                 type="object",
-     *                 @OA\Property(property="message", type="string", example="Usunięto")
-     *             )
-     *         )
-     *     }
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono obrazka o podanym id"
-     * )
      */
+    #[OA\Tag(name: "ArticleImage")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunięto",
+        content: new Model(type: MessageResponse::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono obrazka o podanym id"
+    )]
     #[Route('/article/image/{id}', name: 'app_article_image_delete', methods: ['DELETE'])]
     public function delete(
         ManagerRegistry $doctrine,
@@ -259,42 +228,40 @@ class ImageController extends AbstractController
 
     /**
      * Aktualizuje kolejność zdjęć dla artykułu
-     *
-     * @OA\Tag(name="ArticleImage")
-     * @OA\RequestBody(
-     *     required=true,
-     *     description="Tablica z id i pozycjami zdjęć",
-     *     @OA\JsonContent(
-     *         type="object",
-     *         @OA\Property(
-     *             property="images",
-     *             type="array",
-     *             @OA\Items(
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="position", type="integer", example=1)
-     *             )
-     *         )
-     *     )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Kolejność zaktualizowana",
-     *     content={
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *             @OA\Schema(
-     *                 type="object",
-     *                 @OA\Property(property="message", type="string", example="Kolejność zaktualizowana")
-     *             )
-     *         )
-     *     }
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="Nieprawidłowy format danych"
-     * )
      */
+    #[OA\Tag(name: "ArticleImage")]
+    #[OA\RequestBody(
+        required: true,
+        description: "Tablica z id i pozycjami zdjęć",
+        content: new OA\JsonContent(
+            type: "object",
+            properties: [
+                new OA\Property(
+                    property: "images",
+                    type: "array",
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: "id", type: "integer", example: 1),
+                            new OA\Property(property: "position", type: "integer", example: 1)
+                        ]
+                    )
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Kolejność zaktualizowana",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Kolejność zaktualizowana")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "Nieprawidłowy format danych"
+    )]
     #[Route('/article/{id_article}/images/reorder', name: 'app_article_image_reorder', methods: ['PUT'])]
     public function reorder(
         ImageRepository $imageRepository,
@@ -326,27 +293,17 @@ class ImageController extends AbstractController
 
     /**
      * Ustawia zdjęcie jako główne
-     *
-     * @OA\Tag(name="ArticleImage")
-     * @OA\Response(
-     *     response=200,
-     *     description="Zdjęcie ustawione jako główne",
-     *     content={
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *             @OA\Schema(
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="is_main", type="boolean", example=true)
-     *             )
-     *         )
-     *     }
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono obrazka o podanym id"
-     * )
      */
+    #[OA\Tag(name: "ArticleImage")]
+    #[OA\Response(
+        response: 200,
+        description: "Zdjęcie ustawione jako główne",
+        content: new Model(type: ImageSetMainResponse::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono obrazka o podanym id"
+    )]
     #[Route('/article/image/{id}/set-main', name: 'app_article_image_set_main', methods: ['PUT'])]
     public function setMain(
         ManagerRegistry $doctrine,
@@ -384,24 +341,20 @@ class ImageController extends AbstractController
 
     /**
      * Aktualizuje metadane zdjęcia (pozycja, bez zmiany pliku)
-     *
-     * @OA\Tag(name="ArticleImage")
-     * @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *         type="object",
-     *         @OA\Property(property="position", type="integer", example=2)
-     *     )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Zdjęcie zaktualizowane"
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono obrazka o podanym id"
-     * )
      */
+    #[OA\Tag(name: "ArticleImage")]
+    #[OA\RequestBody(
+        required: true,
+        content: new Model(type: ImageUpdateRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Zdjęcie zaktualizowane"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono obrazka o podanym id"
+    )]
     #[Route('/article/image/{id}', name: 'app_article_image_update', methods: ['PUT', 'PATCH'])]
     public function update(
         ManagerRegistry $doctrine,

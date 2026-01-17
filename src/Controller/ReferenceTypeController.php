@@ -9,28 +9,27 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use OpenApi\Annotations as OA;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\HttpRequestModel\ReferenceTypeCreateRequest;
+use App\HttpRequestModel\ReferenceTypeUpdateRequest;
+use App\HttpResponseModel\ReferenceTypeResponse;
+use App\HttpResponseModel\MessageResponse;
 
 class ReferenceTypeController extends AbstractController
 {
     /**
      * Pobiera typy numerów referencyjnych
-     *
-     * @OA\Tag(name="ReferenceType")
-     * @OA\Response(
-     *     response=200,
-     *     description="Lista typów numerów referencyjnych",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                      "name": "Oryginalne"
-     *                     }
-     *             )
-     *         })
-     * )
-     **/
+     */
+    #[OA\Tag(name: "ReferenceType")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista typów numerów referencyjnych",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: ReferenceType::class))
+        )
+    )]
     #[Route('/reference_type', name: 'app_article_reference_type_get', methods: ["GET"])]
     public function index(ReferenceTypeRepository $referenceTypeRepository)
     {
@@ -41,36 +40,22 @@ class ReferenceTypeController extends AbstractController
     }
     /**
      * Wstawia typ numeru referencyjnego
-     *
-     * @OA\Tag(name="ReferenceType")
-     * @OA\RequestBody(
-     *     request="ReferenceTypePostBody",
-     *     description="Nazwa typu",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                      "name": "Oryginalny"
-     *                     }
-     *    )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Dodany typ numeru referencyjnego",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                      "name": "Oryginalne"
-     *                     }
-     *             )
-     *         })
-     * )
-     * @OA\Response(
-     *     response=400,
-     *     description="ReferenceType o podanej nazwie już istnieje"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "ReferenceType")]
+    #[OA\RequestBody(
+        description: "Nazwa typu",
+        required: true,
+        content: new Model(type: ReferenceTypeCreateRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Dodany typ numeru referencyjnego",
+        content: new Model(type: ReferenceType::class)
+    )]
+    #[OA\Response(
+        response: 400,
+        description: "ReferenceType o podanej nazwie już istnieje"
+    )]
     #[Route('/reference_type', name: 'app_reference_type_post', methods: ["POST"])]
     public function post(ReferenceTypeRepository $referenceTypeRepository, Request $request): JsonResponse
     {
@@ -85,17 +70,16 @@ class ReferenceTypeController extends AbstractController
     }
     /**
      * Usuwa typ numeru referencyjnego
-     *
-     * @OA\Tag(name="ReferenceType")
-     * @OA\Response(
-     *     response=200,
-     *     description="Usunieto",
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono typu numeru referencyjnego o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "ReferenceType")]
+    #[OA\Response(
+        response: 200,
+        description: "Usunieto"
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono typu numeru referencyjnego o podanym id"
+    )]
     #[Route('/reference_type/{id_reference_type}', name: 'app_reference_type_delete', methods: ["DELETE"])]
     public function delete(ReferenceTypeRepository $referenceTypeRepository, int $id_reference_type)
     {
@@ -108,37 +92,22 @@ class ReferenceTypeController extends AbstractController
 
     /**
      * Aktualizuje typ numeru referencyjnego
-     *
-     * @OA\Tag(name="ReferenceType")
-     * @OA\RequestBody(
-     *     request="ReferenceTypePutBody",
-     *     description="Parametry reference",
-     *     required=true,
-     *     @OA\JsonContent(
-     *                     example={
-     *                      "id":1,
-     *                      "name": "Oryginalny"
-     *                     }
-     *    )
-     * )
-     * @OA\Response(
-     *     response=200,
-     *     description="Zmodyfikowany typ numeru referencyjnego",
-     *     content={
-     *             @OA\MediaType(
-     *                 mediaType="application/json",
-     *                     example={
-     *                      "id": 1,
-     *                      "name": "Oryginalny"
-     *                     }
-     *             )
-     *         })
-     * )
-     * @OA\Response(
-     *     response=404,
-     *     description="Nie znaleziono typu numeru referencyjnego o podanym id"
-     * )
-     **/
+     */
+    #[OA\Tag(name: "ReferenceType")]
+    #[OA\RequestBody(
+        description: "Parametry reference",
+        required: true,
+        content: new Model(type: ReferenceTypeUpdateRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Zmodyfikowany typ numeru referencyjnego",
+        content: new Model(type: ReferenceType::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono typu numeru referencyjnego o podanym id"
+    )]
     #[Route('/reference_type', name: 'app_reference_type_put', methods: ["PUT"])]
     public function put(ReferenceTypeRepository $referenceTypeRepository, Request $request)
     {
