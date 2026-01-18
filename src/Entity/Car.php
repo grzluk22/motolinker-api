@@ -64,7 +64,7 @@ class Car
     #[ORM\Column(length: 255)]
     public ?string $kba = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     public ?string $text_value = null;
 
     #[ORM\Column(length: 64, nullable: true)]

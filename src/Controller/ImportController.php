@@ -129,4 +129,82 @@ class ImportController extends AbstractController
 
         return new JsonResponse($stats);
     }
+
+    #[Route('/articles', name: 'articles', methods: ['POST'])]
+    #[OA\Post(
+        summary: "Import only articles.",
+        tags: ["Import"]
+    )]
+    #[OA\RequestBody(
+        content: [
+            new OA\MediaType(
+                mediaType: "multipart/form-data",
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: "file", type: "string", format: "binary"),
+                        new OA\Property(property: "mapping", type: "string", description: "JSON string of mapping"),
+                        new OA\Property(property: "delimiter", type: "string", example: ";")
+                    ]
+                )
+            )
+        ]
+    )]
+    public function importArticles(Request $request): JsonResponse
+    {
+        $file = $request->files->get('file');
+        $delimiter = $request->request->get('delimiter', ';');
+        $mappingJson = $request->request->get('mapping');
+        $mapping = json_decode($mappingJson, true);
+
+        if (!$file || !$mapping) {
+            return new JsonResponse(['error' => 'Missing file or mapping'], 400);
+        }
+
+        $content = file_get_contents($file->getPathname());
+        $parsed = $this->importService->parseCsvContent($content, $delimiter);
+
+        $stats = $this->importService->importArticles($parsed['data'], $mapping);
+
+        return new JsonResponse($stats);
+    }
+
+    #[Route('/cars', name: 'cars', methods: ['POST'])]
+    #[OA\Post(
+        summary: "Import cars (and optionally link to articles).",
+        tags: ["Import"]
+    )]
+    #[OA\RequestBody(
+        content: [
+            new OA\MediaType(
+                mediaType: "multipart/form-data",
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: "file", type: "string", format: "binary"),
+                        new OA\Property(property: "mapping", type: "string", description: "JSON string of mapping"),
+                        new OA\Property(property: "delimiter", type: "string", example: ";"),
+                        new OA\Property(property: "article_identifier_field", type: "string", description: "Field in mapping that connects to Article (default: code)", example: "code")
+                    ]
+                )
+            )
+        ]
+    )]
+    public function importCars(Request $request): JsonResponse
+    {
+        $file = $request->files->get('file');
+        $delimiter = $request->request->get('delimiter', ';');
+        $mappingJson = $request->request->get('mapping');
+        $mapping = json_decode($mappingJson, true);
+        $articleIdentifierField = $request->request->get('article_identifier_field', 'code'); // Default to 'code' as requested
+
+        if (!$file || !$mapping) {
+            return new JsonResponse(['error' => 'Missing file or mapping'], 400);
+        }
+
+        $content = file_get_contents($file->getPathname());
+        $parsed = $this->importService->parseCsvContent($content, $delimiter);
+
+        $stats = $this->importService->importCars($parsed['data'], $mapping, $articleIdentifierField);
+
+        return new JsonResponse($stats);
+    }
 }
