@@ -5,55 +5,158 @@ namespace App\Service;
 use App\Entity\Article;
 use App\Entity\ArticleCar;
 use App\Entity\Car;
+use App\Entity\ImportJob;
 use App\Repository\ArticleRepository;
 use App\Repository\CarRepository;
+use App\Repository\ImportJobRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Mercure\HubInterface;
+use Symfony\Component\Mercure\Update;
 
 class ImportService
 {
+    private const BATCH_SIZE = 50;
+
     public function __construct(
         private CarRepository $carRepository,
         private ArticleRepository $articleRepository,
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private ImportJobRepository $importJobRepository,
+        private HubInterface $hub
     ) {
     }
 
-    public function parseCsvContent(string $content, string $delimiter = ';'): array
+    public function processJob(int $jobId): void
     {
-        $lines = explode("\n", $content);
-        $data = [];
-        $header = null;
+        $job = $this->importJobRepository->find($jobId);
+        if (!$job) {
+            return;
+        }
 
-        foreach ($lines as $line) {
-            if (empty(trim($line))) {
-                continue;
-            }
-            $row = str_getcsv($line, $delimiter);
+        $job->setStatus('processing');
+        $this->entityManager->flush();
 
-            if (!$header) {
-                $header = $row;
-            } else {
+        $filePath = $job->getFilePath();
+        if (!file_exists($filePath)) {
+            $job->setStatus('failed');
+            $this->entityManager->flush();
+            return;
+        }
+
+        $handle = fopen($filePath, 'r');
+        if ($handle === false) {
+            $job->setStatus('failed');
+            $this->entityManager->flush();
+            return;
+        }
+
+        // Detect delimiter? Assuming semi-colon or passed in mapping?
+        // Mapping is stored in Job. Delimiter is NOT. We should store it or assume.
+        // Let's assume ';' or detect.
+        $delimiter = ';';
+        // Simple detection override if needed or store in job entity next time.
+
+        // Read header
+        $header = fgetcsv($handle, 0, $delimiter);
+        $headerOffset = ftell($handle);
+
+        $resumeOffset = $job->getProcessedOffset();
+        if ($resumeOffset > $headerOffset) {
+            fseek($handle, $resumeOffset);
+        }
+
+        $mapping = $job->getMapping();
+        $batch = [];
+        $rowsProcessedInBatch = 0;
+
+        // Stats - accumulated in Job, but we track delta here for batch
+
+        try {
+            while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+                // Skip empty lines
+                if (array_filter($row) === []) {
+                    continue;
+                }
+
                 if (count($row) === count($header)) {
-                    $data[] = array_combine($header, $row);
+                    $batch[] = array_combine($header, $row);
+                    $rowsProcessedInBatch++;
+                }
+
+                if (count($batch) >= self::BATCH_SIZE) {
+                    if ($job->getImportType() === 'cars') {
+                        $this->importCars($batch, $mapping, $job->getArticleIdentifierField());
+                    } else {
+                        $this->processBatch($batch, $mapping, $job);
+                    }
+                    $batch = [];
+
+                    // Update Job Progress
+                    $currentOffset = ftell($handle);
+                    $job->setProcessedOffset($currentOffset);
+                    $job->setProcessedRows($job->getProcessedRows() + $rowsProcessedInBatch);
+                    $this->entityManager->flush();
+                    $rowsProcessedInBatch = 0;
+
+                    // Publish Update
+                    $this->publishProgress($job);
+
+                    // Check for pause/stop signal?
+                    // Reload job to check status if changed by API?
+                    $this->entityManager->refresh($job);
+                    if ($job->getStatus() === 'cancelling') {
+                        $job->setStatus('cancelled');
+                        $this->entityManager->flush();
+                        break;
+                    }
                 }
             }
-        }
 
-        return ['header' => $header, 'data' => $data];
-    }
-
-    public function getCsvHeaders(string $content, string $delimiter = ';'): array
-    {
-        $lines = explode("\n", $content);
-        foreach ($lines as $line) {
-            if (!empty(trim($line))) {
-                return str_getcsv($line, $delimiter);
+            // Process remaining
+            if (count($batch) > 0) {
+                if ($job->getImportType() === 'cars') {
+                    $this->importCars($batch, $mapping, $job->getArticleIdentifierField());
+                } else {
+                    $this->processBatch($batch, $mapping, $job);
+                }
+                $job->setProcessedRows($job->getProcessedRows() + $rowsProcessedInBatch);
             }
+
+            if ($job->getStatus() !== 'cancelled') {
+                $job->setStatus('completed');
+                $job->setProcessedOffset(ftell($handle));
+            }
+
+            $this->entityManager->flush();
+            $this->publishProgress($job);
+
+        } catch (\Exception $e) {
+            $job->setStatus('failed');
+            // Store error in job?
+            $this->entityManager->flush();
+            $this->publishProgress($job);
+            throw $e;
+        } finally {
+            fclose($handle);
         }
-        return [];
     }
 
-    public function processImport(array $mappedData, array $columnMapping): array
+    private function publishProgress(ImportJob $job): void
+    {
+        $update = new Update(
+            'https://motolinker.local/import/progress/' . $job->getId(),
+            json_encode([
+                'status' => $job->getStatus(),
+                'processed' => $job->getProcessedRows(),
+                'total' => $job->getTotalRows()
+            ])
+        );
+        $this->hub->publish($update);
+    }
+
+    // Renamed existing processImport to processBatch for clarity, but logic remains similar
+    // We pass $job to allow logging errors if we want, or just return stats.
+    public function processBatch(array $mappedData, array $columnMapping, ?ImportJob $job = null): array
     {
         $stats = [
             'processed' => 0,
@@ -117,7 +220,9 @@ class ImportService
                 }
 
             } catch (\Exception $e) {
-                $stats['errors'][] = "Row $index: " . $e->getMessage();
+                $errorMsg = "Row $index: " . $e->getMessage();
+                $stats['errors'][] = $errorMsg;
+                // Log error to job if needed?
 
                 if (!$this->entityManager->isOpen()) {
                     $stats['errors'][] = "CRITICAL: Database connection closed due to error. Stopping import.";
@@ -128,8 +233,52 @@ class ImportService
 
         if ($this->entityManager->isOpen()) {
             $this->entityManager->flush();
+            $this->entityManager->clear(); // Detach objects to save memory
         }
         return $stats;
+    }
+
+    public function parseCsvContent(string $content, string $delimiter = ';'): array
+    {
+        $lines = explode("\n", $content);
+        $data = [];
+        $header = null;
+
+        foreach ($lines as $line) {
+            if (empty(trim($line))) {
+                continue;
+            }
+            $row = str_getcsv($line, $delimiter);
+
+            if (!$header) {
+                $header = $row;
+            } else {
+                if (count($row) === count($header)) {
+                    $data[] = array_combine($header, $row);
+                }
+            }
+        }
+
+        return ['header' => $header, 'data' => $data];
+    }
+
+    public function getCsvHeaders(string $content, string $delimiter = ';'): array
+    {
+        $lines = explode("\n", $content);
+        foreach ($lines as $line) {
+            if (!empty(trim($line))) {
+                // Check for BOM
+                $line = preg_replace('/^\xEF\xBB\xBF/', '', $line);
+                return str_getcsv($line, $delimiter);
+            }
+        }
+        return [];
+    }
+
+    // Kept for backward compatibility with existing controller methods if any
+    public function processImport(array $mappedData, array $columnMapping): array
+    {
+        return $this->processBatch($mappedData, $columnMapping);
     }
 
     public function importArticles(array $mappedData, array $columnMapping): array

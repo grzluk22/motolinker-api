@@ -2,10 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\ImportJob;
+use App\Message\ImportJobMessage;
+use App\Repository\ImportJobRepository;
 use App\Service\ImportService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
 
@@ -13,7 +18,10 @@ use OpenApi\Attributes as OA;
 class ImportController extends AbstractController
 {
     public function __construct(
-        private ImportService $importService
+        private ImportService $importService,
+        private EntityManagerInterface $entityManager,
+        private MessageBusInterface $bus,
+        private ImportJobRepository $importJobRepository
     ) {
     }
 
@@ -45,10 +53,6 @@ class ImportController extends AbstractController
         }
 
         $content = file_get_contents($file->getPathname());
-        // Read just the first line effectively for headers, but service might process whole content for consistency checks if needed.
-        // For efficiency, maybe just read first line here? 
-        // Service::getCsvHeaders handles it.
-
         $headers = $this->importService->getCsvHeaders($content, $delimiter);
 
         return new JsonResponse([
@@ -66,18 +70,10 @@ class ImportController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $mapping = $data['mapping'] ?? [];
 
-        // Basic validation: check if 'code' is mapped (assuming it's required for ID)
-        // Check if car identifying columns are present IF 'zastosowania' is NOT mapped? 
-        // Actually, 'zastosowania' is the Special Column.
-
         $errors = [];
         if (!in_array('code', $mapping)) {
             $errors[] = "Column 'code' (Article Code) must be mapped.";
         }
-
-        // If "zastosowania" is mapped, we warn or check if we can parse it?
-        // We can't validate the content of the file here easily without re-uploading, 
-        // but typically this endpoint accepts the mapping solely.
 
         return new JsonResponse([
             'valid' => empty($errors),
@@ -87,90 +83,7 @@ class ImportController extends AbstractController
 
     #[Route('/run', name: 'run', methods: ['POST'])]
     #[OA\Post(
-        summary: "Executes the import process.",
-        tags: ["Import"]
-    )]
-    #[OA\RequestBody(
-        content: [
-            new OA\MediaType(
-                mediaType: "multipart/form-data",
-                schema: new OA\Schema(
-                    properties: [
-                        new OA\Property(property: "file", type: "string", format: "binary"),
-                        new OA\Property(property: "mapping", type: "string", description: "JSON string of mapping"),
-                        new OA\Property(property: "delimiter", type: "string", example: ";")
-                    ]
-                )
-            )
-        ]
-    )]
-    public function runImport(Request $request): JsonResponse
-    {
-        $file = $request->files->get('file');
-        $delimiter = $request->request->get('delimiter', ';');
-        $mappingJson = $request->request->get('mapping');
-        $mapping = json_decode($mappingJson, true);
-
-        if (!$file || !$mapping) {
-            return new JsonResponse(['error' => 'Missing file or mapping'], 400);
-        }
-
-        $content = file_get_contents($file->getPathname());
-        $parsed = $this->importService->parseCsvContent($content, $delimiter);
-
-        // $parsed['data'] has associative arrays with keys from Header based on parseCsvContent logic
-        // But parseCsvContent uses the FILE header.
-        // The MAPPING maps "CSV Header Name" => "Entity Field Name".
-
-        // We need to transform the parsed data according to mapping.
-        // processImport expects data where keys might be CSV headers, and it uses mapping to find values.
-
-        $stats = $this->importService->processImport($parsed['data'], $mapping);
-
-        return new JsonResponse($stats);
-    }
-
-    #[Route('/articles', name: 'articles', methods: ['POST'])]
-    #[OA\Post(
-        summary: "Import only articles.",
-        tags: ["Import"]
-    )]
-    #[OA\RequestBody(
-        content: [
-            new OA\MediaType(
-                mediaType: "multipart/form-data",
-                schema: new OA\Schema(
-                    properties: [
-                        new OA\Property(property: "file", type: "string", format: "binary"),
-                        new OA\Property(property: "mapping", type: "string", description: "JSON string of mapping"),
-                        new OA\Property(property: "delimiter", type: "string", example: ";")
-                    ]
-                )
-            )
-        ]
-    )]
-    public function importArticles(Request $request): JsonResponse
-    {
-        $file = $request->files->get('file');
-        $delimiter = $request->request->get('delimiter', ';');
-        $mappingJson = $request->request->get('mapping');
-        $mapping = json_decode($mappingJson, true);
-
-        if (!$file || !$mapping) {
-            return new JsonResponse(['error' => 'Missing file or mapping'], 400);
-        }
-
-        $content = file_get_contents($file->getPathname());
-        $parsed = $this->importService->parseCsvContent($content, $delimiter);
-
-        $stats = $this->importService->importArticles($parsed['data'], $mapping);
-
-        return new JsonResponse($stats);
-    }
-
-    #[Route('/cars', name: 'cars', methods: ['POST'])]
-    #[OA\Post(
-        summary: "Import cars (and optionally link to articles).",
+        summary: "Starts an import job.",
         tags: ["Import"]
     )]
     #[OA\RequestBody(
@@ -182,29 +95,188 @@ class ImportController extends AbstractController
                         new OA\Property(property: "file", type: "string", format: "binary"),
                         new OA\Property(property: "mapping", type: "string", description: "JSON string of mapping"),
                         new OA\Property(property: "delimiter", type: "string", example: ";"),
-                        new OA\Property(property: "article_identifier_field", type: "string", description: "Field in mapping that connects to Article (default: code)", example: "code")
+                        new OA\Property(property: "type", type: "string", enum: ["articles", "cars"], default: "articles"),
+                        new OA\Property(property: "article_identifier_field", type: "string", description: "For car import: article identifier field in mapping", default: "code")
                     ]
                 )
             )
         ]
     )]
-    public function importCars(Request $request): JsonResponse
+    public function runImport(Request $request): JsonResponse
     {
         $file = $request->files->get('file');
         $delimiter = $request->request->get('delimiter', ';');
         $mappingJson = $request->request->get('mapping');
         $mapping = json_decode($mappingJson, true);
-        $articleIdentifierField = $request->request->get('article_identifier_field', 'code'); // Default to 'code' as requested
+        $type = $request->request->get('type', 'articles');
+        $articleIdentifierField = $request->request->get('article_identifier_field', 'code');
 
         if (!$file || !$mapping) {
             return new JsonResponse(['error' => 'Missing file or mapping'], 400);
         }
 
-        $content = file_get_contents($file->getPathname());
-        $parsed = $this->importService->parseCsvContent($content, $delimiter);
+        // Move file
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/var/uploads';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
 
-        $stats = $this->importService->importCars($parsed['data'], $mapping, $articleIdentifierField);
+        $filename = uniqid('import_') . '.csv';
+        $file->move($uploadDir, $filename);
+        $filePath = $uploadDir . '/' . $filename;
 
-        return new JsonResponse($stats);
+        // Create Job
+        $job = new ImportJob();
+        $job->setFilePath($filePath);
+        $job->setMapping($mapping);
+        $job->setImportType($type);
+        if ($type === 'cars') {
+            $job->setArticleIdentifierField($articleIdentifierField);
+        }
+
+        // Count total rows roughly?
+        // Fast line count
+        $lineCount = 0;
+        $handle = fopen($filePath, "r");
+        while (!feof($handle)) {
+            $line = fgets($handle);
+            if (!empty(trim($line)))
+                $lineCount++;
+        }
+        fclose($handle);
+        $job->setTotalRows($lineCount - 1); // Subtract header
+
+        $this->entityManager->persist($job);
+        $this->entityManager->flush();
+
+        // Dispatch
+        $this->bus->dispatch(new ImportJobMessage($job->getId()));
+
+        return new JsonResponse([
+            'jobId' => $job->getId(),
+            'status' => 'queued',
+            'progressUrl' => '/api/import/status/' . $job->getId()
+        ]);
+    }
+
+    #[Route('/jobs', name: 'list_jobs', methods: ['GET'])]
+    #[OA\Get(
+        summary: "Get list of all import jobs.",
+        tags: ["Import"]
+    )]
+    #[OA\Parameter(
+        name: "status",
+        in: "query",
+        description: "Filter jobs by status (queued, processing, completed, cancelled, etc.)",
+        required: false,
+        schema: new OA\Schema(type: "string")
+    )]
+    #[OA\Parameter(
+        name: "limit",
+        in: "query",
+        description: "Maximum number of jobs to return (default: 100, max: 500)",
+        required: false,
+        schema: new OA\Schema(type: "integer", default: 100)
+    )]
+    public function listJobs(Request $request): JsonResponse
+    {
+        $status = $request->query->get('status');
+        $limit = min((int) $request->query->get('limit', 100), 500);
+
+        $jobs = $this->importJobRepository->findAllOrderedByDate($status, $limit);
+
+        $result = array_map(function (ImportJob $job) {
+            return [
+                'id' => $job->getId(),
+                'status' => $job->getStatus(),
+                'importType' => $job->getImportType(),
+                'processedRows' => $job->getProcessedRows(),
+                'totalRows' => $job->getTotalRows(),
+                'progress' => $job->getTotalRows() > 0
+                    ? round(($job->getProcessedRows() / $job->getTotalRows()) * 100, 2)
+                    : 0,
+                'createdAt' => $job->getCreatedAt()->format('c')
+            ];
+        }, $jobs);
+
+        return new JsonResponse([
+            'jobs' => $result,
+            'count' => count($result)
+        ]);
+    }
+
+    #[Route('/status/{id}', name: 'status', methods: ['GET'])]
+    #[OA\Get(
+        summary: "Get import job status.",
+        tags: ["Import"]
+    )]
+    public function status(int $id): JsonResponse
+    {
+        $job = $this->importJobRepository->find($id);
+
+        if (!$job) {
+            return new JsonResponse(['error' => 'Job not found'], 404);
+        }
+
+        return new JsonResponse([
+            'id' => $job->getId(),
+            'status' => $job->getStatus(),
+            'processedRows' => $job->getProcessedRows(),
+            'totalRows' => $job->getTotalRows(),
+            'createdAt' => $job->getCreatedAt()->format('c')
+        ]);
+    }
+
+    #[Route('/pause/{id}', name: 'pause', methods: ['POST'])]
+    #[OA\Post(
+        summary: "Pause an import job.",
+        tags: ["Import"]
+    )]
+    public function pause(int $id): JsonResponse
+    {
+        $job = $this->importJobRepository->find($id);
+        if (!$job) {
+            return new JsonResponse(['error' => 'Job not found'], 404);
+        }
+
+        $job->setStatus('cancelling'); // Worker will see this and stop, setting it to 'cancelled' (or 'paused' if we implement pause logic)
+        // With current implementation 'cancelled' stops loop. 
+        // We might want 'pausing' -> 'paused'.
+        // Let's use 'cancelling' -> 'cancelled' as "Stop".
+        // If we want Resume, we need "paused".
+        // Let's change existing logic:
+
+        // Actually, to resume, we just need the offset.
+        // If status is 'cancelled', we can resume it.
+        // So 'pause' is effectively 'stop worker'.
+
+        $this->entityManager->flush();
+
+        return new JsonResponse(['status' => 'cancelling']);
+    }
+
+    #[Route('/resume/{id}', name: 'resume', methods: ['POST'])]
+    #[OA\Post(
+        summary: "Resume a cancelled/paused import job.",
+        tags: ["Import"]
+    )]
+    public function resume(int $id): JsonResponse
+    {
+        $job = $this->importJobRepository->find($id);
+        if (!$job) {
+            return new JsonResponse(['error' => 'Job not found'], 404);
+        }
+
+        // If job is already processing, ignore
+        if ($job->getStatus() === 'processing') {
+            return new JsonResponse(['status' => 'processing', 'message' => 'Job already running']);
+        }
+
+        $job->setStatus('queued'); // or just dispatch
+        $this->entityManager->flush();
+
+        $this->bus->dispatch(new ImportJobMessage($job->getId()));
+
+        return new JsonResponse(['status' => 'queued']);
     }
 }
