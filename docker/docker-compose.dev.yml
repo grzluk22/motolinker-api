@@ -6,16 +6,25 @@ services:
     container_name: motolinker_backend
     env_file:
       - env.docker
+    environment:
+      MESSENGER_TRANSPORT_DSN: "doctrine://default?auto_setup=0"
+      APP_ENV: "dev"
+      APP_SECRET: "ChangeMePlease"
+      DATABASE_URL: "mysql://symfony:symfony@db:3306/motolinker"
+      MERCURE_URL: "http://mercure/.well-known/mercure"
+      MERCURE_PUBLIC_URL: "http://localhost/.well-known/mercure"
+      MERCURE_JWT_SECRET: "!ChangeThisMercureHubJWTSecretKey!"
     ports:
       - "8080:80"
     volumes:
       - ..:/var/www/html:z
       - composer_cache:/tmp/composer
+      - ./php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
+      test: [ "CMD", "curl", "-f", "http://localhost" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -24,7 +33,7 @@ services:
   db:
     image: mysql:8.0
     container_name: motolinker_db
-    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+    command: [ "mysqld", "--default-authentication-plugin=mysql_native_password" ]
     environment:
       MYSQL_DATABASE: motolinker
       MYSQL_USER: symfony
@@ -35,12 +44,39 @@ services:
     volumes:
       - motolinker_db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  mercure:
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      # Uncomment the following line to disable HTTPS,
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
+      MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
+      # Set the URL of your Symfony project (without trailing slash!) as value of the cors_origins directive
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins http://localhost:8080 http://127.0.0.1:8080 http://localhost http://127.0.0.1
+    # Comment the following line to disable the development mode
+    command: /usr/bin/caddy run --config /etc/caddy/dev.Caddyfile
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "https://localhost/healthz" ]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - mercure_data:/data
+      - mercure_config:/config
+    ports:
+      - "80:80"
+
 volumes:
   motolinker_db_data:
   composer_cache:
+  mercure_data:
+  mercure_config:
+
 

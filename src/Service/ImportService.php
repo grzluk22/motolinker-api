@@ -43,6 +43,32 @@ class ImportService
             return;
         }
 
+        // Calculate total rows if not set
+        if ($job->getTotalRows() === null) {
+            $lineCount = 0;
+            // Try using wc -l for performance on Linux
+            $cmd = sprintf('wc -l %s', escapeshellarg($filePath));
+            $output = null;
+            $returnVar = null;
+            exec($cmd, $output, $returnVar);
+
+            if ($returnVar === 0 && isset($output[0])) {
+                $lineCount = (int) trim(explode(' ', trim($output[0]))[0]);
+            } else {
+                // Fallback to PHP count
+                $handle = fopen($filePath, "r");
+                while (!feof($handle)) {
+                    if (fgets($handle) !== false)
+                        $lineCount++;
+                }
+                fclose($handle);
+            }
+
+            // Subtract header
+            $job->setTotalRows(max(0, $lineCount - 1));
+            $this->entityManager->flush();
+        }
+
         $handle = fopen($filePath, 'r');
         if ($handle === false) {
             $job->setStatus('failed');
@@ -95,18 +121,32 @@ class ImportService
                     $currentOffset = ftell($handle);
                     $job->setProcessedOffset($currentOffset);
                     $job->setProcessedRows($job->getProcessedRows() + $rowsProcessedInBatch);
-                    $this->entityManager->flush();
+
+                    if ($this->entityManager->isOpen()) {
+                        $this->entityManager->flush();
+                    } else {
+                        throw new \Exception("EntityManager is closed, stopping import job.");
+                    }
                     $rowsProcessedInBatch = 0;
 
                     // Publish Update
                     $this->publishProgress($job);
 
+                    // Debug delay for testing progress tracking
+                    if ($job->getDebugDelay() !== null && $job->getDebugDelay() > 0) {
+                        usleep($job->getDebugDelay() * 1000); // Convert milliseconds to microseconds
+                    }
+
                     // Check for pause/stop signal?
                     // Reload job to check status if changed by API?
-                    $this->entityManager->refresh($job);
+                    if ($this->entityManager->isOpen()) {
+                        $this->entityManager->refresh($job);
+                    }
                     if ($job->getStatus() === 'cancelling') {
                         $job->setStatus('cancelled');
-                        $this->entityManager->flush();
+                        if ($this->entityManager->isOpen()) {
+                            $this->entityManager->flush();
+                        }
                         break;
                     }
                 }
@@ -122,18 +162,21 @@ class ImportService
                 $job->setProcessedRows($job->getProcessedRows() + $rowsProcessedInBatch);
             }
 
-            if ($job->getStatus() !== 'cancelled') {
-                $job->setStatus('completed');
-                $job->setProcessedOffset(ftell($handle));
+            if ($this->entityManager->isOpen()) {
+                if ($job->getStatus() !== 'cancelled') {
+                    $job->setStatus('completed');
+                    $job->setProcessedOffset(ftell($handle));
+                }
+                $this->entityManager->flush();
             }
-
-            $this->entityManager->flush();
             $this->publishProgress($job);
 
         } catch (\Exception $e) {
-            $job->setStatus('failed');
-            // Store error in job?
-            $this->entityManager->flush();
+            if ($this->entityManager->isOpen()) {
+                $job->setStatus('failed');
+                // Store error in job?
+                $this->entityManager->flush();
+            }
             $this->publishProgress($job);
             throw $e;
         } finally {
@@ -143,15 +186,20 @@ class ImportService
 
     private function publishProgress(ImportJob $job): void
     {
-        $update = new Update(
-            'https://motolinker.local/import/progress/' . $job->getId(),
-            json_encode([
-                'status' => $job->getStatus(),
-                'processed' => $job->getProcessedRows(),
-                'total' => $job->getTotalRows()
-            ])
-        );
-        $this->hub->publish($update);
+        try {
+            $update = new Update(
+                'https://motolinker.local/import/progress/' . $job->getId(),
+                json_encode([
+                    'status' => $job->getStatus(),
+                    'processed' => $job->getProcessedRows(),
+                    'total' => $job->getTotalRows()
+                ])
+            );
+            $this->hub->publish($update);
+        } catch (\Exception $e) {
+            // Ignore Mercure errors to not interrupt the import process
+            // Log error if logger is available
+        }
     }
 
     // Renamed existing processImport to processBatch for clarity, but logic remains similar
@@ -216,7 +264,10 @@ class ImportService
                 // Process "zastosowania"
                 $zastosowaniaCol = array_search('zastosowania', $columnMapping);
                 if ($zastosowaniaCol !== false && isset($row[$zastosowaniaCol])) {
-                    $this->processArticleCars($article, $row[$zastosowaniaCol]);
+                    $carErrors = $this->processArticleCars($article, $row[$zastosowaniaCol]);
+                    foreach ($carErrors as $ce) {
+                        $stats['errors'][] = "Row $index (Car): " . $ce;
+                    }
                 }
 
             } catch (\Exception $e) {
@@ -225,8 +276,9 @@ class ImportService
                 // Log error to job if needed?
 
                 if (!$this->entityManager->isOpen()) {
-                    $stats['errors'][] = "CRITICAL: Database connection closed due to error. Stopping import.";
-                    break;
+                    $msg = "CRITICAL: Database connection closed due to error: " . $e->getMessage();
+                    $stats['errors'][] = $msg;
+                    throw new \Exception($msg, 0, $e);
                 }
             }
         }
@@ -401,8 +453,13 @@ class ImportService
                 }
 
                 if (!$hasCarData) {
-                    // Skip empty rows if needed, or maybe it's just an article link line? 
-                    // But if we are importing cars we expect car data.
+                    // Skip empty rows if needed
+                }
+
+                $validationErrors = $this->validateCarData($car);
+                if (!empty($validationErrors)) {
+                    $stats['errors'][] = "Row $index skipped: " . implode(', ', $validationErrors);
+                    continue;
                 }
 
                 $hash = $car->calculateHash();
@@ -472,8 +529,9 @@ class ImportService
                 $stats['errors'][] = "Row $index: " . $e->getMessage();
 
                 if (!$this->entityManager->isOpen()) {
-                    $stats['errors'][] = "CRITICAL: Database connection closed due to error. Stopping import.";
-                    break;
+                    $msg = "CRITICAL: Database connection closed due to error: " . $e->getMessage();
+                    $stats['errors'][] = $msg;
+                    throw new \Exception($msg, 0, $e);
                 }
             }
         }
@@ -485,8 +543,9 @@ class ImportService
         return $stats;
     }
 
-    private function processArticleCars(Article $article, string $zastosowaniaValue): void
+    private function processArticleCars(Article $article, string $zastosowaniaValue): array
     {
+        $errors = [];
         // Detect delimiter for nested CSV
         $subDelimiter = ',';
         if (strpos($zastosowaniaValue, '|') !== false) {
@@ -497,20 +556,21 @@ class ImportService
 
         $lines = explode("\n", trim($zastosowaniaValue));
         if (empty($lines)) {
-            return;
+            return $errors;
         }
 
         // Assume first line is header
         $headerLine = array_shift($lines);
         $headers = str_getcsv($headerLine, $subDelimiter);
 
-        foreach ($lines as $line) {
+        foreach ($lines as $lineIndex => $line) {
             if (empty(trim($line))) {
                 continue;
             }
             $row = str_getcsv($line, $subDelimiter);
 
             if (count($row) !== count($headers)) {
+                $errors[] = "Embedded CSV line $lineIndex: Column count mismatch";
                 continue; // Skip malformed rows
             }
 
@@ -568,6 +628,15 @@ class ImportService
                 }
             }
 
+            // Validate before calculate Hash or Persist?
+            // Hash relies on data. Persist relies on validity.
+
+            $validationErrors = $this->validateCarData($car);
+            if (!empty($validationErrors)) {
+                $errors[] = "Embedded CSV line $lineIndex: Invalid car data: " . implode(', ', $validationErrors);
+                continue;
+            }
+
             $hash = $car->calculateHash();
             $car->setHash($hash);
 
@@ -597,6 +666,8 @@ class ImportService
                 }
             }
         }
+
+        return $errors;
     }
 
     private function findKeyCaseInsensitive(array $array, string $key): ?string
@@ -607,5 +678,21 @@ class ImportService
             }
         }
         return null;
+    }
+
+    private function validateCarData(Car $car): array
+    {
+        $errors = [];
+        // Check required fields based on Entity definition (not nullable)
+        if (!$car->getManufacturer())
+            $errors[] = "Missing manufacturer";
+        if (!$car->getModel())
+            $errors[] = "Missing model";
+        if (!$car->getType())
+            $errors[] = "Missing type";
+        // Add other required fields if strictly needed, or maybe be lenient?
+        // User said: "Column 'manufacturer' cannot be null"
+
+        return $errors;
     }
 }

@@ -41,6 +41,9 @@ class ImportJob
     #[ORM\Column(length: 50, options: ['default' => 'articles'])]
     private string $importType = 'articles';
 
+    #[ORM\Column(nullable: true)]
+    private ?int $debugDelay = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -156,6 +159,18 @@ class ImportJob
     public function setImportType(string $importType): static
     {
         $this->importType = $importType;
+
+        return $this;
+    }
+
+    public function getDebugDelay(): ?int
+    {
+        return $this->debugDelay;
+    }
+
+    public function setDebugDelay(?int $debugDelay): static
+    {
+        $this->debugDelay = $debugDelay;
 
         return $this;
     }

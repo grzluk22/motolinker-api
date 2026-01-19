@@ -49,11 +49,28 @@ class ImportController extends AbstractController
         $delimiter = $request->request->get('delimiter', ';');
 
         if (!$file) {
-            return new JsonResponse(['error' => 'No file uploaded'], 400);
+            return new JsonResponse(['error' => 'No file uploaded or file too large'], 400);
         }
 
-        $content = file_get_contents($file->getPathname());
-        $headers = $this->importService->getCsvHeaders($content, $delimiter);
+        if (!$file->isValid()) {
+            return new JsonResponse(['error' => 'File upload error: ' . $file->getErrorMessage()], 400);
+        }
+
+        $handle = fopen($file->getPathname(), 'r');
+        if ($handle === false) {
+            return new JsonResponse(['error' => 'Could not read file'], 500);
+        }
+
+        $line = fgets($handle);
+        fclose($handle);
+
+        // Remove BOM if present
+        $line = preg_replace('/^\xEF\xBB\xBF/', '', $line);
+
+        $headers = [];
+        if ($line) {
+            $headers = str_getcsv($line, $delimiter);
+        }
 
         return new JsonResponse([
             'headers' => $headers
@@ -96,7 +113,8 @@ class ImportController extends AbstractController
                         new OA\Property(property: "mapping", type: "string", description: "JSON string of mapping"),
                         new OA\Property(property: "delimiter", type: "string", example: ";"),
                         new OA\Property(property: "type", type: "string", enum: ["articles", "cars"], default: "articles"),
-                        new OA\Property(property: "article_identifier_field", type: "string", description: "For car import: article identifier field in mapping", default: "code")
+                        new OA\Property(property: "article_identifier_field", type: "string", description: "For car import: article identifier field in mapping", default: "code"),
+                        new OA\Property(property: "debug_delay", type: "integer", description: "Debug: delay in milliseconds between batches (for testing progress tracking)", example: 1000)
                     ]
                 )
             )
@@ -110,6 +128,8 @@ class ImportController extends AbstractController
         $mapping = json_decode($mappingJson, true);
         $type = $request->request->get('type', 'articles');
         $articleIdentifierField = $request->request->get('article_identifier_field', 'code');
+        $debugDelay = $request->request->get('debug_delay');
+        $debugDelay = 30;
 
         if (!$file || !$mapping) {
             return new JsonResponse(['error' => 'Missing file or mapping'], 400);
@@ -133,18 +153,12 @@ class ImportController extends AbstractController
         if ($type === 'cars') {
             $job->setArticleIdentifierField($articleIdentifierField);
         }
-
-        // Count total rows roughly?
-        // Fast line count
-        $lineCount = 0;
-        $handle = fopen($filePath, "r");
-        while (!feof($handle)) {
-            $line = fgets($handle);
-            if (!empty(trim($line)))
-                $lineCount++;
+        if ($debugDelay !== null && is_numeric($debugDelay)) {
+            $job->setDebugDelay((int) $debugDelay);
         }
-        fclose($handle);
-        $job->setTotalRows($lineCount - 1); // Subtract header
+
+        // Initialize totalRows as null, it will be calculated in the worker
+        $job->setTotalRows(null);
 
         $this->entityManager->persist($job);
         $this->entityManager->flush();
@@ -152,6 +166,7 @@ class ImportController extends AbstractController
         // Dispatch
         $this->bus->dispatch(new ImportJobMessage($job->getId()));
 
+        // Fast response
         return new JsonResponse([
             'jobId' => $job->getId(),
             'status' => 'queued',
