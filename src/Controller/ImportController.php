@@ -129,7 +129,6 @@ class ImportController extends AbstractController
         $type = $request->request->get('type', 'articles');
         $articleIdentifierField = $request->request->get('article_identifier_field', 'code');
         $debugDelay = $request->request->get('debug_delay');
-        $debugDelay = 30;
 
         if (!$file || !$mapping) {
             return new JsonResponse(['error' => 'Missing file or mapping'], 400);

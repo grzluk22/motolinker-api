@@ -111,7 +111,7 @@ class ImportService
 
                 if (count($batch) >= self::BATCH_SIZE) {
                     if ($job->getImportType() === 'cars') {
-                        $this->importCars($batch, $mapping, $job->getArticleIdentifierField());
+                        $this->importCars($batch, $mapping, $job->getArticleIdentifierField(), $job);
                     } else {
                         $this->processBatch($batch, $mapping, $job);
                     }
@@ -132,10 +132,7 @@ class ImportService
                     // Publish Update
                     $this->publishProgress($job);
 
-                    // Debug delay for testing progress tracking
-                    if ($job->getDebugDelay() !== null && $job->getDebugDelay() > 0) {
-                        usleep($job->getDebugDelay() * 1000); // Convert milliseconds to microseconds
-                    }
+
 
                     // Check for pause/stop signal?
                     // Reload job to check status if changed by API?
@@ -155,7 +152,7 @@ class ImportService
             // Process remaining
             if (count($batch) > 0) {
                 if ($job->getImportType() === 'cars') {
-                    $this->importCars($batch, $mapping, $job->getArticleIdentifierField());
+                    $this->importCars($batch, $mapping, $job->getArticleIdentifierField(), $job);
                 } else {
                     $this->processBatch($batch, $mapping, $job);
                 }
@@ -214,6 +211,9 @@ class ImportService
         ];
 
         foreach ($mappedData as $index => $row) {
+            if ($job && $job->getDebugDelay() !== null && $job->getDebugDelay() > 0) {
+                usleep($job->getDebugDelay() * 1000);
+            }
             $stats['processed']++;
 
             try {
@@ -405,7 +405,7 @@ class ImportService
         return $stats;
     }
 
-    public function importCars(array $mappedData, array $columnMapping, ?string $articleIdentifierField = 'articleCode'): array
+    public function importCars(array $mappedData, array $columnMapping, ?string $articleIdentifierField = 'articleCode', ?ImportJob $job = null): array
     {
         $stats = [
             'processed' => 0,
@@ -416,6 +416,9 @@ class ImportService
         ];
 
         foreach ($mappedData as $index => $row) {
+            if ($job && $job->getDebugDelay() !== null && $job->getDebugDelay() > 0) {
+                usleep($job->getDebugDelay() * 1000);
+            }
             $stats['processed']++;
 
             try {
