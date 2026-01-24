@@ -79,7 +79,7 @@ class ImportService
         // Detect delimiter? Assuming semi-colon or passed in mapping?
         // Mapping is stored in Job. Delimiter is NOT. We should store it or assume.
         // Let's assume ';' or detect.
-        $delimiter = ';';
+        $delimiter = $job->getDelimiter();
         // Simple detection override if needed or store in job entity next time.
 
         // Read header
