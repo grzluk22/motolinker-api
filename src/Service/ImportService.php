@@ -6,9 +6,11 @@ use App\Entity\Article;
 use App\Entity\ArticleCar;
 use App\Entity\Car;
 use App\Entity\ImportJob;
+use App\Entity\Setting;
 use App\Repository\ArticleRepository;
 use App\Repository\CarRepository;
 use App\Repository\ImportJobRepository;
+use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
@@ -79,7 +81,7 @@ class ImportService
         // Detect delimiter? Assuming semi-colon or passed in mapping?
         // Mapping is stored in Job. Delimiter is NOT. We should store it or assume.
         // Let's assume ';' or detect.
-        $delimiter = $job->getDelimiter();
+        $delimiter = ',';
         // Simple detection override if needed or store in job entity next time.
 
         // Read header
@@ -117,10 +119,9 @@ class ImportService
                     }
                     $batch = [];
 
-                    // Update Job Progress
+                    // Update Job Progress - Offset only, Rows are updated inside sub-methods now
                     $currentOffset = ftell($handle);
                     $job->setProcessedOffset($currentOffset);
-                    $job->setProcessedRows($job->getProcessedRows() + $rowsProcessedInBatch);
 
                     if ($this->entityManager->isOpen()) {
                         $this->entityManager->flush();
@@ -156,7 +157,6 @@ class ImportService
                 } else {
                     $this->processBatch($batch, $mapping, $job);
                 }
-                $job->setProcessedRows($job->getProcessedRows() + $rowsProcessedInBatch);
             }
 
             if ($this->entityManager->isOpen()) {
@@ -210,11 +210,33 @@ class ImportService
             'errors' => []
         ];
 
+        $lastTimeUpdated = time();
+        $lastProcessedCount = 0;
+        $settingRepository = $this->entityManager->getRepository(Setting::class);
+
         foreach ($mappedData as $index => $row) {
             if ($job && $job->getDebugDelay() !== null && $job->getDebugDelay() > 0) {
                 usleep($job->getDebugDelay() * 1000);
             }
             $stats['processed']++;
+
+            // Throttled progress update
+            if ($job) {
+                try {
+                    $flushInterval = (int) $settingRepository->getSetting('flush_interval') ?: 1;
+                } catch (\Exception $e) {
+                    $flushInterval = 1;
+                }
+
+                if (time() - $lastTimeUpdated >= $flushInterval) {
+                    $delta = $stats['processed'] - $lastProcessedCount;
+                    $job->setProcessedRows($job->getProcessedRows() + $delta);
+                    $this->entityManager->flush();
+                    $this->publishProgress($job);
+                    $lastTimeUpdated = time();
+                    $lastProcessedCount = $stats['processed'];
+                }
+            }
 
             try {
                 // Check required fields
@@ -280,6 +302,13 @@ class ImportService
                     $stats['errors'][] = $msg;
                     throw new \Exception($msg, 0, $e);
                 }
+            }
+        }
+
+        if ($job) {
+            $delta = $stats['processed'] - $lastProcessedCount;
+            if ($delta > 0) {
+                $job->setProcessedRows($job->getProcessedRows() + $delta);
             }
         }
 
@@ -415,6 +444,10 @@ class ImportService
             'errors' => []
         ];
 
+        $lastTimeUpdated = time();
+        $lastProcessedCount = 0;
+        $settingRepository = $this->entityManager->getRepository(Setting::class);
+
         foreach ($mappedData as $index => $row) {
             if ($job && $job->getDebugDelay() !== null && $job->getDebugDelay() > 0) {
                 usleep($job->getDebugDelay() * 1000);
@@ -528,6 +561,23 @@ class ImportService
                     }
                 }
 
+                if ($job) {
+                    try {
+                        $flushInterval = (int) $settingRepository->getSetting('flush_interval') ?: 1;
+                    } catch (\Exception $e) {
+                        $flushInterval = 1;
+                    }
+
+                    if (time() - $lastTimeUpdated >= $flushInterval) {
+                        $delta = $stats['processed'] - $lastProcessedCount;
+                        $job->setProcessedRows($job->getProcessedRows() + $delta);
+                        $this->entityManager->flush();
+                        $this->publishProgress($job);
+                        $lastTimeUpdated = time();
+                        $lastProcessedCount = $stats['processed'];
+                    }
+                }
+
             } catch (\Exception $e) {
                 $stats['errors'][] = "Row $index: " . $e->getMessage();
 
@@ -536,6 +586,13 @@ class ImportService
                     $stats['errors'][] = $msg;
                     throw new \Exception($msg, 0, $e);
                 }
+            }
+        }
+
+        if ($job) {
+            $delta = $stats['processed'] - $lastProcessedCount;
+            if ($delta > 0) {
+                $job->setProcessedRows($job->getProcessedRows() + $delta);
             }
         }
 
