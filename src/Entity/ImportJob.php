@@ -9,6 +9,18 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ImportJobRepository::class)]
 class ImportJob
 {
+    public const STATUS_CREATED = 'created';
+    public const STATUS_QUEUED = 'queued';
+    public const STATUS_PROCESSING = 'processing';
+    public const STATUS_PAUSING = 'pausing';
+    public const STATUS_PAUSED = 'paused';
+    public const STATUS_CANCELLING = 'cancelling';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_FAILED = 'failed';
+    public const STATUS_REVERTING = 'reverting';
+    public const STATUS_REVERTED = 'reverted';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -47,7 +59,7 @@ class ImportJob
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->status = 'created';
+        $this->status = self::STATUS_CREATED;
     }
 
     public function getId(): ?int

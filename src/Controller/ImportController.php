@@ -253,20 +253,12 @@ class ImportController extends AbstractController
             return new JsonResponse(['error' => 'Job not found'], 404);
         }
 
-        $job->setStatus('cancelling'); // Worker will see this and stop, setting it to 'cancelled' (or 'paused' if we implement pause logic)
-        // With current implementation 'cancelled' stops loop. 
-        // We might want 'pausing' -> 'paused'.
-        // Let's use 'cancelling' -> 'cancelled' as "Stop".
-        // If we want Resume, we need "paused".
-        // Let's change existing logic:
+        if ($job->getStatus() === ImportJob::STATUS_PROCESSING) {
+            $job->setStatus(ImportJob::STATUS_PAUSING);
+            $this->entityManager->flush();
+        }
 
-        // Actually, to resume, we just need the offset.
-        // If status is 'cancelled', we can resume it.
-        // So 'pause' is effectively 'stop worker'.
-
-        $this->entityManager->flush();
-
-        return new JsonResponse(['status' => 'cancelling']);
+        return new JsonResponse(['status' => $job->getStatus()]);
     }
 
     #[Route('/resume/{id}', name: 'resume', methods: ['POST'])]
@@ -282,15 +274,48 @@ class ImportController extends AbstractController
         }
 
         // If job is already processing, ignore
-        if ($job->getStatus() === 'processing') {
-            return new JsonResponse(['status' => 'processing', 'message' => 'Job already running']);
+        if ($job->getStatus() === ImportJob::STATUS_PROCESSING) {
+            return new JsonResponse(['status' => ImportJob::STATUS_PROCESSING, 'message' => 'Job already running']);
         }
 
-        $job->setStatus('queued'); // or just dispatch
+        // Resume allowed from paused, cancelled or failed?
+        // User said: "Cancelled to zadanie importu ktorego juz nie da się wznowić."
+        // So we only resume from paused (and maybe created/failed if we want).
+        if ($job->getStatus() === ImportJob::STATUS_CANCELLED) {
+            return new JsonResponse(['error' => 'Cancelled job cannot be resumed'], 400);
+        }
+
+        $job->setStatus(ImportJob::STATUS_QUEUED);
         $this->entityManager->flush();
 
         $this->bus->dispatch(new ImportJobMessage($job->getId()));
 
-        return new JsonResponse(['status' => 'queued']);
+        return new JsonResponse(['status' => ImportJob::STATUS_QUEUED]);
+    }
+
+    #[Route('/revert/{id}', name: 'revert', methods: ['DELETE'])]
+    #[OA\Delete(
+        summary: "Revert an import job (delete created records).",
+        tags: ["Import"]
+    )]
+    public function revert(int $id): JsonResponse
+    {
+        $job = $this->importJobRepository->find($id);
+        if (!$job) {
+            return new JsonResponse(['error' => 'Job not found'], 404);
+        }
+
+        // Only completed or failed jobs should be reverted? 
+        // Or maybe even paused?
+        if (in_array($job->getStatus(), [ImportJob::STATUS_PROCESSING, ImportJob::STATUS_PAUSING, ImportJob::STATUS_REVERTING])) {
+            return new JsonResponse(['error' => 'Job is currently active and cannot be reverted yet'], 400);
+        }
+
+        try {
+            $this->importService->revertJob($id);
+            return new JsonResponse(['status' => ImportJob::STATUS_REVERTED]);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 500);
+        }
     }
 }

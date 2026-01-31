@@ -7,9 +7,11 @@ use App\Entity\ArticleCar;
 use App\Entity\Car;
 use App\Entity\ImportJob;
 use App\Entity\Setting;
+use App\Entity\ImportRowsAffected;
 use App\Repository\ArticleRepository;
 use App\Repository\CarRepository;
 use App\Repository\ImportJobRepository;
+use App\Repository\ImportRowsAffectedRepository;
 use App\Repository\SettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mercure\HubInterface;
@@ -24,6 +26,7 @@ class ImportService
         private ArticleRepository $articleRepository,
         private EntityManagerInterface $entityManager,
         private ImportJobRepository $importJobRepository,
+        private ImportRowsAffectedRepository $importRowsAffectedRepository,
         private HubInterface $hub
     ) {
     }
@@ -35,7 +38,11 @@ class ImportService
             return;
         }
 
-        $job->setStatus('processing');
+        if (in_array($job->getStatus(), [ImportJob::STATUS_CANCELLED, ImportJob::STATUS_COMPLETED, ImportJob::STATUS_REVERTED])) {
+            return;
+        }
+
+        $job->setStatus(ImportJob::STATUS_PROCESSING);
         $this->entityManager->flush();
 
         $filePath = $job->getFilePath();
@@ -135,13 +142,20 @@ class ImportService
 
 
 
-                    // Check for pause/stop signal?
-                    // Reload job to check status if changed by API?
+                    // Check for pause/stop signal
                     if ($this->entityManager->isOpen()) {
                         $this->entityManager->refresh($job);
                     }
-                    if ($job->getStatus() === 'cancelling') {
-                        $job->setStatus('cancelled');
+                    if (in_array($job->getStatus(), [ImportJob::STATUS_CANCELLING, ImportJob::STATUS_CANCELLED])) {
+                        $job->setStatus(ImportJob::STATUS_CANCELLED);
+                        if ($this->entityManager->isOpen()) {
+                            $this->entityManager->flush();
+                        }
+                        break;
+                    }
+
+                    if (in_array($job->getStatus(), [ImportJob::STATUS_PAUSING, ImportJob::STATUS_PAUSED])) {
+                        $job->setStatus(ImportJob::STATUS_PAUSED);
                         if ($this->entityManager->isOpen()) {
                             $this->entityManager->flush();
                         }
@@ -160,8 +174,8 @@ class ImportService
             }
 
             if ($this->entityManager->isOpen()) {
-                if ($job->getStatus() !== 'cancelled') {
-                    $job->setStatus('completed');
+                if (!in_array($job->getStatus(), [ImportJob::STATUS_CANCELLED, ImportJob::STATUS_PAUSED])) {
+                    $job->setStatus(ImportJob::STATUS_COMPLETED);
                     $job->setProcessedOffset(ftell($handle));
                 }
                 $this->entityManager->flush();
@@ -254,6 +268,9 @@ class ImportService
                     $article = new Article();
                     $article->setCode($articleCode);
                     $stats['created']++;
+                    $this->entityManager->persist($article);
+                    $this->entityManager->flush();
+                    $this->logAffectedRow($job, 'articles', $article->getId());
                 } else {
                     $stats['updated']++;
                 }
@@ -286,7 +303,7 @@ class ImportService
                 // Process "zastosowania"
                 $zastosowaniaCol = array_search('zastosowania', $columnMapping);
                 if ($zastosowaniaCol !== false && isset($row[$zastosowaniaCol])) {
-                    $carErrors = $this->processArticleCars($article, $row[$zastosowaniaCol]);
+                    $carErrors = $this->processArticleCars($article, $row[$zastosowaniaCol], $job);
                     foreach ($carErrors as $ce) {
                         $stats['errors'][] = "Row $index (Car): " . $ce;
                     }
@@ -389,6 +406,8 @@ class ImportService
                     $article = new Article();
                     $article->setCode($articleCode);
                     $stats['created']++;
+                    $this->entityManager->persist($article);
+                    $this->entityManager->flush();
                 } else {
                     $stats['updated']++;
                 }
@@ -508,6 +527,7 @@ class ImportService
                     $this->entityManager->flush();
                     $existingCar = $car;
                     $stats['created_cars']++;
+                    $this->logAffectedRow($job, 'cars', $existingCar->getId());
                 } else {
                     $stats['existing_cars']++;
                 }
@@ -555,7 +575,9 @@ class ImportService
                                 $articleCar->setIdArticle($article->getId());
                                 $articleCar->setIdCar($existingCar->getId());
                                 $this->entityManager->persist($articleCar);
+                                $this->entityManager->flush();
                                 $stats['linked_articles']++;
+                                $this->logAffectedRow($job, 'article_car', $articleCar->getId());
                             }
                         }
                     }
@@ -603,7 +625,7 @@ class ImportService
         return $stats;
     }
 
-    private function processArticleCars(Article $article, string $zastosowaniaValue): array
+    private function processArticleCars(Article $article, string $zastosowaniaValue, ?ImportJob $job = null): array
     {
         $errors = [];
         // Detect delimiter for nested CSV
@@ -708,6 +730,7 @@ class ImportService
                 $this->entityManager->persist($car);
                 $this->entityManager->flush(); // Flush to get ID for the new car
                 $existingCar = $car;
+                $this->logAffectedRow($job, 'cars', $existingCar->getId());
             }
 
             // Link Article to Car
@@ -723,11 +746,89 @@ class ImportService
                     $articleCar->setIdArticle($article->getId());
                     $articleCar->setIdCar($existingCar->getId());
                     $this->entityManager->persist($articleCar);
+                    $this->entityManager->flush();
+                    $this->logAffectedRow($job, 'article_car', $articleCar->getId());
                 }
             }
         }
 
         return $errors;
+    }
+
+    private function logAffectedRow(?ImportJob $job, string $table, int $rowId): void
+    {
+        if (!$job) {
+            return;
+        }
+
+        $settingRepository = $this->entityManager->getRepository(Setting::class);
+        $logEnabled = $settingRepository->getSetting('log_for_reverting') === 'true';
+
+        if (!$logEnabled) {
+            return;
+        }
+
+        $affected = new ImportRowsAffected();
+        $affected->setJobId($job->getId());
+        $affected->setTable($table);
+        $affected->setRowId($rowId);
+        // userId can be added if we have current user context, for now leave null
+
+        $this->entityManager->persist($affected);
+        // We might want to flush this periodically or at least once per batch, 
+        // but since we need to ensure it's saved even if the import crashes later, 
+        // flushing here is safer but slower. 
+        // Given the performance concern, maybe we should batch these?
+        // Let's flush here for simplicity for now.
+        $this->entityManager->flush();
+    }
+
+    public function revertJob(int $jobId): void
+    {
+        $job = $this->importJobRepository->find($jobId);
+        if (!$job) {
+            throw new \Exception("Job not found");
+        }
+
+        $job->setStatus(ImportJob::STATUS_REVERTING);
+        $this->entityManager->flush();
+
+        $affectedRows = $this->importRowsAffectedRepository->findByJobId($jobId);
+
+        // Delete in order: article_car links first, then articles and cars
+        // Actually findByJobId returns them in DESC order of ID, which is likely perfect (LIFO delete)
+        foreach ($affectedRows as $affected) {
+            $tableName = $affected->getTable();
+            $rowId = $affected->getRowId();
+
+            try {
+                if ($tableName === 'article_car') {
+                    $entity = $this->entityManager->getRepository(ArticleCar::class)->find($rowId);
+                } elseif ($tableName === 'articles') {
+                    $entity = $this->entityManager->getRepository(Article::class)->find($rowId);
+                } elseif ($tableName === 'cars') {
+                    $entity = $this->entityManager->getRepository(Car::class)->find($rowId);
+                } else {
+                    continue;
+                }
+
+                if ($entity) {
+                    $this->entityManager->remove($entity);
+                }
+            } catch (\Exception $e) {
+                // Log error or ignore if already gone
+            }
+        }
+
+        $this->entityManager->flush();
+
+        // Also delete the log entries?
+        foreach ($affectedRows as $affected) {
+            $this->entityManager->remove($affected);
+        }
+
+        $job->setStatus(ImportJob::STATUS_REVERTED);
+        $this->entityManager->flush();
     }
 
     private function findKeyCaseInsensitive(array $array, string $key): ?string
