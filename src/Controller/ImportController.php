@@ -146,6 +146,10 @@ class ImportController extends AbstractController
 
         // Create Job
         $job = new ImportJob();
+        $user = $this->getUser();
+        if ($user) {
+            $job->setUser($user);
+        }
         $job->setFilePath($filePath);
         $job->setMapping($mapping);
         $job->setImportType($type);

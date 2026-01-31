@@ -1,0 +1,7 @@
+Field	Type	Null	Key	Default	Extra
+id	int	NO	PRI	NULL	auto_increment
+user_id	int	YES		NULL	
+job_id	int	NO		NULL	
+table_name	varchar(255)	NO		NULL	
+row_id	int	NO		NULL	
+created_at	datetime	NO		NULL	

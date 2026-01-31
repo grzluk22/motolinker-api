@@ -1,0 +1,11 @@
+$
+        if ($job) {$
+            $delta = $stats['processed'] - $lastProcessedCount;$
+            if ($delta > 0) {$
+                $job->setProcessedRows($job->getProcessedRows() + $delta);$
+            }$
+        }$
+$
+        if ($this->entityManager->isOpen()) {$
+            $this->entityManager->flush();$
+            $this->entityManager->clear(); // Detach objects to save memory$

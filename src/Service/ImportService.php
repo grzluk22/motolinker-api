@@ -227,6 +227,7 @@ class ImportService
         $lastTimeUpdated = time();
         $lastProcessedCount = 0;
         $settingRepository = $this->entityManager->getRepository(Setting::class);
+        $flushInterval = 1;
 
         foreach ($mappedData as $index => $row) {
             if ($job && $job->getDebugDelay() !== null && $job->getDebugDelay() > 0) {
@@ -236,8 +237,9 @@ class ImportService
 
             // Throttled progress update
             if ($job) {
+                $user = $job->getUser();
                 try {
-                    $flushInterval = (int) $settingRepository->getSetting('flush_interval') ?: 1;
+                    $flushInterval = $user ? (int) $settingRepository->getSetting('flush_interval', $user) : 1;
                 } catch (\Exception $e) {
                     $flushInterval = 1;
                 }
@@ -312,7 +314,6 @@ class ImportService
             } catch (\Exception $e) {
                 $errorMsg = "Row $index: " . $e->getMessage();
                 $stats['errors'][] = $errorMsg;
-                // Log error to job if needed?
 
                 if (!$this->entityManager->isOpen()) {
                     $msg = "CRITICAL: Database connection closed due to error: " . $e->getMessage();
@@ -466,6 +467,7 @@ class ImportService
         $lastTimeUpdated = time();
         $lastProcessedCount = 0;
         $settingRepository = $this->entityManager->getRepository(Setting::class);
+        $flushInterval = 1;
 
         foreach ($mappedData as $index => $row) {
             if ($job && $job->getDebugDelay() !== null && $job->getDebugDelay() > 0) {
@@ -584,8 +586,9 @@ class ImportService
                 }
 
                 if ($job) {
+                    $user = $job->getUser();
                     try {
-                        $flushInterval = (int) $settingRepository->getSetting('flush_interval') ?: 1;
+                        $flushInterval = $user ? (int) $settingRepository->getSetting('flush_interval', $user) : 1;
                     } catch (\Exception $e) {
                         $flushInterval = 1;
                     }
@@ -762,7 +765,8 @@ class ImportService
         }
 
         $settingRepository = $this->entityManager->getRepository(Setting::class);
-        $logEnabled = $settingRepository->getSetting('log_for_reverting') === 'true';
+        $user = $job->getUser();
+        $logEnabled = $user ? $settingRepository->getSetting('log_for_reverting', $user) === 'true' : false;
 
         if (!$logEnabled) {
             return;
@@ -772,7 +776,9 @@ class ImportService
         $affected->setJobId($job->getId());
         $affected->setTable($table);
         $affected->setRowId($rowId);
-        // userId can be added if we have current user context, for now leave null
+        if ($user) {
+            $affected->setUserId($user->getId());
+        }
 
         $this->entityManager->persist($affected);
         // We might want to flush this periodically or at least once per batch, 
