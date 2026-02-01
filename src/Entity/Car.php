@@ -64,8 +64,59 @@ class Car
     #[ORM\Column(length: 255)]
     public ?string $kba = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     public ?string $text_value = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    public ?string $hash = null;
+
+    public function getHash(): ?string
+    {
+        return $this->hash;
+    }
+
+    public function setHash(?string $hash): static
+    {
+        $this->hash = $hash;
+
+        return $this;
+    }
+
+    /**
+     * Calculates hash based on all properties except id and hash.
+     */
+    public function calculateHash(): string
+    {
+        $values = [
+            $this->manufacturer,
+            $this->model,
+            $this->type,
+            $this->model_from,
+            $this->model_to,
+            $this->body_type,
+            $this->drive_type,
+            $this->displacement_liters,
+            $this->displacement_cmm,
+            $this->fuel_type,
+            $this->kw,
+            $this->hp,
+            $this->cylinders,
+            $this->valves,
+            $this->engine_type,
+            $this->engine_codes,
+            $this->kba,
+            $this->text_value
+        ];
+
+        // Serialize and hash to ensure consistency
+        return hash('sha256', serialize($values));
+    }
+
+    public function updateHash(): static
+    {
+        $this->hash = $this->calculateHash();
+        return $this;
+    }
 
     public function getId(): ?int
     {

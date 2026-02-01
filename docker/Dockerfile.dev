@@ -6,15 +6,15 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public \
     PATH="${PATH}:/var/www/html/vendor/bin"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git \
-        curl \
-        unzip \
-        libicu-dev \
-        libzip-dev \
-        libpng-dev \
-        libjpeg-dev \
-        libfreetype6-dev \
-        libwebp-dev \
+    git \
+    curl \
+    unzip \
+    libicu-dev \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libwebp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-configure intl \
     && docker-php-ext-install -j$(nproc) gd intl pdo_mysql zip \
@@ -31,6 +31,7 @@ WORKDIR /var/www/html
 
 COPY docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/init-uploads.sh /usr/local/bin/init-uploads.sh
+COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 RUN mkdir -p var/cache var/log public/uploads/articles && \
     chown -R www-data:www-data var public/uploads && \

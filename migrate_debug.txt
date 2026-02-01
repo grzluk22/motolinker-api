@@ -1,0 +1,104 @@
+
+ [WARNING] You have 1 previously executed migrations in the database that are   
+           not registered migrations.                                           
+
+ >> 2026-01-17 08:40:15 (DoctrineMigrations\Version20260117083958)
+[notice] Migrating up to DoctrineMigrations\Version20260131175849
+[info] User Deprecated: The "Doctrine\Migrations\Provider\LazySchema" class uses "Symfony\Component\VarExporter\LazyProxyTrait" that is deprecated since Symfony 7.3, use native lazy objects instead.
+[info] ++ migrating DoctrineMigrations\Version20260131175849
+[debug] ALTER TABLE import_job ADD user_id INT NOT NULL 
+[error] Migration DoctrineMigrations\Version20260131175849 failed during Execution. Error: "An exception occurred while executing a query: SQLSTATE[42S21]: Column already exists: 1060 Duplicate column name 'user_id'"
+[critical] Error thrown while running command "doctrine:migrations:migrate --no-interaction -vvv". Message: "An exception occurred while executing a query: SQLSTATE[42S21]: Column already exists: 1060 Duplicate column name 'user_id'"
+[debug] Command "doctrine:migrations:migrate --no-interaction -vvv" exited with code "1060"
+
+In ExceptionConverter.php line 74:
+                                                                               
+  [Doctrine\DBAL\Exception\NonUniqueFieldNameException (1060)]                 
+  An exception occurred while executing a query: SQLSTATE[42S21]: Column alre  
+  ady exists: 1060 Duplicate column name 'user_id'                             
+                                                                               
+
+Exception trace:
+  at /var/www/html/vendor/doctrine/dbal/src/Driver/API/MySQL/ExceptionConverter.php:74
+ Doctrine\DBAL\Driver\API\MySQL\ExceptionConverter->convert() at /var/www/html/vendor/doctrine/dbal/src/Connection.php:1976
+ Doctrine\DBAL\Connection->handleDriverException() at /var/www/html/vendor/doctrine/dbal/src/Connection.php:1918
+ Doctrine\DBAL\Connection->convertExceptionDuringQuery() at /var/www/html/vendor/doctrine/dbal/src/Connection.php:1111
+ Doctrine\DBAL\Connection->executeQuery() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:275
+ Doctrine\Migrations\Version\DbalExecutor->executeResult() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:152
+ Doctrine\Migrations\Version\DbalExecutor->executeMigration() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:72
+ Doctrine\Migrations\Version\DbalExecutor->execute() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:87
+ Doctrine\Migrations\DbalMigrator->executePlan() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:54
+ Doctrine\Migrations\DbalMigrator->executeMigrations() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:134
+ Doctrine\Migrations\DbalMigrator->migrate() at /var/www/html/vendor/doctrine/migrations/src/Tools/Console/Command/MigrateCommand.php:225
+ Doctrine\Migrations\Tools\Console\Command\MigrateCommand->execute() at /var/www/html/vendor/symfony/console/Command/Command.php:341
+ Symfony\Component\Console\Command\Command->run() at /var/www/html/vendor/symfony/console/Application.php:1102
+ Symfony\Component\Console\Application->doRunCommand() at /var/www/html/vendor/symfony/framework-bundle/Console/Application.php:123
+ Symfony\Bundle\FrameworkBundle\Console\Application->doRunCommand() at /var/www/html/vendor/symfony/console/Application.php:356
+ Symfony\Component\Console\Application->doRun() at /var/www/html/vendor/symfony/framework-bundle/Console/Application.php:77
+ Symfony\Bundle\FrameworkBundle\Console\Application->doRun() at /var/www/html/vendor/symfony/console/Application.php:195
+ Symfony\Component\Console\Application->run() at /var/www/html/vendor/symfony/runtime/Runner/Symfony/ConsoleApplicationRunner.php:49
+ Symfony\Component\Runtime\Runner\Symfony\ConsoleApplicationRunner->run() at /var/www/html/vendor/autoload_runtime.php:32
+ require_once() at /var/www/html/bin/console:11
+
+In Exception.php line 24:
+                                                                               
+  [Doctrine\DBAL\Driver\PDO\Exception (1060)]                                  
+  SQLSTATE[42S21]: Column already exists: 1060 Duplicate column name 'user_id  
+  '                                                                            
+                                                                               
+
+Exception trace:
+  at /var/www/html/vendor/doctrine/dbal/src/Driver/PDO/Exception.php:24
+ Doctrine\DBAL\Driver\PDO\Exception::new() at /var/www/html/vendor/doctrine/dbal/src/Driver/PDO/Connection.php:76
+ Doctrine\DBAL\Driver\PDO\Connection->query() at /var/www/html/vendor/doctrine/dbal/src/Driver/Middleware/AbstractConnectionMiddleware.php:33
+ Doctrine\DBAL\Driver\Middleware\AbstractConnectionMiddleware->query() at /var/www/html/vendor/symfony/doctrine-bridge/Middleware/Debug/DBAL3/Connection.php:58
+ Symfony\Bridge\Doctrine\Middleware\Debug\DBAL3\Connection->query() at /var/www/html/vendor/doctrine/dbal/src/Connection.php:1106
+ Doctrine\DBAL\Connection->executeQuery() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:275
+ Doctrine\Migrations\Version\DbalExecutor->executeResult() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:152
+ Doctrine\Migrations\Version\DbalExecutor->executeMigration() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:72
+ Doctrine\Migrations\Version\DbalExecutor->execute() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:87
+ Doctrine\Migrations\DbalMigrator->executePlan() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:54
+ Doctrine\Migrations\DbalMigrator->executeMigrations() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:134
+ Doctrine\Migrations\DbalMigrator->migrate() at /var/www/html/vendor/doctrine/migrations/src/Tools/Console/Command/MigrateCommand.php:225
+ Doctrine\Migrations\Tools\Console\Command\MigrateCommand->execute() at /var/www/html/vendor/symfony/console/Command/Command.php:341
+ Symfony\Component\Console\Command\Command->run() at /var/www/html/vendor/symfony/console/Application.php:1102
+ Symfony\Component\Console\Application->doRunCommand() at /var/www/html/vendor/symfony/framework-bundle/Console/Application.php:123
+ Symfony\Bundle\FrameworkBundle\Console\Application->doRunCommand() at /var/www/html/vendor/symfony/console/Application.php:356
+ Symfony\Component\Console\Application->doRun() at /var/www/html/vendor/symfony/framework-bundle/Console/Application.php:77
+ Symfony\Bundle\FrameworkBundle\Console\Application->doRun() at /var/www/html/vendor/symfony/console/Application.php:195
+ Symfony\Component\Console\Application->run() at /var/www/html/vendor/symfony/runtime/Runner/Symfony/ConsoleApplicationRunner.php:49
+ Symfony\Component\Runtime\Runner\Symfony\ConsoleApplicationRunner->run() at /var/www/html/vendor/autoload_runtime.php:32
+ require_once() at /var/www/html/bin/console:11
+
+In Connection.php line 71:
+                                                                               
+  [PDOException (42S21)]                                                       
+  SQLSTATE[42S21]: Column already exists: 1060 Duplicate column name 'user_id  
+  '                                                                            
+                                                                               
+
+Exception trace:
+  at /var/www/html/vendor/doctrine/dbal/src/Driver/PDO/Connection.php:71
+ PDO->query() at /var/www/html/vendor/doctrine/dbal/src/Driver/PDO/Connection.php:71
+ Doctrine\DBAL\Driver\PDO\Connection->query() at /var/www/html/vendor/doctrine/dbal/src/Driver/Middleware/AbstractConnectionMiddleware.php:33
+ Doctrine\DBAL\Driver\Middleware\AbstractConnectionMiddleware->query() at /var/www/html/vendor/symfony/doctrine-bridge/Middleware/Debug/DBAL3/Connection.php:58
+ Symfony\Bridge\Doctrine\Middleware\Debug\DBAL3\Connection->query() at /var/www/html/vendor/doctrine/dbal/src/Connection.php:1106
+ Doctrine\DBAL\Connection->executeQuery() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:275
+ Doctrine\Migrations\Version\DbalExecutor->executeResult() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:152
+ Doctrine\Migrations\Version\DbalExecutor->executeMigration() at /var/www/html/vendor/doctrine/migrations/src/Version/DbalExecutor.php:72
+ Doctrine\Migrations\Version\DbalExecutor->execute() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:87
+ Doctrine\Migrations\DbalMigrator->executePlan() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:54
+ Doctrine\Migrations\DbalMigrator->executeMigrations() at /var/www/html/vendor/doctrine/migrations/src/DbalMigrator.php:134
+ Doctrine\Migrations\DbalMigrator->migrate() at /var/www/html/vendor/doctrine/migrations/src/Tools/Console/Command/MigrateCommand.php:225
+ Doctrine\Migrations\Tools\Console\Command\MigrateCommand->execute() at /var/www/html/vendor/symfony/console/Command/Command.php:341
+ Symfony\Component\Console\Command\Command->run() at /var/www/html/vendor/symfony/console/Application.php:1102
+ Symfony\Component\Console\Application->doRunCommand() at /var/www/html/vendor/symfony/framework-bundle/Console/Application.php:123
+ Symfony\Bundle\FrameworkBundle\Console\Application->doRunCommand() at /var/www/html/vendor/symfony/console/Application.php:356
+ Symfony\Component\Console\Application->doRun() at /var/www/html/vendor/symfony/framework-bundle/Console/Application.php:77
+ Symfony\Bundle\FrameworkBundle\Console\Application->doRun() at /var/www/html/vendor/symfony/console/Application.php:195
+ Symfony\Component\Console\Application->run() at /var/www/html/vendor/symfony/runtime/Runner/Symfony/ConsoleApplicationRunner.php:49
+ Symfony\Component\Runtime\Runner\Symfony\ConsoleApplicationRunner->run() at /var/www/html/vendor/autoload_runtime.php:32
+ require_once() at /var/www/html/bin/console:11
+
+doctrine:migrations:migrate [--write-sql [WRITE-SQL]] [--dry-run] [--query-time] [--allow-no-migration] [--all-or-nothing [ALL-OR-NOTHING]] [--no-all-or-nothing] [--configuration CONFIGURATION] [--em EM] [--conn CONN] [--] [<version>]
+

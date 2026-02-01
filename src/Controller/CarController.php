@@ -48,13 +48,14 @@ class CarController extends AbstractController
             $requestArray = $request->toArray();
             $cars = $carRepository->findBy($requestArray);
         } catch (\Exception $exception) {
-            if($exception->getMessage() == "Request body is empty.") {
+            if ($exception->getMessage() == "Request body is empty.") {
                 $cars = $carRepository->findAll();
-            }else{
+            } else {
                 throw $exception;
             }
         }
-        if(!$cars) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
+        if (!$cars)
+            return new JsonResponse(['message' => 'Nie znaleziono'], 404);
         return new JsonResponse($cars);
     }
 
@@ -82,7 +83,8 @@ class CarController extends AbstractController
         $requestArray = $request->toArray();
         /* Sprawdzanie czy w bazie nie istnieje już samochód o identycznych parametrach */
         $car = $carRepository->findOneBy($requestArray);
-        if($car !== null) return new JsonResponse(['message' => 'Samochód o identycznych parametrach już istnieje w bazie danych'], 400);
+        if ($car !== null)
+            return new JsonResponse(['message' => 'Samochód o identycznych parametrach już istnieje w bazie danych'], 400);
         /* Dodawanie nowego samochodu do bazy danych */
         $car = new Car();
         $car->setManufacturer($requestArray['manufacturer']);
@@ -102,7 +104,7 @@ class CarController extends AbstractController
         $car->setEngineType($requestArray['engine_type']);
         $car->setEngineCodes($requestArray['engine_codes']);
         $car->setKba($requestArray['kba']);
-        $car->setTextValue(implode(" ", (array)$car));
+        $car->setTextValue(implode(" ", (array) $car));
         $carRepository->save($car, true);
         return new JsonResponse($car);
     }
@@ -131,7 +133,8 @@ class CarController extends AbstractController
         /* Aktualizowanie samochodu */
         $requestArray = $request->toArray();
         $car = $carRepository->findOneBy(['id' => $requestArray['id']]);
-        if(!$car) return new JsonResponse(['message' => 'Nie znaleziono samochodu o podanym id'], 404);
+        if (!$car)
+            return new JsonResponse(['message' => 'Nie znaleziono samochodu o podanym id'], 404);
         $car->setManufacturer($requestArray['manufacturer']);
         $car->setModel($requestArray['model']);
         $car->setType($requestArray['type']);
@@ -150,7 +153,7 @@ class CarController extends AbstractController
         $car->setEngineCodes($requestArray['engine_codes']);
         $car->setKba($requestArray['kba']);
         //$car->setTextValue(implode(" ", (array)$car));
-        
+
         $carRepository->save($car, true);
         return new JsonResponse($car);
     }
@@ -172,16 +175,17 @@ class CarController extends AbstractController
     public function delete(CarRepository $carRepository, ArticleCarRepository $articleCarRepository, int $id_car)
     {
         $car = $carRepository->findOneBy(['id' => $id_car]);
-        if(!$car) return new JsonResponse(['message' => 'Nie znaleziono samochodu o podanym id']);
+        if (!$car)
+            return new JsonResponse(['message' => 'Nie znaleziono samochodu o podanym id']);
         /* Najpierw odpinanie samochodu od wszystkich produktów do których został podpięty */
-        $articleCars= $articleCarRepository->findBy(['id_car' => $id_car]);
+        $articleCars = $articleCarRepository->findBy(['id_car' => $id_car]);
         $deletedArticleCars = 0;
         foreach ($articleCars as $articleCar) {
             $articleCarRepository->remove($articleCar, true);
             $deletedArticleCars++;
         }
         $carRepository->remove($car, true);
-        return new JsonResponse(['message' => 'Usunięto samochód oraz odpięto od '.$deletedArticleCars.' produktów.', 'deletedItem' => $car]);
+        return new JsonResponse(['message' => 'Usunięto samochód oraz odpięto od ' . $deletedArticleCars . ' produktów.', 'deletedItem' => $car]);
     }
 
     /**
@@ -205,7 +209,8 @@ class CarController extends AbstractController
     {
         /* Metoda wyszukuje samochód na podstawie wprowadzonego tekstu */
         $result = $carRepository->search($text_value);
-        if(!$result) return new JsonResponse(['message' => 'Nie znaleziono samochodu na podstawie wpisanej frazy'], 404);
+        if (!$result)
+            return new JsonResponse(['message' => 'Nie znaleziono samochodu na podstawie wpisanej frazy'], 404);
         return new JsonResponse($result);
     }
 
@@ -237,22 +242,80 @@ class CarController extends AbstractController
             $orderBy = $requestArray['orderBy'] ?? [];
             $limit = $requestArray['limit'] ?? 50;
             $offset = $requestArray['offset'] ?? 0;
-            
+
             $cars = $carRepository->findByExtended($criteria, $orderBy, $limit, $offset);
             $total = $carRepository->countByExtended($criteria);
 
         } catch (\Exception $exception) {
-            if($exception->getMessage() == "Request body is empty.") {
+            if ($exception->getMessage() == "Request body is empty.") {
                 $cars = $carRepository->findAll();
                 $total = count($cars);
             } else {
                 throw $exception;
             }
         }
-        
-        if(!$cars) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
-        
+
+        if (!$cars)
+            return new JsonResponse(['message' => 'Nie znaleziono'], 404);
+
         return new JsonResponse(['data' => $cars, 'total' => $total]);
+
+    }
+
+    /**
+     * Zwraca listę producentów samochodów
+     */
+    #[OA\Tag(name: "Car")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista producentów samochodów",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(type: 'string')
+        )
+    )]
+    #[Route('/car/manufacturers', name: 'app_car_manufacturers', methods: ["GET"])]
+    public function getManufacturers(CarRepository $carRepository)
+    {
+        $manufacturers = $carRepository->getManufacturers();
+        return new JsonResponse($manufacturers);
+    }
+    /**
+     * Zwraca listę modeli dla danego producenta
+     */
+    #[OA\Tag(name: "Car")]
+    #[OA\Response(
+        response: 200,
+        description: "Lista modeli dla danego producenta",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(type: 'string')
+        )
+    )]
+    #[Route('/car/{manufacturer}/models', name: 'app_car_models', methods: ["GET"])]
+    public function getModels(CarRepository $carRepository, string $manufacturer)
+    {
+        $models = $carRepository->getModels($manufacturer);
+        return new JsonResponse($models);
+    }
+    /**
+     * Zwraca ilość artykułów powiązanych z danym samochodem
+     */
+    #[OA\Tag(name: "Car")]
+    #[OA\Response(
+        response: 200,
+        description: "Liczba artykułów powiązanych z samochodem",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "count", type: "integer", example: 5)
+            ]
+        )
+    )]
+    #[Route('/car/affected-parts/{id}', name: 'app_car_affected_parts', methods: ["GET"])]
+    public function getAffectedPartsCount(int $id, ArticleCarRepository $articleCarRepository): JsonResponse
+    {
+        $count = $articleCarRepository->count(['id_car' => $id]);
+        return new JsonResponse(['count' => $count]);
     }
 }
 

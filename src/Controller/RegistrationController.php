@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Entity\User;
+use App\Entity\UserGroup;
 use OpenApi\Attributes as OA;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use App\HttpRequestModel\RegistrationRequest;
@@ -55,6 +56,12 @@ class RegistrationController extends AbstractController
         $user->setPassword($hashedPassword);
         $user->setEmail($email);
         $user->setUsername($email);
+
+        $defaultGroups = $em->getRepository(UserGroup::class)->findBy(['isDefault' => true]);
+        foreach ($defaultGroups as $group) {
+            $user->addUserGroup($group);
+        }
+
         $em->persist($user);
         $em->flush();
 
