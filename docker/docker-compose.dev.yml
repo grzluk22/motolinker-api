@@ -9,15 +9,17 @@ services:
     environment:
       MESSENGER_TRANSPORT_DSN: "doctrine://default?auto_setup=0"
       APP_ENV: "dev"
-      APP_SECRET: "ChangeMePlease"
+      APP_SECRET: "frajerek123!"
       DATABASE_URL: "mysql://symfony:symfony@db:3306/motolinker"
       MERCURE_URL: "http://mercure/.well-known/mercure"
       MERCURE_PUBLIC_URL: "http://localhost/.well-known/mercure"
-      MERCURE_JWT_SECRET: "!ChangeThisMercureHubJWTSecretKey!"
+      MERCURE_JWT_SECRET: "frajerek123!"
     ports:
       - "8080:80"
     volumes:
       - ..:/var/www/html:z
+      - /var/www/html/var
+      - /var/www/html/vendor
       - composer_cache:/tmp/composer
       - ./php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
     depends_on:
@@ -55,8 +57,8 @@ services:
     environment:
       # Uncomment the following line to disable HTTPS,
       SERVER_NAME: ':80'
-      MERCURE_PUBLISHER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
-      MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
+      MERCURE_PUBLISHER_JWT_KEY: 'frajerek123!'
+      MERCURE_SUBSCRIBER_JWT_KEY: 'frajerek123!'
       # Set the URL of your Symfony project (without trailing slash!) as value of the cors_origins directive
       MERCURE_EXTRA_DIRECTIVES: |
         cors_origins http://localhost:8080 http://127.0.0.1:8080 http://localhost http://127.0.0.1
