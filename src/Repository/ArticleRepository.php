@@ -77,8 +77,13 @@ class ArticleRepository extends ServiceEntityRepository
                 continue;
             }
             if(!$searchLike) {
-                $qb->andWhere('a.'.$key.' = :'.$key);
-                $qb->setParameter($key, $value);
+                if (is_array($value)) {
+                    $qb->andWhere('a.'.$key.' IN (:'.$key.')');
+                    $qb->setParameter($key, $value);
+                } else {
+                    $qb->andWhere('a.'.$key.' = :'.$key);
+                    $qb->setParameter($key, $value);
+                }
             }else{
                 $qb->andWhere($qb->expr()->like('a.'.$key, ':value'.$key))
                     ->setParameter('value' . $key, '%' . $value . '%');

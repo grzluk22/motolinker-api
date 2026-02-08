@@ -27,6 +27,7 @@ use App\HttpResponseModel\ArticleListResponse;
 use App\HttpResponseModel\ArticleDetailResponse;
 use App\HttpResponseModel\MessageResponse;
 use App\HttpRequestModel\ArticleBulkDeleteRequest;
+use App\HttpRequestModel\ArticleBulkEditRequest;
 
 class ArticleController extends AbstractController
 {
@@ -166,6 +167,121 @@ class ArticleController extends AbstractController
         return new JsonResponse([
             'message' => 'ZakoĹczono zbiorcze usuwanie',
             'deleted_count' => $deletedCount,
+            'errors' => $errors
+        ]);
+    }
+
+    /**
+     * Zbiorcza edycja artykułów
+     */
+    #[OA\Tag(name: "Article")]
+    #[OA\RequestBody(
+        description: "Kryteria i wartości do zmiany",
+        required: true,
+        content: new Model(type: ArticleBulkEditRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Wynik operacji",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string"),
+                new OA\Property(property: "updated_count", type: "integer"),
+                new OA\Property(property: "errors", type: "array", items: new OA\Items(type: "string"))
+            ]
+        )
+    )]
+    #[Route('/article/bulk-edit', name: 'app_article_bulk_edit', methods: ["POST"])]
+    public function bulkEdit(
+        ManagerRegistry $doctrine,
+        ArticleRepository $articleRepository,
+        ArticleEanRepository $articleEanRepository,
+        Request $request
+    ): JsonResponse {
+        $data = $request->toArray();
+        $criteria = $data['criteria'] ?? [];
+        $values = $data['values'] ?? [];
+
+        if (empty($criteria) && empty($values)) {
+             return new JsonResponse(['message' => 'Brak kryteriów lub wartości do zmiany', 'updated_count' => 0], 400);
+        }
+
+        // Znajdź artykuły pasujące do kryteriów
+        // Używamy findByExtended bez limitu/offsetu by pobrać wszystkie pasujące
+        $articles = $articleRepository->findByExtended($criteria, [], 999999, 0);
+
+        if (empty($articles)) {
+            return new JsonResponse(['message' => 'Nie znaleziono artykułów spełniających kryteria', 'updated_count' => 0], 200);
+        }
+
+        $entityManager = $doctrine->getManager();
+        $articleEanManager = $doctrine->getManagerForClass(ArticleEan::class);
+        $updatedCount = 0;
+        $errors = [];
+
+        foreach ($articles as $article) {
+            try {
+                $isUpdated = false;
+
+                if (isset($values['price'])) {
+                    $article->setPrice($values['price']);
+                    $isUpdated = true;
+                }
+                if (isset($values['id_category'])) {
+                    $article->setIdCategory($values['id_category']);
+                    $isUpdated = true;
+                }
+                if (isset($values['name'])) {
+                    $article->setName($values['name']);
+                    $isUpdated = true;
+                }
+                if (isset($values['description'])) {
+                    $article->setDescription($values['description']);
+                    $isUpdated = true;
+                }
+                 if (isset($values['ean13'])) {
+                    $newEan = $values['ean13'];
+                    if ($article->getEan13() !== $newEan) {
+                        $article->setEan13($newEan);
+                        
+                        // Aktualizacja w tabeli article_ean (dodanie jeśli nie ma)
+                        $existingEans = $articleEanRepository->findByArticleId($article->getId());
+                        $eanExists = false;
+                        foreach ($existingEans as $existingEan) {
+                            if ($existingEan->getEan13() === $newEan) {
+                                $eanExists = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$eanExists) {
+                             $ae = new ArticleEan();
+                             $ae->setIdArticle($article->getId());
+                             $ae->setEan13($newEan);
+                             $articleEanManager->persist($ae);
+                        }
+
+                        $isUpdated = true;
+                    }
+                }
+
+                if ($isUpdated) {
+                    $entityManager->persist($article);
+                    $updatedCount++;
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Błąd przy ID " . $article->getId() . ": " . $e->getMessage();
+            }
+        }
+
+        if ($updatedCount > 0) {
+            $entityManager->flush();
+            $articleEanManager->flush();
+        }
+
+        return new JsonResponse([
+            'message' => 'Zakończono zbiorczą edycję',
+            'updated_count' => $updatedCount,
             'errors' => $errors
         ]);
     }
