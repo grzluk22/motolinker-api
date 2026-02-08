@@ -17,9 +17,9 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ..:/var/www/html:z
-      - /var/www/html/var
-      - /var/www/html/vendor
+      - ..:/var/www
+      - /var/www/var
+      - /var/www/vendor
       - composer_cache:/tmp/composer
       - ./php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
     depends_on:

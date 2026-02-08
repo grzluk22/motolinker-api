@@ -28,7 +28,7 @@ use Nelmio\ApiDocBundle\Attribute\Model;
 use App\HttpRequestModel\SeedSampleDataRequest;
 use App\HttpResponseModel\SeedSampleDataResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-quse Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
