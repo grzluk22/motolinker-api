@@ -79,10 +79,17 @@ class CarRepository extends ServiceEntityRepository
 
     public function findByExtended(mixed $criteria, mixed $orderBy, mixed $limit, mixed $offset)
     {
-        $extendedCriteria = ['searchLike'];
+        $extendedCriteria = ['searchLike', 'article_id'];
         $searchLike = $criteria['searchLike'] ?? false;
+        $articleId = $criteria['article_id'] ?? null;
 
         $qb = $this->createQueryBuilder('c');
+
+        if ($articleId) {
+            $qb->join('App\Entity\ArticleCar', 'ac', 'WITH', 'ac.id_car = c.id')
+                ->andWhere('ac.id_article = :articleId')
+                ->setParameter('articleId', $articleId);
+        }
 
         foreach ($criteria as $key => $value) {
             if (in_array($key, $extendedCriteria))
@@ -111,11 +118,18 @@ class CarRepository extends ServiceEntityRepository
 
     public function countByExtended(mixed $criteria): int
     {
-        $extendedCriteria = ['searchLike'];
+        $extendedCriteria = ['searchLike', 'article_id'];
         $searchLike = $criteria['searchLike'] ?? false;
+        $articleId = $criteria['article_id'] ?? null;
 
         $qb = $this->createQueryBuilder('c')
             ->select('COUNT(DISTINCT c.id)');
+
+        if ($articleId) {
+            $qb->join('App\Entity\ArticleCar', 'ac', 'WITH', 'ac.id_car = c.id')
+                ->andWhere('ac.id_article = :articleId')
+                ->setParameter('articleId', $articleId);
+        }
 
         foreach ($criteria as $key => $value) {
             if (in_array($key, $extendedCriteria))
