@@ -10,8 +10,12 @@ security:
                 class: App\Entity\User
                 property: username
     firewalls:
+        options:
+            pattern: ^/.*
+            methods: [OPTIONS]
+            security: false
         login:
-            pattern: ^/login
+            pattern: ^/(login|login_check)
             stateless: true
             json_login:
                 check_path: /login_check

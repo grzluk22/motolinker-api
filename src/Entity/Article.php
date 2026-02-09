@@ -19,7 +19,7 @@ class Article
     #[ORM\Column(length: 255, unique: true)]
     public ?string $code = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     public ?string $ean13 = null;
 
     #[ORM\Column]
@@ -66,7 +66,7 @@ class Article
         return $this->ean13;
     }
 
-    public function setEan13(string $ean13): static
+    public function setEan13(?string $ean13): static
     {
         $this->ean13 = $ean13;
 

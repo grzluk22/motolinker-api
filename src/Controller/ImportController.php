@@ -213,7 +213,8 @@ class ImportController extends AbstractController
                 'progress' => $job->getTotalRows() > 0
                     ? round(($job->getProcessedRows() / $job->getTotalRows()) * 100, 2)
                     : 0,
-                'createdAt' => $job->getCreatedAt()->format('c')
+                'createdAt' => $job->getCreatedAt()->format('c'),
+                'errorMessage' => $job->getErrorMessage(),
             ];
         }, $jobs);
 
@@ -241,7 +242,8 @@ class ImportController extends AbstractController
             'status' => $job->getStatus(),
             'processedRows' => $job->getProcessedRows(),
             'totalRows' => $job->getTotalRows(),
-            'createdAt' => $job->getCreatedAt()->format('c')
+            'createdAt' => $job->getCreatedAt()->format('c'),
+            'errorMessage' => $job->getErrorMessage(),
         ]);
     }
 
