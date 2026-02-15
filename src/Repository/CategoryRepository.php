@@ -63,4 +63,24 @@ class CategoryRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+    /**
+     * UĹĽyte do pobierania wszystkich zagnieĹĽdĹĽonych kategorii
+     *
+     * @param array $parentIds
+     * @return array
+     */
+    public function getDescendantIds(array $parentIds): array
+    {
+        $allIds = $parentIds;
+        $children = $this->findBy(['id_parent' => $parentIds]);
+
+        if (empty($children)) {
+            return $allIds;
+        }
+
+        $childIds = array_map(fn($category) => $category->getId(), $children);
+        $grandChildIds = $this->getDescendantIds($childIds);
+
+        return array_unique(array_merge($allIds, $grandChildIds));
+    }
 }
