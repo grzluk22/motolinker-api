@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Article;
+use App\Entity\Category;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -51,6 +52,7 @@ class ArticleRepository extends ServiceEntityRepository
 
     public function findByExtended(mixed $criteria, mixed $orderBy, mixed $limit, mixed $offset)
     {
+        $this->expandCategoryIds($criteria);
         $extendedCriteria = ['priceMin', 'priceMax', 'quantity', 'quantitySearchMode', 'searchLike', 'image'];
 
         $priceMin = $criteria['priceMin'] ?? false;
@@ -168,6 +170,7 @@ class ArticleRepository extends ServiceEntityRepository
 
     public function countByExtended(mixed $criteria): int
     {
+        $this->expandCategoryIds($criteria);
         $extendedCriteria = ['priceMin', 'priceMax', 'quantity', 'quantitySearchMode', 'searchLike', 'image'];
 
         $priceMin = $criteria['priceMin'] ?? false;
@@ -196,8 +199,13 @@ class ArticleRepository extends ServiceEntityRepository
                 continue;
             }
             if(!$searchLike) {
-                $qb->andWhere('a.'.$key.' = :'.$key);
-                $qb->setParameter($key, $value);
+                if (is_array($value)) {
+                    $qb->andWhere('a.'.$key.' IN (:'.$key.')');
+                    $qb->setParameter($key, $value);
+                } else {
+                    $qb->andWhere('a.'.$key.' = :'.$key);
+                    $qb->setParameter($key, $value);
+                }
             }else{
                 $qb->andWhere($qb->expr()->like('a.'.$key, ':value'.$key))
                     ->setParameter('value' . $key, '%' . $value . '%');
@@ -272,5 +280,19 @@ class ArticleRepository extends ServiceEntityRepository
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    private function expandCategoryIds(mixed &$criteria): void
+    {
+        if (isset($criteria['id_category']) && !empty($criteria['id_category']) && $criteria['id_category'] != -1) {
+            $categoryId = $criteria['id_category'];
+            $parentIds = is_array($categoryId) ? $categoryId : [$categoryId];
+
+            /** @var \App\Repository\CategoryRepository $categoryRepository */
+            $categoryRepository = $this->getEntityManager()->getRepository(Category::class);
+            $expandedIds = $categoryRepository->getDescendantIds($parentIds);
+
+            $criteria['id_category'] = $expandedIds;
+        }
     }
 }
