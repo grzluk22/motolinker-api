@@ -17,6 +17,7 @@ use OpenApi\Attributes as OA;
 use Nelmio\ApiDocBundle\Attribute\Model;
 use App\Entity\Language;
 use App\HttpResponseModel\MessageResponse;
+use App\HttpRequestModel\ArticleCarBulkEditRequest;
 
 class ArticleCarController extends AbstractController
 {
@@ -108,5 +109,125 @@ class ArticleCarController extends AbstractController
         }else{
             return new JsonResponse(["message" => "nie znaleziono takiego samochodu podłączonego do artykułu"], 404);
         }
+    }
+    /**
+     * Zbiorcza edycja powiązań artykułów z samochodami
+     */
+    #[OA\Tag(name: "ArticleCar")]
+    #[OA\RequestBody(
+        description: "Lista operacji do wykonania (dodawanie/usuwanie powiązań)",
+        required: true,
+        content: new Model(type: ArticleCarBulkEditRequest::class)
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Wynik operacji",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string"),
+                new OA\Property(property: "processed_count", type: "integer"),
+                new OA\Property(property: "errors", type: "array", items: new OA\Items(type: "string"))
+            ]
+        )
+    )]
+    #[Route('/article/bulk-cars-edit', name: 'app_article_bulk_cars_edit', methods: ["POST"])]
+    public function bulkEdit(
+        ManagerRegistry $doctrine,
+        ArticleCarRepository $articleCarRepository,
+        ArticleRepository $articleRepository,
+        CarRepository $carRepository,
+        Request $request
+    ): JsonResponse {
+        $entityManager = $doctrine->getManager();
+        $data = $request->toArray();
+        
+        $operations = $data['operations'] ?? [];
+        
+        // Wsteczna kompatybilność / elastyczność
+        if (empty($operations) && isset($data[0]) && is_array($data[0])) {
+            $operations = $data;
+        }
+
+        if (empty($operations)) {
+            return new JsonResponse(['message' => 'Brak operacji do wykonania', 'processed_count' => 0], 400);
+        }
+
+        $processedCount = 0;
+        $errors = [];
+
+        // Cache dla encji
+        $articlesCache = [];
+        $carsCache = [];
+
+        foreach ($operations as $index => $op) {
+            $articleId = $op['article_id'] ?? null;
+            $carId = $op['car_id'] ?? null;
+            $action = $op['action'] ?? null;
+
+            if (!$articleId || !$carId || !$action) {
+                $errors[] = "Operacja #$index: Brak wymaganych pól (article_id, car_id, action)";
+                continue;
+            }
+
+            try {
+                // Walidacja istnienia artykułu
+                if (!isset($articlesCache[$articleId])) {
+                    $article = $articleRepository->find($articleId);
+                    if (!$article) {
+                        $errors[] = "Operacja #$index: Nie znaleziono artykułu ID $articleId";
+                        $articlesCache[$articleId] = false;
+                        continue;
+                    }
+                    $articlesCache[$articleId] = $article;
+                } elseif ($articlesCache[$articleId] === false) {
+                    continue;
+                }
+
+                // Walidacja istnienia samochodu
+                if (!isset($carsCache[$carId])) {
+                     $car = $carRepository->find($carId);
+                     if (!$car) {
+                         $errors[] = "Operacja #$index: Nie znaleziono samochodu ID $carId";
+                         $carsCache[$carId] = false;
+                         continue;
+                     }
+                     $carsCache[$carId] = $car;
+                } elseif ($carsCache[$carId] === false) {
+                     continue;
+                }
+
+                $existingRelation = $articleCarRepository->findOneBy(['id_article' => $articleId, 'id_car' => $carId]);
+
+                if ($action === 'add') {
+                    if (!$existingRelation) {
+                        $newRelation = new ArticleCar();
+                        $newRelation->setIdArticle($articleId);
+                        $newRelation->setIdCar($carId);
+                        $entityManager->persist($newRelation);
+                        $processedCount++;
+                    }
+                } elseif ($action === 'remove') {
+                    if ($existingRelation) {
+                        $entityManager->remove($existingRelation);
+                        $processedCount++;
+                    }
+                } else {
+                    $errors[] = "Operacja #$index: Nieznana akcja '$action'";
+                }
+
+            } catch (\Exception $e) {
+                $errors[] = "Operacja #$index: Błąd wewnętrzny - " . $e->getMessage();
+            }
+        }
+
+        if ($processedCount > 0) {
+            $entityManager->flush();
+        }
+
+        return new JsonResponse([
+            'message' => 'Zakończono masową edycję powiązań',
+            'processed_count' => $processedCount,
+            'errors' => $errors
+        ]);
     }
 }

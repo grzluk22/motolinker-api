@@ -182,7 +182,7 @@ class ImportService
             }
             $this->publishProgress($job);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             if ($this->entityManager->isOpen()) {
                 $job->setStatus('failed');
                 // Store error in job?

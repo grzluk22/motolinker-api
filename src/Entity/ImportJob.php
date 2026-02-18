@@ -60,6 +60,9 @@ class ImportJob
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $errorMessage = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -199,6 +202,18 @@ class ImportJob
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getErrorMessage(): ?string
+    {
+        return $this->errorMessage;
+    }
+
+    public function setErrorMessage(?string $errorMessage): static
+    {
+        $this->errorMessage = $errorMessage;
 
         return $this;
     }
