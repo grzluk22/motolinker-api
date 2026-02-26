@@ -1,77 +1,94 @@
-# motolinker-api-local
+# Motolinker API
 
-Motolinker API wykorzystujące PHP (Symfony) i MySQL.
+Backend API dla katalogu produktów branży motoryzacyjnej. 
 
-## Najważniejsze ścieżki
+## Stack Technologiczny
 
-- `/doc` – interfejs Swagger
-- `/doc.json` – dokumentacja JSON
-- `/register` – rejestracja (JSON z polami `email`, `password`)
-- `/login_check` – logowanie (JSON z polami `login`, `password`, zwraca JWT i refresh token)
-- `/token/refresh` – odświeżenie tokenu (JSON z polami `token`, `refresh_token`)
+- **Framework:** Symfony 7.4
+- **Język:** PHP 8.2
+- **Baza danych:** MySQL
+- **Autentykacja:** JWT (LexikJWTAuthenticationBundle)
+- **Komunikacja w czasie rzeczywistym:** Symfony Mercure
+- **Kolejkowanie zadań:** Symfony Messenger
+- **Dokumentacja API:** Swagger/OpenAPI (NelmioApiDocBundle)
 
-## Środowisko developerskie z Docker
+## Instalacja ze wsparciem Docker
 
-### Szybki start (skrypt)
+Wymagane zainstalowane narzędzia Docker oraz Docker Compose.
 
+### Środowisko deweloperskie
+
+W projekcie znajdują się gotowe skrypty przygotowujące środowisko. Konfigurują one pliki środowiskowe, uruchamiają kontenery, instalują pakiety i generują klucze dostępowe.
+
+Dla systemów Linux / macOS:
 ```bash
 ./install-dev.sh
 ```
 
-Skrypt poprosi o wartości `APP_SECRET`, `JWT_PASSPHRASE`, zbuduje obraz (opcjonalnie), uruchomi kontenery, zainstaluje zależności, migracje i wygeneruje klucze JWT.
+Dla systemu Windows (PowerShell):
+```powershell
+.\install-dev.ps1
+```
 
-### Ręczny start z Docker
+Aplikacja deweloperska po zakończeniu działania skryptu będzie wystawiona pod adresem http://localhost:8080.
 
-1. Skopiuj plik środowiskowy i dostosuj sekrety (np. `APP_SECRET`):
+### Środowisko produkcyjne
+
+1. Skopiuj podstawowy plik środowiskowy i skonfiguruj odpowiednie i docelowe hasła oraz ustaw `APP_ENV=prod`:
    ```bash
-   cd motolinker-api-local
    cp docker/env.docker .env.local
    ```
-2. Uruchom kontenery (PHP-Apache + MySQL):
+2. Zbuduj i uruchom kontenery środowiska produkcyjnego:
    ```bash
-   make docker-up
+   docker compose -f compose.yaml up -d --build
    ```
-   Aplikacja będzie dostępna pod adresem `http://localhost:8080`.
-3. Zainstaluj zależności PHP, korzystając z kontenera:
+3. Zainstaluj zależności omijając systemy deweloperskie i optymalizując pliki:
    ```bash
-   make install
+   docker compose exec app composer install --no-dev --optimize-autoloader
    ```
-4. Wykonaj migracje bazy danych:
+4. Przeprowadź migracje bazy danych:
    ```bash
-   make migrate
+   docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
    ```
-5. Wygeneruj parę kluczy JWT (przechowywane w `config/jwt/`):
+5. Wygeneruj parę kluczy JWT niezbędnych do logowania i zabezpieczeń tras:
    ```bash
-   make jwt-keys
+   docker compose exec app php bin/console lexik:jwt:generate-keypair
    ```
-6. Pozostałe polecenia dostępne są w pliku `Makefile` (`make docker-stop`, `make docker-down`, `make console <cmd>` itp.).
 
-### Przydatne informacje
+## Instalacja bez wsparcia Docker (Lokalnie)
 
-- Katalog projektu jest montowany w kontenerze, więc zmiany w kodzie są widoczne natychmiast.
-- Volumne `db_data` przechowuje dane MySQL; aby wyczyścić bazę, wykonaj `make docker-down` i usuń wolumen (`docker volume rm motolinker-api-local_db_data`).
-- Komenda `make console doctrine:database:create` pozwala uruchomić dowolne polecenie `bin/console`.
+Wymagane zainstalowane narzędzia PHP (wersja >= 8.2), Composer oraz serwer bazy danych MySQL.
 
-## Ręczna instalacja (opcjonalnie, bez Docker)
+### Środowisko deweloperskie
 
-1. `git clone` repozytorium i przejdź do katalogu projektu.
-2. `composer install`
-3. Włącz `mod_rewrite` według instrukcji: <https://gcore.com/learning/how-enable-apache-mod-rewrite/>
-4. Skonfiguruj połączenie z bazą w `.env`.
-5. `php bin/console doctrine:database:create`
-6. `php bin/console doctrine:migrations:migrate`
-7. `php bin/console lexik:jwt:generate-keypair`
+1. Wejdź do katalogu projektu i pobierz zależności:
+   ```bash
+   composer install
+   ```
+2. Skopiuj plik ze zmiennymi i skonfiguruj parametry połączenia z bazą, upewnij się czy serwer www obsługuje zasady mod_rewrite (dla Apache):
+   ```bash
+   cp docker/env.docker .env.local
+   ```
+3. Przygotuj bazę danych i załaduj schematy migracji:
+   ```bash
+   php bin/console doctrine:database:create
+   php bin/console doctrine:migrations:migrate
+   ```
+4. Utwórz klucze autentykacji dla JWT:
+   ```bash
+   php bin/console lexik:jwt:generate-keypair
+   ```
 
-## Najczęstsze problemy
+### Środowisko produkcyjne
 
-1. Podczas generowania pary kluczy JWT może pojawić się komunikat `error:80000003:system library::No such process`.
-   - Zainstaluj OpenSSL.
-   - Wygeneruj klucz prywatny:
-     ```bash
-     openssl genrsa -out config/jwt/private.pem -aes256 4096
-     ```
-     Podaj hasło takie, jak w zmiennej `JWT_PASSPHRASE`.
-   - Wygeneruj klucz publiczny:
-     ```bash
-     openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
-     ```
+1. Upewnij się, że DocumentRoot serwera (na przykład Nginx czy Apache) kieruje na wewnętrzny katalog `public`.
+2. Zdefiniuj w `.env.local` docelowe zmienne bezpieczeństwa oraz popraw parametry połączeniowe. Koniecznie zmień wartość `APP_ENV=prod`.
+3. Dokonaj instalacji wyłącznie bibliotek docelowych:
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   ```
+4. Zmigruj bazę i wygeneruj asymetryczne klucze JWT:
+   ```bash
+   php bin/console doctrine:migrations:migrate --no-interaction
+   php bin/console lexik:jwt:generate-keypair
+   ```
