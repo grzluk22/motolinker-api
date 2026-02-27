@@ -24,10 +24,11 @@ class ImportController extends AbstractController
         private ImportJobRepository $importJobRepository
     ) {
     }
-
+//@TODO: czy ta funkcja odrazu nie powinna zwracać informacji że istnieje już importMapping z takimi samymi nagłówkami?
     #[Route('/headers', name: 'headers', methods: ['POST'])]
     #[OA\Post(
-        summary: "Reads the first line of an uploaded CSV to return headers.",
+        summary: "Odczytuje pierwszą linię przesłanego pliku CSV i zwraca nagłówki.",
+        description: "Odczytuje pierwszą linię przesłanego pliku CSV i zwraca nagłówki. Zwraca również tymczasową nazwę pliku, która będzie potrzebna w kolejnym kroku importu, tak aby użytkownik nie musiał ponownie przesyłać pliku.",
         tags: ["Import"]
     )]
     #[OA\RequestBody(
@@ -49,16 +50,16 @@ class ImportController extends AbstractController
         $delimiter = $request->request->get('delimiter', ';');
 
         if (!$file) {
-            return new JsonResponse(['error' => 'No file uploaded or file too large'], 400);
+            return new JsonResponse(['error' => 'Nie przekazano żadnego pliku lub plik jest zbyt duży.'], 400);
         }
 
         if (!$file->isValid()) {
-            return new JsonResponse(['error' => 'File upload error: ' . $file->getErrorMessage()], 400);
+            return new JsonResponse(['error' => 'Wystąpił błąd podczas przesyłania pliku: ' . $file->getErrorMessage()], 400);  
         }
 
         $handle = fopen($file->getPathname(), 'r');
         if ($handle === false) {
-            return new JsonResponse(['error' => 'Could not read file'], 500);
+            return new JsonResponse(['error' => 'Nie udało się odczytać pliku.'], 500);
         }
 
         $line = fgets($handle);
@@ -79,7 +80,7 @@ class ImportController extends AbstractController
 
     #[Route('/validate', name: 'validate', methods: ['POST'])]
     #[OA\Post(
-        summary: "Validates the import mapping and column requirements.",
+        summary: "Waliduje mapowanie importu i wymagane kolumny.",
         tags: ["Import"]
     )]
     public function validate(Request $request): JsonResponse
@@ -89,7 +90,7 @@ class ImportController extends AbstractController
 
         $errors = [];
         if (!in_array('code', $mapping)) {
-            $errors[] = "Column 'code' (Article Code) must be mapped.";
+            $errors[] = "Kolumna 'code' (Kod artykułu) musi być zmapowana.";
         }
 
         return new JsonResponse([
@@ -100,7 +101,7 @@ class ImportController extends AbstractController
 
     #[Route('/run', name: 'run', methods: ['POST'])]
     #[OA\Post(
-        summary: "Starts an import job.",
+        summary: "Uruchamia import.",
         tags: ["Import"]
     )]
     #[OA\RequestBody(
@@ -110,11 +111,11 @@ class ImportController extends AbstractController
                 schema: new OA\Schema(
                     properties: [
                         new OA\Property(property: "file", type: "string", format: "binary"),
-                        new OA\Property(property: "mapping", type: "string", description: "JSON string of mapping"),
+                        new OA\Property(property: "mapping", type: "string", description: "JSON string z mapowaniem"),
                         new OA\Property(property: "delimiter", type: "string", example: ";"),
                         new OA\Property(property: "type", type: "string", enum: ["articles", "cars"], default: "articles"),
-                        new OA\Property(property: "article_identifier_field", type: "string", description: "For car import: article identifier field in mapping", default: "code"),
-                        new OA\Property(property: "debug_delay", type: "integer", description: "Debug: delay in milliseconds between batches (for testing progress tracking)", example: 1000)
+                        new OA\Property(property: "article_identifier_field", type: "string", description: "Dla importu samochodów: pole identyfikatora artykułu w mapowaniu", default: "code"),
+                        new OA\Property(property: "debug_delay", type: "integer", description: "Debug: opóźnienie w milisekundach między partiami (do testowania śledzenia postępu)", example: 1000)
                     ]
                 )
             )
@@ -131,7 +132,7 @@ class ImportController extends AbstractController
         $debugDelay = $request->request->get('debug_delay');
 
         if (!$file || !$mapping) {
-            return new JsonResponse(['error' => 'Missing file or mapping'], 400);
+            return new JsonResponse(['error' => 'Brak pliku lub mapowania'], 400);
         }
 
         // Move file
@@ -179,20 +180,20 @@ class ImportController extends AbstractController
 
     #[Route('/jobs', name: 'list_jobs', methods: ['GET'])]
     #[OA\Get(
-        summary: "Get list of all import jobs.",
+        summary: "Pobiera listę wszystkich importów.",
         tags: ["Import"]
     )]
     #[OA\Parameter(
         name: "status",
         in: "query",
-        description: "Filter jobs by status (queued, processing, completed, cancelled, etc.)",
+        description: "Filtruje importy wg statusu (queued, processing, completed, cancelled, etc.)",
         required: false,
         schema: new OA\Schema(type: "string")
     )]
     #[OA\Parameter(
         name: "limit",
         in: "query",
-        description: "Maximum number of jobs to return (default: 100, max: 500)",
+        description: "Maksymalna liczba importów do zwrócenia (domyślnie: 100, max: 500)",
         required: false,
         schema: new OA\Schema(type: "integer", default: 100)
     )]
@@ -226,7 +227,7 @@ class ImportController extends AbstractController
 
     #[Route('/status/{id}', name: 'status', methods: ['GET'])]
     #[OA\Get(
-        summary: "Get import job status.",
+        summary: "Pobiera status importu.",
         tags: ["Import"]
     )]
     public function status(int $id): JsonResponse
@@ -234,7 +235,7 @@ class ImportController extends AbstractController
         $job = $this->importJobRepository->find($id);
 
         if (!$job) {
-            return new JsonResponse(['error' => 'Job not found'], 404);
+            return new JsonResponse(['error' => 'Nie znaleziono importu'], 404);
         }
 
         return new JsonResponse([
@@ -249,7 +250,7 @@ class ImportController extends AbstractController
 
     #[Route('/pause/{id}', name: 'pause', methods: ['POST'])]
     #[OA\Post(
-        summary: "Pause an import job.",
+        summary: "Wstrzymuje import.",
         tags: ["Import"]
     )]
     public function pause(int $id): JsonResponse
@@ -269,14 +270,14 @@ class ImportController extends AbstractController
 
     #[Route('/resume/{id}', name: 'resume', methods: ['POST'])]
     #[OA\Post(
-        summary: "Resume a cancelled/paused import job.",
+        summary: "Wznawia import.",
         tags: ["Import"]
     )]
     public function resume(int $id): JsonResponse
     {
         $job = $this->importJobRepository->find($id);
         if (!$job) {
-            return new JsonResponse(['error' => 'Job not found'], 404);
+            return new JsonResponse(['error' => 'Nie znaleziono importu'], 404);
         }
 
         // If job is already processing, ignore
@@ -288,7 +289,7 @@ class ImportController extends AbstractController
         // User said: "Cancelled to zadanie importu ktorego juz nie da się wznowić."
         // So we only resume from paused (and maybe created/failed if we want).
         if ($job->getStatus() === ImportJob::STATUS_CANCELLED) {
-            return new JsonResponse(['error' => 'Cancelled job cannot be resumed'], 400);
+            return new JsonResponse(['error' => 'Nie można wznowić anulowanego importu'], 400);
         }
 
         $job->setStatus(ImportJob::STATUS_QUEUED);
@@ -301,20 +302,20 @@ class ImportController extends AbstractController
 
     #[Route('/revert/{id}', name: 'revert', methods: ['DELETE'])]
     #[OA\Delete(
-        summary: "Revert an import job (delete created records).",
+        summary: "Cofnięcie importu (usuwa utworzone rekordy).",
         tags: ["Import"]
     )]
     public function revert(int $id): JsonResponse
     {
         $job = $this->importJobRepository->find($id);
         if (!$job) {
-            return new JsonResponse(['error' => 'Job not found'], 404);
+            return new JsonResponse(['error' => 'Nie znaleziono importu'], 404);
         }
 
         // Only completed or failed jobs should be reverted? 
         // Or maybe even paused?
         if (in_array($job->getStatus(), [ImportJob::STATUS_PROCESSING, ImportJob::STATUS_PAUSING, ImportJob::STATUS_REVERTING])) {
-            return new JsonResponse(['error' => 'Job is currently active and cannot be reverted yet'], 400);
+            return new JsonResponse(['error' => 'Import jest w trakcie i nie można go jeszcze cofnąć'], 400);
         }
 
         try {

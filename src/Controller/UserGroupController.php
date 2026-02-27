@@ -22,7 +22,7 @@ class UserGroupController extends AbstractController
     #[Route('', name: 'app_user_group_index', methods: ['GET'])]
     #[OA\Response(
         response: 200,
-        description: 'Returns the list of user groups',
+        description: 'Zwraca listę grup użytkowników.',
         content: new OA\JsonContent(type: 'array', items: new OA\Items(ref: new Model(type: UserGroupResponse::class)))
     )]
     public function index(UserGroupRepository $repository): Response
@@ -46,7 +46,7 @@ class UserGroupController extends AbstractController
     #[OA\RequestBody(content: new Model(type: UserGroupRequest::class))]
     #[OA\Response(
         response: 201,
-        description: 'Group created',
+        description: 'Grupa utworzona pomyślnie.',
         content: new Model(type: UserGroupResponse::class)
     )]
     public function create(Request $request, UserGroupRepository $repository): Response
@@ -72,7 +72,7 @@ class UserGroupController extends AbstractController
     #[Route('/{id}', name: 'app_user_group_show', methods: ['GET'])]
     #[OA\Response(
         response: 200,
-        description: 'Returns a single user group',
+        description: 'Zwraca pojedynczą grupę użytkowników.',
         content: new Model(type: UserGroupResponse::class)
     )]
     public function show(UserGroup $group): Response
@@ -90,7 +90,7 @@ class UserGroupController extends AbstractController
     #[OA\RequestBody(content: new Model(type: UserGroupRequest::class))]
     #[OA\Response(
         response: 200,
-        description: 'Group updated',
+        description: 'Grupa zaktualizowana pomyślnie.',
         content: new Model(type: UserGroupResponse::class)
     )]
     public function update(Request $request, UserGroup $group, UserGroupRepository $repository): Response
@@ -119,7 +119,7 @@ class UserGroupController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_user_group_delete', methods: ['DELETE'])]
-    #[OA\Response(response: 204, description: 'Group deleted')]
+    #[OA\Response(response: 204, description: 'Grupa usunięta pomyślnie.')]
     public function delete(UserGroup $group, UserGroupRepository $repository): Response
     {
         $repository->remove($group, true);

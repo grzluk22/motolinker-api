@@ -92,3 +92,26 @@ Wymagane zainstalowane narzędzia PHP (wersja >= 8.2), Composer oraz serwer bazy
    php bin/console doctrine:migrations:migrate --no-interaction
    php bin/console lexik:jwt:generate-keypair
    ```
+
+## Uruchamianie procesów w tle (Messenger & Mercure)
+
+### Symfony Mercure
+
+Serwer **Mercure** jest zdefiniowany jako osobny kontener w plikach Docker Compose, więc uruchamia się automatycznie wraz z resztą środowiska. 
+
+Dla środowisk **bez Dockera**, należy pobrać odpowiednią binarkę (standalone) ze strony [Mercure.rocks](https://mercure.rocks/) i uruchomić ją samodzielnie z odpowiednio zdefiniowanymi zmiennymi środowiskowymi pasującymi do Twojego ustrukturyzowania `.env`.
+
+### Symfony Messenger (Worker)
+
+Przetwarzanie zadań ułożonych w kolejce przez Messengera wymaga uruchomienia tzw. workera. Domyślnie można to zrobić w osobnym oknie terminala.
+
+**W opartym o Docker ze środowiskiem deweloperskim:**
+```bash
+docker compose -f docker/docker-compose.dev.yml exec app php bin/console messenger:consume async -vv
+```
+*(W produkcji upewnij się, że modyfikujesz komendę pod swój docelowy `compose.yaml` lub podłączasz workery do Supervisora).*
+
+**W środowisku instalowanym natywnie (Bez Dockera):**
+```bash
+php bin/console messenger:consume async -vv
+```

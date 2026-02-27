@@ -21,12 +21,12 @@ class SettingsController extends AbstractController
     #[Route('', name: 'api_settings_list', methods: ['GET'])]
     #[OA\Get(
         path: '/api/settings',
-        summary: 'Returns all settings as key-value pairs',
+        summary: 'Zwraca wszystkie ustawienia w formacie klucz-wartość.',
         tags: ['Settings']
     )]
     #[OA\Response(
         response: 200,
-        description: 'Returns all settings',
+        description: 'Zwraca wszystkie ustawienia.',
         content: new OA\JsonContent(
             type: 'object',
             additionalProperties: new OA\AdditionalProperties(type: 'string')
@@ -36,7 +36,7 @@ class SettingsController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user) {
-            return $this->json(['error' => 'Unauthorized'], 401);
+            return $this->json(['error' => 'Nieautoryzowany.'], 401);
         }
         return $this->json($this->settingRepository->getSettingsAsArray($user));
     }
@@ -44,7 +44,7 @@ class SettingsController extends AbstractController
     #[Route('/{key}', name: 'api_settings_get', methods: ['GET'])]
     #[OA\Get(
         path: '/api/settings/{key}',
-        summary: 'Returns a specific setting value',
+        summary: 'Zwraca konkretną wartość ustawienia.',
         tags: ['Settings']
     )]
     #[OA\Parameter(
@@ -55,7 +55,7 @@ class SettingsController extends AbstractController
     )]
     #[OA\Response(
         response: 200,
-        description: 'Returns a specific setting value',
+        description: 'Zwraca konkretną wartość ustawienia.',
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'key', type: 'string'),
@@ -65,7 +65,7 @@ class SettingsController extends AbstractController
     )]
     #[OA\Response(
         response: 404,
-        description: 'Setting not found'
+        description: 'Ustawienie nie znalezione.'
     )]
     public function get(string $key): JsonResponse
     {
@@ -85,12 +85,12 @@ class SettingsController extends AbstractController
     #[Route('', name: 'api_settings_update', methods: ['POST', 'PUT'])]
     #[OA\Post(
         path: '/api/settings',
-        summary: 'Update settings',
-        description: 'Updates or creates multiple settings at once',
+        summary: 'Aktualizuje lub tworzy ustawienia.',
+        description: 'Aktualizuje lub tworzy ustawienia.',
         tags: ['Settings']
     )]
     #[OA\RequestBody(
-        description: 'Settings to update (key-value pairs)',
+        description: 'Ustawienia do aktualizacji (pary klucz-wartość)',
         content: new OA\JsonContent(
             type: 'object',
             additionalProperties: new OA\AdditionalProperties(type: 'string')
@@ -98,7 +98,7 @@ class SettingsController extends AbstractController
     )]
     #[OA\Response(
         response: 200,
-        description: 'Settings updated successfully'
+        description: 'Ustawienia zaktualizowane pomyślnie.'
     )]
     public function update(Request $request): JsonResponse
     {
@@ -128,7 +128,7 @@ class SettingsController extends AbstractController
     #[Route('/{key}', name: 'api_settings_delete', methods: ['DELETE'])]
     #[OA\Delete(
         path: '/api/settings/{key}',
-        summary: 'Delete a setting',
+        summary: 'Usuwa ustawienie.',
         tags: ['Settings']
     )]
     #[OA\Parameter(
@@ -139,11 +139,11 @@ class SettingsController extends AbstractController
     )]
     #[OA\Response(
         response: 200,
-        description: 'Setting deleted successfully'
+        description: 'Ustawienie usunięte pomyślnie.'
     )]
     #[OA\Response(
         response: 404,
-        description: 'Setting not found'
+        description: 'Ustawienie nie znalezione.'
     )]
     public function delete(string $key): JsonResponse
     {
@@ -154,7 +154,7 @@ class SettingsController extends AbstractController
 
         $success = $this->settingRepository->deleteSetting($key, $user);
         if (!$success) {
-            return $this->json(['error' => 'Setting not found'], 404);
+            return $this->json(['error' => 'Ustawienie nie znalezione.'], 404);
         }
 
         return $this->json(['status' => 'success']);
