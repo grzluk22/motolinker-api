@@ -1,4 +1,0 @@
-Field	Type	Null	Key	Default	Extra
-id	int	NO	PRI	NULL	auto_increment
-setting_key	varchar(255)	NO	UNI	NULL	
-setting_value	longtext	YES		NULL	

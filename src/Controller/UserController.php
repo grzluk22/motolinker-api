@@ -26,7 +26,7 @@ class UserController extends AbstractController
     #[Route('', name: 'app_user_index', methods: ['GET'])]
     #[OA\Response(
         response: 200,
-        description: 'Returns the list of users',
+        description: 'Zwraca listę użytkowników.',
         content: new OA\JsonContent(type: 'array', items: new OA\Items(ref: new Model(type: UserResponse::class)))
     )]
     public function index(UserRepository $repository): Response
@@ -45,7 +45,7 @@ class UserController extends AbstractController
     #[OA\RequestBody(content: new Model(type: UserCreateRequest::class))]
     #[OA\Response(
         response: 201,
-        description: 'User created',
+        description: 'Użytkownik utworzony pomyślnie.',
         content: new Model(type: UserResponse::class)
     )]
     public function create(
@@ -82,7 +82,7 @@ class UserController extends AbstractController
     #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
     #[OA\Response(
         response: 200,
-        description: 'Returns a single user',
+        description: 'Zwraca pojedynczego użytkownika.',
         content: new Model(type: UserResponse::class)
     )]
     public function show(User $user): Response
@@ -94,7 +94,7 @@ class UserController extends AbstractController
     #[OA\RequestBody(content: new Model(type: UserUpdateRequest::class))]
     #[OA\Response(
         response: 200,
-        description: 'User updated',
+        description: 'Użytkownik zaktualizowany pomyślnie.',
         content: new Model(type: UserResponse::class)
     )]
     public function update(
@@ -139,7 +139,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_user_delete', methods: ['DELETE'])]
-    #[OA\Response(response: 204, description: 'User deleted')]
+    #[OA\Response(response: 204, description: 'Użytkownik usunięty pomyślnie.')]
     public function delete(User $user, UserRepository $repository): Response
     {
         $repository->remove($user, true);

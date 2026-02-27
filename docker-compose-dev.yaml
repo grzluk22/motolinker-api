@@ -1,0 +1,87 @@
+version: "3.7"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: motolinker_backend_dev
+    restart: unless-stopped
+    env_file:
+      - docker/env.docker
+    environment:
+      APP_ENV: dev
+      APP_SECRET: ${APP_SECRET:-frajerek123!}
+      DATABASE_URL: mysql://symfony:symfony@db:3306/motolinker
+      MERCURE_URL: http://mercure/.well-known/mercure
+      # Ustawienie poprawnego URL publicznego dla Mercure
+      MERCURE_PUBLIC_URL: https://mercure.motolinker.grzesiak24.pl/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-frajerek123!}
+      CORS_ALLOW_ORIGIN: ^https?://(${DOMAIN_NAME}|dev.motolinker.grzesiak24.pl|localhost|127\.0\.0\.1)(:[0-9]+)?$
+      # Nginx Proxy Env Vars - Usunięto błędną składnię ${...}
+      VIRTUAL_HOST: dev.api.motolinker.grzesiak24.pl
+      LETSENCRYPT_HOST: dev.api.motolinker.grzesiak24.pl
+      LETSENCRYPT_EMAIL: admin@grzesiak24.pl
+    volumes:
+      - .:/var/www
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - public_uploads:/var/www/public/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - motolinker
+      - proxy
+
+  db:
+    image: mysql:8.0
+    container_name: motolinker_db_dev
+    restart: unless-stopped
+    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_DATABASE: motolinker
+      MYSQL_USER: symfony
+      MYSQL_PASSWORD: symfony
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - motolinker
+
+  mercure:
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-frajerek123!}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-frajerek123!}
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins *
+      # Nginx Proxy Env Vars - Ustawiono spójnie z app
+      VIRTUAL_HOST: mercure.motolinker.grzesiak24.pl
+      LETSENCRYPT_HOST: mercure.motolinker.grzesiak24.pl
+      LETSENCRYPT_EMAIL: admin@grzesiak24.pl
+    volumes:
+      - mercure_data:/data
+      - mercure_config:/config
+    networks:
+      - motolinker
+      - proxy
+
+networks:
+  # Dodano brakującą definicję sieci motolinker
+  motolinker:
+  proxy:
+    external: true
+    name: audiora_audiora-network
+
+volumes:
+  db_data:
+  mercure_data:
+  mercure_config:
+  public_uploads:
