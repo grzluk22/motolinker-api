@@ -150,8 +150,8 @@ ensure_ssl_certs() {
         # Zawsze wymuszamy ich kopię do Nginx - wewnątrz Docker Proxy musi być najświeższa wiedza!
         echo -e "${BLUE}Kopiowanie kluczy SSL dla $DOMAIN do kontenera ${PROXY_CONTAINER_NAME}...${NC}"
         docker exec ${PROXY_CONTAINER_NAME} mkdir -p /etc/nginx/ssl/$DOMAIN
-        docker cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem ${PROXY_CONTAINER_NAME}:/etc/nginx/ssl/$DOMAIN/fullchain.pem
-        docker cp /etc/letsencrypt/live/$DOMAIN/privkey.pem ${PROXY_CONTAINER_NAME}:/etc/nginx/ssl/$DOMAIN/privkey.pem
+        docker cp -L /etc/letsencrypt/live/$DOMAIN/fullchain.pem ${PROXY_CONTAINER_NAME}:/etc/nginx/ssl/$DOMAIN/fullchain.pem
+        docker cp -L /etc/letsencrypt/live/$DOMAIN/privkey.pem ${PROXY_CONTAINER_NAME}:/etc/nginx/ssl/$DOMAIN/privkey.pem
     fi
 }
 
