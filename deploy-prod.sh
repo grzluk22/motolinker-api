@@ -21,7 +21,7 @@ echo -e "${BLUE}=== Przygotowanie wdrożenia produkcyjnego Motolinker API ===${N
 echo "Skrypt wygeneruje plik środowiskowy i zbuduje kontenery."
 echo ""
 
-# Sprawdz czy istnieje plik .env.prod.local
+#  prawdz czy istnieje plik .env.prod.local
 if [ -f ".env.prod.local" ]; then
     # Zapytaj czy usunąć
     read -p "${YELLOW}Plik .env.prod.local już istnieje. Czy chcesz go usunąć? (t/n): ${NC}" INPUT
