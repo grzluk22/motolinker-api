@@ -1,0 +1,72 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.prod
+    container_name: motolinker_backend_prod
+    env_file:
+      - .env.prod.local
+    restart: always
+    # Odkomentuj i zmień poniższą sieć na tą, w której rzeźbi Twoje Nginx Proxy
+    # networks:
+    #   - default
+    #   - nginx-proxy
+    environment:
+      # Zmienne wymagane przez Nginx Proxy (np. nginx-proxy by jwilder lub Nginx Proxy Manager z automatyczną detekcją)
+      VIRTUAL_HOST: ${API_DOMAIN}
+      LETSENCRYPT_HOST: ${API_DOMAIN}
+      VIRTUAL_PORT: 80
+    volumes:
+      - public_uploads:/var/www/public/uploads
+      - jwt_keys:/var/www/config/jwt
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    container_name: motolinker_db_prod
+    command: [ "mysqld", "--default-authentication-plugin=mysql_native_password" ]
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - motolinker_db_data_prod:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mercure:
+    image: dunglas/mercure
+    container_name: motolinker_mercure_prod
+    restart: always
+    environment:
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET}
+      VIRTUAL_HOST: ${MERCURE_DOMAIN}
+      LETSENCRYPT_HOST: ${MERCURE_DOMAIN}
+      VIRTUAL_PORT: 80
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins https://${API_DOMAIN} https://${FRONTEND_DOMAIN}
+    command: /usr/bin/caddy run --config /etc/caddy/Caddyfile
+    volumes:
+      - mercure_data_prod:/data
+      - mercure_config_prod:/config
+
+volumes:
+  motolinker_db_data_prod:
+  public_uploads:
+  jwt_keys:
+  mercure_data_prod:
+  mercure_config_prod:
+
+# Odkomentuj to jeśli podłączasz zewnętrzną sieć Nginx Proxy
+# networks:
+#   nginx-proxy:
+#     external: true

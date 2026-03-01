@@ -74,7 +74,7 @@ services:
       - mercure_data:/data
       - mercure_config:/config
     ports:
-      - "80:80"
+      - "8081:80"
 
 volumes:
   motolinker_db_data:

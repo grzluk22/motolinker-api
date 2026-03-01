@@ -38,9 +38,9 @@ Aplikacja deweloperska po zakończeniu działania skryptu będzie wystawiona pod
    ```bash
    cp docker/env.docker .env.local
    ```
-2. Zbuduj i uruchom kontenery środowiska produkcyjnego:
+2. Przeglądnij również plik `docker/docker-compose.prod.yml` i dostosuj go do swoich potrzeb. Pamiętaj że aplikacja buduje kontener ale nie obsługuje domeny, więc musisz przekierować ruch na odpowiedni port. Zbuduj i uruchom kontenery środowiska produkcyjnego:
    ```bash
-   docker compose -f compose.yaml up -d --build
+   docker compose -f docker/docker-compose.prod.yml up -d --build
    ```
 3. Zainstaluj zależności omijając systemy deweloperskie i optymalizując pliki:
    ```bash
