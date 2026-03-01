@@ -24,8 +24,10 @@ echo ""
 # Sprawdz czy istnieje plik .env.prod.local
 if [ -f ".env.prod.local" ]; then
     # Zapytaj czy usunąć
-    read -p "$(echo -e "${YELLOW}Plik .env.prod.local już istnieje. Czy chcesz go usunąć i skonfigurować na nowo? (t/n): ${NC}")" INPUT
+    read -p "$(echo -e "${YELLOW}Plik .env.prod.local już istnieje. Czy chcesz go usunąć i skonfigurować na nowo? Ostrzeżenie: Spowoduje to całkowity RESET BAZY DANYCH! (t/n): ${NC}")" INPUT
     if [ "$INPUT" = "t" ]; then
+        echo -e "${YELLOW}Zatrzymywanie kontenerów i czyszczenie wolumenów danych...${NC}"
+        docker compose -f docker-compose.prod.yml down -v || echo "Nie znaleziono kontenerów do zamknięcia."
         rm .env.prod.local
     else
         echo -e "${GREEN}Kontynuuję z istniejącym plikiem .env.prod.local${NC}"
@@ -92,7 +94,9 @@ EOF
 fi
 
 # ZAWSZE wczytujemy zmienne ze skonfigurowanego pliku do środowiska skryptu
-export $(grep -v '^#' .env.prod.local | xargs)
+set -a
+source .env.prod.local
+set +a
 
 # Docker-compose czyta m.in. z .env domyślnie przy parsowaniu ymla, 
 # więc zawsze kopiujemy aktualny konfig na wszelki wypadek
@@ -156,6 +160,11 @@ server {
     }
 }
 EOF
+
+if [ -z "${API_DOMAIN}" ] || [ -z "${PROXY_CONTAINER_NAME}" ]; then
+    echo -e "${RED}Błąd krytyczny skryptu: Zmienne sieciowe nie załadowały się. Przerywam kopiowanie do proxy.${NC}"
+    exit 1
+fi
 
 echo -e "\n${BLUE}Wgrywanie konfiguracji do kontenera ${PROXY_CONTAINER_NAME}...${NC}"
 docker cp ${API_DOMAIN}.conf ${PROXY_CONTAINER_NAME}:/etc/nginx/conf.d/${API_DOMAIN}.conf
