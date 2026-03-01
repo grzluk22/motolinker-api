@@ -55,8 +55,8 @@ if [ ! -f ".env.prod.local" ]; then
     ask "Sekret JWT dla Mercure" "$GEN_MERCURE" MERCURE_JWT_SECRET
     ask "Hasło kluczy JWT (Lexik)" "$GEN_JWT_PASS" JWT_PASSPHRASE
 
-    ask "Nazwa podpiętej sieci dockera dla proxy" "nginx-proxy" PROXY_NETWORK_NAME
-    ask "Nazwa kontenera dockera z Nginx" "nginx" PROXY_CONTAINER_NAME
+    ask "Nazwa podpiętej sieci dockera dla proxy" "audiora_audiora-network" PROXY_NETWORK_NAME
+    ask "Nazwa kontenera dockera z Nginx" "audiora-nginx" PROXY_CONTAINER_NAME
 
     echo -e "\n${BLUE}Tworzenie pliku .env.prod.local...${NC}"
 
