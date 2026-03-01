@@ -60,10 +60,7 @@ if [ ! -f ".env.prod.local" ]; then
     ask "Nazwa podpiętej sieci dockera dla proxy" "audiora_audiora-network" PROXY_NETWORK_NAME
     ask "Nazwa kontenera dockera z Nginx" "audiora-nginx" PROXY_CONTAINER_NAME
 
-    read -p "$(echo -e "${YELLOW}Czy wygenerować certyfikaty SSL Let's Encrypt na VPSie? (t/n): ${NC}")" RUN_SSL
-    if [ "$RUN_SSL" = "t" ]; then
-        ask "Email dla powiadomień Let's Encrypt" "admin@grzesiak24.pl" CERT_EMAIL
-    fi
+
 
     echo -e "\n${BLUE}Tworzenie pliku .env.prod.local...${NC}"
 
@@ -93,8 +90,7 @@ MYSQL_PASSWORD=${MYSQL_PASSWORD}
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 PROXY_NETWORK_NAME=${PROXY_NETWORK_NAME}
 PROXY_CONTAINER_NAME=${PROXY_CONTAINER_NAME}
-RUN_SSL=${RUN_SSL}
-CERT_EMAIL=${CERT_EMAIL}
+
 EOF
 
     echo -e "${GREEN}Zapisano .env.prod.local!${NC}"
@@ -104,6 +100,12 @@ fi
 set -a
 source .env.prod.local
 set +a
+
+read -p "$(echo -e "\n${YELLOW}Czy chcesz wdrożyć proxy z certyfikatami SSL w Nginx (HTTPS)? Skrypt spróbuje je wygenerować i skopiować (t/n): ${NC}")" RUN_SSL
+if [ "$RUN_SSL" = "t" ]; then
+    read -p "$(echo -e "${YELLOW}Podaj Email Let's Encrypt [admin@grzesiak24.pl]: ${NC}")" INPUT_EMAIL
+    CERT_EMAIL="${INPUT_EMAIL:-admin@grzesiak24.pl}"
+fi
 
 # Docker-compose czyta m.in. z .env domyślnie przy parsowaniu ymla, 
 # więc zawsze kopiujemy aktualny konfig na wszelki wypadek
@@ -136,17 +138,17 @@ ensure_ssl_certs() {
     if [ "$RUN_SSL" = "t" ]; then
         if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then
             echo -e "${YELLOW}Brak certyfikatów dla $DOMAIN na hoście. Generowanie...${NC}"
-            # Zatrzymanie Nginx w razie przypisanego portu 80 przez standalone
-            docker exec ${PROXY_CONTAINER_NAME} nginx -s stop || true
+            # Zatrzymanie całego kontenera proxy dla zwolnienia portu 80 dla Certbota
+            docker stop ${PROXY_CONTAINER_NAME} || true
             sleep 2
             certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos -m $CERT_EMAIL
-            docker exec ${PROXY_CONTAINER_NAME} nginx || true
+            docker start ${PROXY_CONTAINER_NAME} || true
         else
-            echo -e "${GREEN}Certyfikaty na hoście dla $DOMAIN już istnieją. Omijanie generowania.${NC}"
+            echo -e "${GREEN}Certyfikaty na hoście dla $DOMAIN już istnieją. Nie uruchamiam Certbota.${NC}"
         fi
         
-        # Nawet na pominiętym gnerowaniu zawsze wymuszamy ich kopię do Nginx
-        echo -e "${BLUE}Kopiowanie kluczy SSL dla $DOMAIN to kontenera ${PROXY_CONTAINER_NAME}...${NC}"
+        # Zawsze wymuszamy ich kopię do Nginx - wewnątrz Docker Proxy musi być najświeższa wiedza!
+        echo -e "${BLUE}Kopiowanie kluczy SSL dla $DOMAIN do kontenera ${PROXY_CONTAINER_NAME}...${NC}"
         docker exec ${PROXY_CONTAINER_NAME} mkdir -p /etc/nginx/ssl/$DOMAIN
         docker cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem ${PROXY_CONTAINER_NAME}:/etc/nginx/ssl/$DOMAIN/fullchain.pem
         docker cp /etc/letsencrypt/live/$DOMAIN/privkey.pem ${PROXY_CONTAINER_NAME}:/etc/nginx/ssl/$DOMAIN/privkey.pem
