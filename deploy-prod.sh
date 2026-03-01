@@ -24,7 +24,7 @@ echo ""
 # Sprawdz czy istnieje plik .env.prod.local
 if [ -f ".env.prod.local" ]; then
     # Zapytaj czy usunąć
-    read -p "$(echo -e ${YELLOW}Plik .env.prod.local już istnieje. Czy chcesz go usunąć i skonfigurować na nowo? (t/n): ${NC})" INPUT
+    read -p "$(echo -e "${YELLOW}Plik .env.prod.local już istnieje. Czy chcesz go usunąć i skonfigurować na nowo? (t/n): ${NC}")" INPUT
     if [ "$INPUT" = "t" ]; then
         rm .env.prod.local
     else
