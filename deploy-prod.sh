@@ -60,6 +60,11 @@ if [ ! -f ".env.prod.local" ]; then
     ask "Nazwa podpiętej sieci dockera dla proxy" "audiora_audiora-network" PROXY_NETWORK_NAME
     ask "Nazwa kontenera dockera z Nginx" "audiora-nginx" PROXY_CONTAINER_NAME
 
+    read -p "$(echo -e "${YELLOW}Czy wygenerować certyfikaty SSL Let's Encrypt na VPSie? (t/n): ${NC}")" RUN_SSL
+    if [ "$RUN_SSL" = "t" ]; then
+        ask "Email dla powiadomień Let's Encrypt" "admin@grzesiak24.pl" CERT_EMAIL
+    fi
+
     echo -e "\n${BLUE}Tworzenie pliku .env.prod.local...${NC}"
 
     cat > .env.prod.local <<EOF
@@ -78,7 +83,7 @@ MERCURE_PUBLIC_URL="https://${MERCURE_DOMAIN}/.well-known/mercure"
 MERCURE_JWT_SECRET="${MERCURE_JWT_SECRET}"
 CORS_ALLOW_ORIGIN='^https?://(${FRONTEND_DOMAIN}|${API_DOMAIN})(:[0-9]+)?$'
 
-# Zmienne dla docker-compose
+# Zmienne dla docker-compose i SSL
 API_DOMAIN=${API_DOMAIN}
 MERCURE_DOMAIN=${MERCURE_DOMAIN}
 FRONTEND_DOMAIN=${FRONTEND_DOMAIN}
@@ -88,6 +93,8 @@ MYSQL_PASSWORD=${MYSQL_PASSWORD}
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 PROXY_NETWORK_NAME=${PROXY_NETWORK_NAME}
 PROXY_CONTAINER_NAME=${PROXY_CONTAINER_NAME}
+RUN_SSL=${RUN_SSL}
+CERT_EMAIL=${CERT_EMAIL}
 EOF
 
     echo -e "${GREEN}Zapisano .env.prod.local!${NC}"
@@ -122,9 +129,98 @@ docker exec -u www-data -i motolinker_backend_prod php bin/console doctrine:migr
 # Dodatkowe ostateczne upewnienie się co do uprawnień
 docker exec -i motolinker_backend_prod chown -R www-data:www-data var/ public/uploads/ config/jwt/
 
+echo -e "\n${BLUE}Generowanie i zarządzanie certyfikatami SSL Certbot...${NC}"
+
+ensure_ssl_certs() {
+    local DOMAIN=$1
+    if [ "$RUN_SSL" = "t" ]; then
+        if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then
+            echo -e "${YELLOW}Brak certyfikatów dla $DOMAIN na hoście. Generowanie...${NC}"
+            # Zatrzymanie Nginx w razie przypisanego portu 80 przez standalone
+            docker exec ${PROXY_CONTAINER_NAME} nginx -s stop || true
+            sleep 2
+            certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos -m $CERT_EMAIL
+            docker exec ${PROXY_CONTAINER_NAME} nginx || true
+        else
+            echo -e "${GREEN}Certyfikaty na hoście dla $DOMAIN już istnieją. Omijanie generowania.${NC}"
+        fi
+        
+        # Nawet na pominiętym gnerowaniu zawsze wymuszamy ich kopię do Nginx
+        echo -e "${BLUE}Kopiowanie kluczy SSL dla $DOMAIN to kontenera ${PROXY_CONTAINER_NAME}...${NC}"
+        docker exec ${PROXY_CONTAINER_NAME} mkdir -p /etc/nginx/ssl/$DOMAIN
+        docker cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem ${PROXY_CONTAINER_NAME}:/etc/nginx/ssl/$DOMAIN/fullchain.pem
+        docker cp /etc/letsencrypt/live/$DOMAIN/privkey.pem ${PROXY_CONTAINER_NAME}:/etc/nginx/ssl/$DOMAIN/privkey.pem
+    fi
+}
+
+ensure_ssl_certs "$API_DOMAIN"
+ensure_ssl_certs "$MERCURE_DOMAIN"
+
 echo -e "\n${BLUE}Generowanie dynamicznych plików konfiguracyjnych Nginx...${NC}"
 
-cat > ${API_DOMAIN}.conf <<EOF
+if [ "$RUN_SSL" = "t" ]; then
+    # Konfiguracja Nginx wspierająca SSL TLS
+    cat > ${API_DOMAIN}.conf <<EOF
+server {
+    listen 80;
+    server_name ${API_DOMAIN};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ${API_DOMAIN};
+
+    ssl_certificate /etc/nginx/ssl/${API_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/${API_DOMAIN}/privkey.pem;
+
+    location / {
+        proxy_pass http://motolinker_backend_prod:80;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+    }
+}
+EOF
+
+    cat > ${MERCURE_DOMAIN}.conf <<EOF
+server {
+    listen 80;
+    server_name ${MERCURE_DOMAIN};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ${MERCURE_DOMAIN};
+
+    ssl_certificate /etc/nginx/ssl/${MERCURE_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/${MERCURE_DOMAIN}/privkey.pem;
+
+    location / {
+        proxy_pass http://motolinker_mercure_prod:80;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        proxy_set_header Connection '';
+        proxy_http_version 1.1;
+        chunked_transfer_encoding off;
+        proxy_buffering off;
+        proxy_cache off;
+    }
+}
+EOF
+
+else
+    # Konfiguracja Nginx bez SSL - standardowe HTTP
+    cat > ${API_DOMAIN}.conf <<EOF
 server {
     listen 80;
     server_name ${API_DOMAIN};
@@ -143,7 +239,7 @@ server {
 }
 EOF
 
-cat > ${MERCURE_DOMAIN}.conf <<EOF
+    cat > ${MERCURE_DOMAIN}.conf <<EOF
 server {
     listen 80;
     server_name ${MERCURE_DOMAIN};
@@ -163,6 +259,7 @@ server {
     }
 }
 EOF
+fi
 
 if [ -z "${API_DOMAIN}" ] || [ -z "${PROXY_CONTAINER_NAME}" ]; then
     echo -e "${RED}Błąd krytyczny skryptu: Zmienne sieciowe nie załadowały się. Przerywam kopiowanie do proxy.${NC}"
