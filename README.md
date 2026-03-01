@@ -1,4 +1,4 @@
-# motolinker-api-local
+# motolinker-api
 
 Motolinker API wykorzystujące PHP (Symfony) i MySQL.
 
