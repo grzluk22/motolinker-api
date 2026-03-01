@@ -41,9 +41,9 @@ COPY . /var/www
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Konfiguracja uprawnień
-RUN mkdir -p var/cache var/log public/uploads/articles config/jwt && \
+RUN mkdir -p var/cache/prod/jms_serializer_default var/cache/prod var/log public/uploads/articles config/jwt && \
     chown -R www-data:www-data var public/uploads config/jwt && \
-    chmod -R 775 public/uploads config/jwt && \
+    chmod -R 775 var/cache public/uploads config/jwt && \
     chmod +x /usr/local/bin/init-uploads.sh
 
 # Odpalenie skryptów Post-install (jeśli są)
