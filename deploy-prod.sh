@@ -57,8 +57,8 @@ if [ ! -f ".env.prod.local" ]; then
     ask "Sekret JWT dla Mercure" "$GEN_MERCURE" MERCURE_JWT_SECRET
     ask "Hasło kluczy JWT (Lexik)" "$GEN_JWT_PASS" JWT_PASSPHRASE
 
-    ask "Nazwa podpiętej sieci dockera dla proxy" "audiora_audiora-network" PROXY_NETWORK_NAME
-    ask "Nazwa kontenera dockera z Nginx" "audiora-nginx" PROXY_CONTAINER_NAME
+    ask "Nazwa podpiętej sieci dockera dla proxy" "nginx-network" PROXY_NETWORK_NAME
+    ask "Nazwa kontenera dockera z Nginx" "nginx" PROXY_CONTAINER_NAME
 
 
 
@@ -103,8 +103,8 @@ set +a
 
 read -p "$(echo -e "\n${YELLOW}Czy chcesz wdrożyć proxy z certyfikatami SSL w Nginx (HTTPS)? Skrypt spróbuje je wygenerować i skopiować (t/n): ${NC}")" RUN_SSL
 if [ "$RUN_SSL" = "t" ]; then
-    read -p "$(echo -e "${YELLOW}Podaj Email Let's Encrypt [admin@grzesiak24.pl]: ${NC}")" INPUT_EMAIL
-    CERT_EMAIL="${INPUT_EMAIL:-admin@grzesiak24.pl}"
+    read -p "$(echo -e "${YELLOW}Podaj Email Let's Encrypt [EMAIL_ADDRESS]: ${NC}")" INPUT_EMAIL
+    CERT_EMAIL="${INPUT_EMAIL:-[EMAIL_ADDRESS]}"
 fi
 
 # Docker-compose czyta m.in. z .env domyślnie przy parsowaniu ymla, 

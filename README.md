@@ -62,6 +62,36 @@ Skrypt poprosi o wartości `APP_SECRET`, `JWT_PASSPHRASE`, zbuduje obraz (opcjon
 6. `php bin/console doctrine:migrations:migrate`
 7. `php bin/console lexik:jwt:generate-keypair`
 
+## Wdrożenie na środowisko produkcyjne (Produkcja)
+
+Aplikacja posiada zautomatyzowany skrypt do wdrożenia na produkcji przy użyciu Docker Compose i Nginx (jako reverse proxy z opcjonalną obsługą SSL).
+
+### Wymagania wstępne (przygotowanie środowiska)
+Przed uruchomieniem skryptu na serwerze produkcyjnym (np. VPS), upewnij się, że spełnione są następujące warunki:
+1. Zainstalowany **Docker** oraz wtyczka **Docker Compose** (`docker compose`).
+2. Zainstalowane narzędzie **Certbot** (jeśli planujesz automatyczne generowanie bezpłatnych certyfikatów SSL za pomocą Let's Encrypt, np. `apt install certbot`).
+3. Wydelegowane domeny/subdomeny (np. dla API, serwera Mercure, Frontendu) na adres IP twojego serwera (ustawione rekordy DNS typu A).
+4. Porty **80** i **443** na serwerze są otwarte w zaporze sieciowej (firewall) i nie są zablokowane ani używane przez inne procesy (np. zainstalowany niezależnie serwer Apache/Nginx).
+5. Sklonowane repozytorium na serwerze.
+
+### 🚀 Uruchomienie wdrożenia
+Aby wdrożyć aplikację na produkcji, na serwerze przejdź do katalogu projektu i wykonaj kroki:
+
+1. Nadaj uprawnienia do wykonywania skryptowi instalacyjnemu:
+   ```bash
+   chmod +x deploy-prod.sh
+   ```
+2. Uruchom skrypt instalacyjny:
+   ```bash
+   ./deploy-prod.sh
+   ```
+3. Postępuj zgodnie z instrukcjami wyświetlanymi w terminalu. Skrypt poprosi Cię o:
+   - Podanie domen (API, Mercure, Frontend).
+   - Skonfigurowanie haseł i sekretów dla JWT, Mercure oraz bazy danych (Domyślnie skrypt podpowie losowe, bezpieczne tokeny).
+   - Podjęcie decyzji dotyczącej generowania certyfikatów SSL (HTTPS).
+
+Skrypt automatycznie wygeneruje plik konfiguracyjny `.env.prod.local`, uruchomi kontenery w trybie produkcyjnym, wygeneruje klucze JWT, zresetuje system cache`u aplikacji i dokona automatycznych migracji bazy danych.
+
 ## Najczęstsze problemy
 
 1. Podczas generowania pary kluczy JWT może pojawić się komunikat `error:80000003:system library::No such process`.
@@ -75,3 +105,5 @@ Skrypt poprosi o wartości `APP_SECRET`, `JWT_PASSPHRASE`, zbuduje obraz (opcjon
      ```bash
      openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
      ```
+
+Ten projekt jest w fazie rozwoju. Przy jego tworzeniu korzystałem z pomocy narzędzi AI, natomiast większośc planowania i implementacji jest moja. Wszelkie sugestie i uwagi są mile widziane. 
