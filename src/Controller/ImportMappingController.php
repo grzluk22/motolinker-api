@@ -21,11 +21,11 @@ class ImportMappingController extends AbstractController
 
     #[Route('', name: 'index', methods: ['GET'])]
     #[OA\Get(
-        summary: "List all saved import mappings.",
+        summary: "Lista wszystkich zmapowanych pól importowanego pliku.",
         responses: [
             new OA\Response(
                 response: 200,
-                description: "List of mappings",
+                description: "Lista zmapowanych pól importowanego pliku.",
                 content: new OA\JsonContent(
                     type: "array",
                     items: new OA\Items(
@@ -56,11 +56,11 @@ class ImportMappingController extends AbstractController
 
     #[Route('/{name}', name: 'show', methods: ['GET'])]
     #[OA\Get(
-        summary: "Get a specific import mapping by name.",
+        summary: "Pobierz konkretne mapowanie pól importowanego pliku.",
         responses: [
             new OA\Response(
                 response: 200,
-                description: "The mapping details",
+                description: "Szczegóły mapowania pól importowanego pliku.",
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: "id", type: "integer"),
@@ -70,7 +70,7 @@ class ImportMappingController extends AbstractController
                     ]
                 )
             ),
-            new OA\Response(response: 404, description: "Mapping not found")
+            new OA\Response(response: 404, description: "Mapowanie pól importowanego pliku nie znalezione.")
         ]
     )]
     public function show(string $name): JsonResponse
@@ -78,7 +78,7 @@ class ImportMappingController extends AbstractController
         $mapping = $this->importMappingService->getMappingByName($name);
 
         if (!$mapping) {
-            return $this->json(['error' => 'Mapping not found'], 404);
+            return $this->json(['error' => 'Mapowanie pól importowanego pliku nie znalezione.'], 404);
         }
 
         return $this->json([
@@ -91,9 +91,9 @@ class ImportMappingController extends AbstractController
 
     #[Route('', name: 'store', methods: ['POST'])]
     #[OA\Post(
-        summary: "Create or update an import mapping.",
+        summary: "Zapisz mapowanie pól importowanego pliku.",
         requestBody: new OA\RequestBody(
-            description: "Mapping data",
+            description: "Dane mapowania pól importowanego pliku.",
             required: true,
             content: new OA\JsonContent(
                 properties: [
@@ -105,7 +105,7 @@ class ImportMappingController extends AbstractController
         responses: [
             new OA\Response(
                 response: 200,
-                description: "The saved mapping",
+                description: "Zapisane mapowanie pól importowanego pliku.",
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: "id", type: "integer"),
@@ -115,7 +115,7 @@ class ImportMappingController extends AbstractController
                     ]
                 )
             ),
-            new OA\Response(response: 400, description: "Invalid input")
+            new OA\Response(response: 400, description: "Niepoprawne dane wejściowe.")
         ]
     )]
     public function store(Request $request): JsonResponse
@@ -123,11 +123,11 @@ class ImportMappingController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!isset($data['name']) || empty($data['name'])) {
-            return $this->json(['error' => 'Name is required'], 400);
+            return $this->json(['error' => 'Nazwa jest wymagana.'], 400);
         }
 
         if (!isset($data['mapping']) || !is_array($data['mapping'])) {
-            return $this->json(['error' => 'Mapping object is required'], 400);
+            return $this->json(['error' => 'Obiekt mapowania jest wymagany.'], 400);
         }
 
         $mapping = $this->importMappingService->saveMapping($data['name'], $data['mapping']);
@@ -142,10 +142,10 @@ class ImportMappingController extends AbstractController
 
     #[Route('/{name}', name: 'delete', methods: ['DELETE'])]
     #[OA\Delete(
-        summary: "Delete an import mapping.",
+        summary: "Usuń mapowanie pól importowanego pliku.",
         responses: [
-            new OA\Response(response: 204, description: "Mapping deleted"),
-            new OA\Response(response: 404, description: "Mapping not found")
+            new OA\Response(response: 204, description: "Mapowanie pól importowanego pliku usunięte."),
+            new OA\Response(response: 404, description: "Mapowanie pól importowanego pliku nie znalezione.")
         ]
     )]
     public function delete(string $name): JsonResponse
@@ -153,7 +153,7 @@ class ImportMappingController extends AbstractController
         $mapping = $this->importMappingService->getMappingByName($name);
         
         if (!$mapping) {
-            return $this->json(['error' => 'Mapping not found'], 404);
+            return $this->json(['error' => 'Mapowanie pól importowanego pliku nie znalezione.'], 404);
         }
 
         $this->importMappingService->deleteMapping($name);
