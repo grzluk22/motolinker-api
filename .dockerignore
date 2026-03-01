@@ -1,0 +1,10 @@
+.git
+.idea
+vendor/
+var/
+node_modules/
+.env.local
+.env.*.local
+!.env.prod.local
+docker-compose.dev.yml
+docker-compose.override.yml
