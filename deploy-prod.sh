@@ -21,40 +21,46 @@ echo -e "${BLUE}=== Przygotowanie wdrożenia produkcyjnego Motolinker API ===${N
 echo "Skrypt wygeneruje plik środowiskowy i zbuduje kontenery."
 echo ""
 
-#  prawdz czy istnieje plik .env.prod.local
+# Sprawdz czy istnieje plik .env.prod.local
 if [ -f ".env.prod.local" ]; then
     # Zapytaj czy usunąć
-    read -p "${YELLOW}Plik .env.prod.local już istnieje. Czy chcesz go usunąć? (t/n): ${NC}" INPUT
+    read -p "$(echo -e ${YELLOW}Plik .env.prod.local już istnieje. Czy chcesz go usunąć i skonfigurować na nowo? (t/n): ${NC})" INPUT
     if [ "$INPUT" = "t" ]; then
         rm .env.prod.local
-        # Generowanie losowych bezpiecznych ciągów
-GEN_SALT=$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)
-GEN_MERCURE=$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)
-GEN_DB_PASS=$(head -c 24 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 20)
-GEN_DB_ROOT=$(head -c 24 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 20)
-GEN_JWT_PASS=$(head -c 24 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 20)
+    else
+        echo -e "${GREEN}Kontynuuję z istniejącym plikiem .env.prod.local${NC}"
+    fi
+fi
 
-echo -e "${GREEN}Podaj parametry, naciśnij ENTER aby użyć wartości domyślnej w [nawiasach].${NC}\n"
+if [ ! -f ".env.prod.local" ]; then
+    # Generowanie losowych bezpiecznych ciągów
+    GEN_SALT=$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)
+    GEN_MERCURE=$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)
+    GEN_DB_PASS=$(head -c 24 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 20)
+    GEN_DB_ROOT=$(head -c 24 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 20)
+    GEN_JWT_PASS=$(head -c 24 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 20)
 
-ask "Domena API (np. api.motolinker.pl)" "api.motolinker.pl" API_DOMAIN
-ask "Domena Mercure (np. mercure.motolinker.pl)" "mercure.motolinker.pl" MERCURE_DOMAIN
-ask "Domena Frontend (do CORS, np. motolinker.pl)" "motolinker.pl" FRONTEND_DOMAIN
+    echo -e "${GREEN}Podaj parametry, naciśnij ENTER aby użyć wartości domyślnej w [nawiasach].${NC}\n"
 
-ask "Nazwa produkcyjnej bazy danych" "motolinker_prod" MYSQL_DATABASE
-ask "Użytkownik bazy danych" "motolinker_user" MYSQL_USER
-ask "Hasło bazy danych" "$GEN_DB_PASS" MYSQL_PASSWORD
-ask "Hasło ROOT bazy danych" "$GEN_DB_ROOT" MYSQL_ROOT_PASSWORD
+    ask "Domena API (np. api.motolinker.pl)" "api.motolinker.pl" API_DOMAIN
+    ask "Domena Mercure (np. mercure.motolinker.pl)" "mercure.motolinker.pl" MERCURE_DOMAIN
+    ask "Domena Frontend (do CORS, np. motolinker.pl)" "motolinker.pl" FRONTEND_DOMAIN
 
-ask "Sekret aplikacji Symfony (APP_SECRET)" "$GEN_SALT" APP_SECRET
-ask "Sekret JWT dla Mercure" "$GEN_MERCURE" MERCURE_JWT_SECRET
-ask "Hasło kluczy JWT (Lexik)" "$GEN_JWT_PASS" JWT_PASSPHRASE
+    ask "Nazwa produkcyjnej bazy danych" "motolinker_prod" MYSQL_DATABASE
+    ask "Użytkownik bazy danych" "motolinker_user" MYSQL_USER
+    ask "Hasło bazy danych" "$GEN_DB_PASS" MYSQL_PASSWORD
+    ask "Hasło ROOT bazy danych" "$GEN_DB_ROOT" MYSQL_ROOT_PASSWORD
 
-ask "Nazwa podpiętej sieci dockera dla proxy" "nginx-proxy" PROXY_NETWORK_NAME
-ask "Nazwa kontenera dockera z Nginx" "nginx" PROXY_CONTAINER_NAME
+    ask "Sekret aplikacji Symfony (APP_SECRET)" "$GEN_SALT" APP_SECRET
+    ask "Sekret JWT dla Mercure" "$GEN_MERCURE" MERCURE_JWT_SECRET
+    ask "Hasło kluczy JWT (Lexik)" "$GEN_JWT_PASS" JWT_PASSPHRASE
 
-echo -e "\n${BLUE}Tworzenie pliku .env.prod.local...${NC}"
+    ask "Nazwa podpiętej sieci dockera dla proxy" "nginx-proxy" PROXY_NETWORK_NAME
+    ask "Nazwa kontenera dockera z Nginx" "nginx" PROXY_CONTAINER_NAME
 
-cat > .env.prod.local <<EOF
+    echo -e "\n${BLUE}Tworzenie pliku .env.prod.local...${NC}"
+
+    cat > .env.prod.local <<EOF
 APP_ENV=prod
 APP_DEBUG=0
 APP_SECRET=${APP_SECRET}
@@ -82,17 +88,16 @@ PROXY_NETWORK_NAME=${PROXY_NETWORK_NAME}
 PROXY_CONTAINER_NAME=${PROXY_CONTAINER_NAME}
 EOF
 
-echo -e "${GREEN}Zapisano .env.prod.local!${NC}"
+    echo -e "${GREEN}Zapisano .env.prod.local!${NC}"
+fi
+
+# ZAWSZE wczytujemy zmienne ze skonfigurowanego pliku do środowiska skryptu
+export $(grep -v '^#' .env.prod.local | xargs)
 
 # Docker-compose czyta m.in. z .env domyślnie przy parsowaniu ymla, 
-# więc warto skopiować go również tam, żeby Docker podstawiał wartości przed budową.
+# więc zawsze kopiujemy aktualny konfig na wszelki wypadek
 cp .env.prod.local .env
 
-    else
-        # Kontynuuj wykorzystując zmienne z istniejącego pliku
-        echo -e "${GREEN}Kontynuuję z istniejącym plikiem .env.prod.local${NC}"
-    fi
-fi
 
 echo -e "\n${BLUE}Budowanie i uruchamianie kontenerów dockera...${NC}"
 # Używamy wygenerowanego pliku yaml
@@ -151,9 +156,6 @@ server {
     }
 }
 EOF
-
-# W przypadku wczytania danych z .env musimy odczytać zmienną PROXY_CONTAINER_NAME która mogła zostać podana wcześniej
-source .env.prod.local
 
 echo -e "\n${BLUE}Wgrywanie konfiguracji do kontenera ${PROXY_CONTAINER_NAME}...${NC}"
 docker cp ${API_DOMAIN}.conf ${PROXY_CONTAINER_NAME}:/etc/nginx/conf.d/${API_DOMAIN}.conf
