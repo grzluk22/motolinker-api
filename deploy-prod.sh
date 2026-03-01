@@ -111,13 +111,16 @@ echo -e "\n${BLUE}Oczekiwanie na wstanie bazy danych, włączanie w 15 sekund...
 sleep 15
 
 echo -e "\n${BLUE}Generowanie kluczy JWT (jeśli nie istnieją)...${NC}"
-docker exec -i motolinker_backend_prod php bin/console lexik:jwt:generate-keypair --skip-if-exists || echo -e "${YELLOW}Nie udało się wygenerować kluczy (być może już są). Omijanie...${NC}"
+docker exec -u www-data -i motolinker_backend_prod php bin/console lexik:jwt:generate-keypair --skip-if-exists || echo -e "${YELLOW}Nie udało się wygenerować kluczy (być może już są). Omijanie...${NC}"
 
 echo -e "\n${BLUE}Czyszczenie cache dziedziczonego...${NC}"
-docker exec -i motolinker_backend_prod php bin/console cache:clear --env=prod || echo -e "${YELLOW}Omijanie czyszczenia cache...${NC}"
+docker exec -u www-data -i motolinker_backend_prod php bin/console cache:clear --env=prod || echo -e "${YELLOW}Omijanie czyszczenia cache...${NC}"
 
 echo -e "\n${BLUE}Wykonywanie migracji bazy danych...${NC}"
-docker exec -i motolinker_backend_prod php bin/console doctrine:migrations:migrate --no-interaction || echo -e "${RED}Błąd podczas migracji, sprawdź logi dockera!${NC}"
+docker exec -u www-data -i motolinker_backend_prod php bin/console doctrine:migrations:migrate --no-interaction || echo -e "${RED}Błąd podczas migracji, sprawdź logi dockera!${NC}"
+
+# Dodatkowe ostateczne upewnienie się co do uprawnień
+docker exec -i motolinker_backend_prod chown -R www-data:www-data var/ public/uploads/ config/jwt/
 
 echo -e "\n${BLUE}Generowanie dynamicznych plików konfiguracyjnych Nginx...${NC}"
 
