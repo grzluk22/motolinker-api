@@ -1,4 +1,4 @@
-# Motolinker API
+# motolinker-api
 
 Backend API dla katalogu produktów branży motoryzacyjnej. 
 
@@ -78,40 +78,66 @@ Wymagane zainstalowane narzędzia PHP (wersja >= 8.2), Composer oraz serwer bazy
    ```bash
    php bin/console lexik:jwt:generate-keypair
    ```
+6. Pozostałe polecenia dostępne są w pliku `Makefile` (`make docker-stop`, `make docker-down`, `make console <cmd>` itp.).
 
-### Środowisko produkcyjne
+### Przydatne informacje
 
-1. Upewnij się, że DocumentRoot serwera (na przykład Nginx czy Apache) kieruje na wewnętrzny katalog `public`.
-2. Zdefiniuj w `.env.local` docelowe zmienne bezpieczeństwa oraz popraw parametry połączeniowe. Koniecznie zmień wartość `APP_ENV=prod`.
-3. Dokonaj instalacji wyłącznie bibliotek docelowych:
+- Katalog projektu jest montowany w kontenerze, więc zmiany w kodzie są widoczne natychmiast.
+- Volumne `db_data` przechowuje dane MySQL; aby wyczyścić bazę, wykonaj `make docker-down` i usuń wolumen (`docker volume rm motolinker-api-local_db_data`).
+- Komenda `make console doctrine:database:create` pozwala uruchomić dowolne polecenie `bin/console`.
+
+## Ręczna instalacja (opcjonalnie, bez Docker)
+
+1. `git clone` repozytorium i przejdź do katalogu projektu.
+2. `composer install`
+3. Włącz `mod_rewrite` według instrukcji: <https://gcore.com/learning/how-enable-apache-mod-rewrite/>
+4. Skonfiguruj połączenie z bazą w `.env`.
+5. `php bin/console doctrine:database:create`
+6. `php bin/console doctrine:migrations:migrate`
+7. `php bin/console lexik:jwt:generate-keypair`
+
+## Wdrożenie na środowisko produkcyjne (Produkcja)
+
+Aplikacja posiada zautomatyzowany skrypt do wdrożenia na produkcji przy użyciu Docker Compose i Nginx (jako reverse proxy z opcjonalną obsługą SSL).
+
+### Wymagania wstępne (przygotowanie środowiska)
+Przed uruchomieniem skryptu na serwerze produkcyjnym (np. VPS), upewnij się, że spełnione są następujące warunki:
+1. Zainstalowany **Docker** oraz wtyczka **Docker Compose** (`docker compose`).
+2. Zainstalowane narzędzie **Certbot** (jeśli planujesz automatyczne generowanie bezpłatnych certyfikatów SSL za pomocą Let's Encrypt, np. `apt install certbot`).
+3. Wydelegowane domeny/subdomeny (np. dla API, serwera Mercure, Frontendu) na adres IP twojego serwera (ustawione rekordy DNS typu A).
+4. Porty **80** i **443** na serwerze są otwarte w zaporze sieciowej (firewall) i nie są zablokowane ani używane przez inne procesy (np. zainstalowany niezależnie serwer Apache/Nginx).
+5. Sklonowane repozytorium na serwerze.
+
+### 🚀 Uruchomienie wdrożenia
+Aby wdrożyć aplikację na produkcji, na serwerze przejdź do katalogu projektu i wykonaj kroki:
+
+1. Nadaj uprawnienia do wykonywania skryptowi instalacyjnemu:
    ```bash
-   composer install --no-dev --optimize-autoloader
+   chmod +x deploy-prod.sh
    ```
-4. Zmigruj bazę i wygeneruj asymetryczne klucze JWT:
+2. Uruchom skrypt instalacyjny:
    ```bash
-   php bin/console doctrine:migrations:migrate --no-interaction
-   php bin/console lexik:jwt:generate-keypair
+   ./deploy-prod.sh
    ```
+3. Postępuj zgodnie z instrukcjami wyświetlanymi w terminalu. Skrypt poprosi Cię o:
+   - Podanie domen (API, Mercure, Frontend).
+   - Skonfigurowanie haseł i sekretów dla JWT, Mercure oraz bazy danych (Domyślnie skrypt podpowie losowe, bezpieczne tokeny).
+   - Podjęcie decyzji dotyczącej generowania certyfikatów SSL (HTTPS).
 
-## Uruchamianie procesów w tle (Messenger & Mercure)
+Skrypt automatycznie wygeneruje plik konfiguracyjny `.env.prod.local`, uruchomi kontenery w trybie produkcyjnym, wygeneruje klucze JWT, zresetuje system cache`u aplikacji i dokona automatycznych migracji bazy danych.
 
-### Symfony Mercure
+## Najczęstsze problemy
 
-Serwer **Mercure** jest zdefiniowany jako osobny kontener w plikach Docker Compose, więc uruchamia się automatycznie wraz z resztą środowiska. 
+1. Podczas generowania pary kluczy JWT może pojawić się komunikat `error:80000003:system library::No such process`.
+   - Zainstaluj OpenSSL.
+   - Wygeneruj klucz prywatny:
+     ```bash
+     openssl genrsa -out config/jwt/private.pem -aes256 4096
+     ```
+     Podaj hasło takie, jak w zmiennej `JWT_PASSPHRASE`.
+   - Wygeneruj klucz publiczny:
+     ```bash
+     openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
+     ```
 
-Dla środowisk **bez Dockera**, należy pobrać odpowiednią binarkę (standalone) ze strony [Mercure.rocks](https://mercure.rocks/) i uruchomić ją samodzielnie z odpowiednio zdefiniowanymi zmiennymi środowiskowymi pasującymi do Twojego ustrukturyzowania `.env`.
-
-### Symfony Messenger (Worker)
-
-Przetwarzanie zadań ułożonych w kolejce przez Messengera wymaga uruchomienia tzw. workera. Domyślnie można to zrobić w osobnym oknie terminala.
-
-**W opartym o Docker ze środowiskiem deweloperskim:**
-```bash
-docker compose -f docker/docker-compose.dev.yml exec app php bin/console messenger:consume async -vv
-```
-*(W produkcji upewnij się, że modyfikujesz komendę pod swój docelowy `compose.yaml` lub podłączasz workery do Supervisora).*
-
-**W środowisku instalowanym natywnie (Bez Dockera):**
-```bash
-php bin/console messenger:consume async -vv
-```
+Ten projekt jest w fazie rozwoju. Przy jego tworzeniu korzystałem z pomocy narzędzi AI, natomiast większośc planowania i implementacji jest moja. Wszelkie sugestie i uwagi są mile widziane. 

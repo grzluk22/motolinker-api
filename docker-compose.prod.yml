@@ -7,12 +7,11 @@ services:
     env_file:
       - .env.prod.local
     restart: always
-    # Odkomentuj i zmień poniższą sieć na tą, w której rzeźbi Twoje Nginx Proxy
-    # networks:
-    #   - default
-    #   - nginx-proxy
+    networks:
+      - default
+      - proxy_network
     environment:
-      # Zmienne wymagane przez Nginx Proxy (np. nginx-proxy by jwilder lub Nginx Proxy Manager z automatyczną detekcją)
+      # Zmienne wymagane przez Nginx Proxy (wcześniej)
       VIRTUAL_HOST: ${API_DOMAIN}
       LETSENCRYPT_HOST: ${API_DOMAIN}
       VIRTUAL_PORT: 80
@@ -54,6 +53,9 @@ services:
       VIRTUAL_PORT: 80
       MERCURE_EXTRA_DIRECTIVES: |
         cors_origins https://${API_DOMAIN} https://${FRONTEND_DOMAIN}
+    networks:
+      - default
+      - proxy_network
     command: /usr/bin/caddy run --config /etc/caddy/Caddyfile
     volumes:
       - mercure_data_prod:/data
@@ -66,7 +68,7 @@ volumes:
   mercure_data_prod:
   mercure_config_prod:
 
-# Odkomentuj to jeśli podłączasz zewnętrzną sieć Nginx Proxy
-# networks:
-#   nginx-proxy:
-#     external: true
+networks:
+  proxy_network:
+    name: ${PROXY_NETWORK_NAME}
+    external: true

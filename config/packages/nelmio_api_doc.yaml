@@ -108,6 +108,8 @@ nelmio_api_doc:
                                             message:
                                                 type: string
                                                 example: Invalid refresh token
+    html_config:
+        assets_mode: offline
     areas: # to filter documented areas
         path_patterns:
             - ^\/((?!_error)(?!doc)(?!_wdt)(?!_profiler).)*$ # Accepts routes under / except /doc /_error /_wdt /_profler
