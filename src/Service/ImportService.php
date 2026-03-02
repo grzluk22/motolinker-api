@@ -27,7 +27,8 @@ class ImportService
         private EntityManagerInterface $entityManager,
         private ImportJobRepository $importJobRepository,
         private ImportRowsAffectedRepository $importRowsAffectedRepository,
-        private HubInterface $hub
+        private HubInterface $hub,
+        private string $mercureTopicBaseUrl
     ) {
     }
 
@@ -199,7 +200,7 @@ class ImportService
     {
         try {
             $update = new Update(
-                'https://motolinker.local/import/progress/' . $job->getId(),
+                rtrim($this->mercureTopicBaseUrl, '/') . '/import/progress/' . $job->getId(),
                 json_encode([
                     'status' => $job->getStatus(),
                     'processed' => $job->getProcessedRows(),

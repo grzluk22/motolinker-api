@@ -8,6 +8,7 @@ parameters:
     app.thumbnail_size: 300
     app.upload_directory: 'public/uploads/articles'
     app.debug_delay_ms: '%env(int:DEBUG_DELAY_MS)%'
+    app.mercure_topic_base_url: '%env(string:MERCURE_TOPIC_BASE_URL)%'
 
 services:
     # default configuration for services in *this* file
@@ -35,3 +36,7 @@ services:
     App\EventSubscriber\DebugDelaySubscriber:
         arguments:
             $delayMs: '%app.debug_delay_ms%'
+
+    App\Service\ImportService:
+        arguments:
+            $mercureTopicBaseUrl: '%app.mercure_topic_base_url%'

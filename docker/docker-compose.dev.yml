@@ -14,6 +14,7 @@ services:
       MERCURE_URL: "http://mercure/.well-known/mercure"
       MERCURE_PUBLIC_URL: "http://localhost/.well-known/mercure"
       MERCURE_JWT_SECRET: "frajerek123!"
+      MERCURE_TOPIC_BASE_URL: http://localhost:4200
       CORS_ALLOW_ORIGIN: ^https?://(localhost|127\.0\.0\.1|motolinker\.local)(:[0-9]+)?$
     ports:
       - "8080:80"

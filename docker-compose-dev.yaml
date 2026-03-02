@@ -17,6 +17,7 @@ services:
       # Ustawienie poprawnego URL publicznego dla Mercure
       MERCURE_PUBLIC_URL: https://mercure.motolinker.grzesiak24.pl/.well-known/mercure
       MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-frajerek123!}
+      MERCURE_TOPIC_BASE_URL: https://${DOMAIN_NAME:-dev.motolinker.grzesiak24.pl}
       CORS_ALLOW_ORIGIN: ^https?://(${DOMAIN_NAME}|dev.motolinker.grzesiak24.pl|localhost|127\.0\.0\.1)(:[0-9]+)?$
       # Nginx Proxy Env Vars - Usunięto błędną składnię ${...}
       VIRTUAL_HOST: dev.api.motolinker.grzesiak24.pl
