@@ -265,14 +265,13 @@ class ImportService
                 $articleCode = $row[$codeColumn];
 
                 // Update or Create Article
+                $isNew = false;
                 $article = $this->articleRepository->findOneBy(['code' => $articleCode]);
                 if (!$article) {
                     $article = new Article();
                     $article->setCode($articleCode);
                     $stats['created']++;
-                    $this->entityManager->persist($article);
-                    $this->entityManager->flush();
-                    $this->logAffectedRow($job, 'articles', $article->getId());
+                    $isNew = true;
                 } else {
                     $stats['updated']++;
                 }
@@ -301,6 +300,11 @@ class ImportService
                 }
 
                 $this->entityManager->persist($article);
+                $this->entityManager->flush();
+
+                if ($isNew) {
+                    $this->logAffectedRow($job, 'articles', $article->getId());
+                }
 
                 // Process "zastosowania"
                 $zastosowaniaCol = array_search('zastosowania', $columnMapping);
@@ -401,14 +405,11 @@ class ImportService
 
                 $articleCode = $row[$codeColumn];
 
-                // Update or Create Article
                 $article = $this->articleRepository->findOneBy(['code' => $articleCode]);
                 if (!$article) {
                     $article = new Article();
                     $article->setCode($articleCode);
                     $stats['created']++;
-                    $this->entityManager->persist($article);
-                    $this->entityManager->flush();
                 } else {
                     $stats['updated']++;
                 }
