@@ -52,6 +52,7 @@ services:
       LETSENCRYPT_HOST: ${MERCURE_DOMAIN}
       VIRTUAL_PORT: 80
       MERCURE_EXTRA_DIRECTIVES: |
+        anonymous
         cors_origins https://${API_DOMAIN} https://${FRONTEND_DOMAIN}
     networks:
       - default
