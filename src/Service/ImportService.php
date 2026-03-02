@@ -27,7 +27,8 @@ class ImportService
         private EntityManagerInterface $entityManager,
         private ImportJobRepository $importJobRepository,
         private ImportRowsAffectedRepository $importRowsAffectedRepository,
-        private HubInterface $hub
+        private HubInterface $hub,
+        private string $mercureTopicBaseUrl
     ) {
     }
 
@@ -188,23 +189,29 @@ class ImportService
                 // Store error in job?
                 $this->entityManager->flush();
             }
-            $this->publishProgress($job);
+            $this->publishProgress($job, $e->getMessage());
             throw $e;
         } finally {
             fclose($handle);
         }
     }
 
-    private function publishProgress(ImportJob $job): void
+    private function publishProgress(ImportJob $job, ?string $error = null): void
     {
         try {
+            $payload = [
+                'status' => $job->getStatus(),
+                'processed' => $job->getProcessedRows(),
+                'total' => $job->getTotalRows()
+            ];
+
+            if ($error !== null) {
+                $payload['error'] = $error;
+            }
+
             $update = new Update(
-                'https://motolinker.local/import/progress/' . $job->getId(),
-                json_encode([
-                    'status' => $job->getStatus(),
-                    'processed' => $job->getProcessedRows(),
-                    'total' => $job->getTotalRows()
-                ])
+                rtrim($this->mercureTopicBaseUrl, '/') . '/import/progress/' . $job->getId(),
+                json_encode($payload)
             );
             $this->hub->publish($update);
         } catch (\Exception $e) {
@@ -265,14 +272,13 @@ class ImportService
                 $articleCode = $row[$codeColumn];
 
                 // Update or Create Article
+                $isNew = false;
                 $article = $this->articleRepository->findOneBy(['code' => $articleCode]);
                 if (!$article) {
                     $article = new Article();
                     $article->setCode($articleCode);
                     $stats['created']++;
-                    $this->entityManager->persist($article);
-                    $this->entityManager->flush();
-                    $this->logAffectedRow($job, 'articles', $article->getId());
+                    $isNew = true;
                 } else {
                     $stats['updated']++;
                 }
@@ -301,6 +307,11 @@ class ImportService
                 }
 
                 $this->entityManager->persist($article);
+                $this->entityManager->flush();
+
+                if ($isNew) {
+                    $this->logAffectedRow($job, 'articles', $article->getId());
+                }
 
                 // Process "zastosowania"
                 $zastosowaniaCol = array_search('zastosowania', $columnMapping);
@@ -401,14 +412,11 @@ class ImportService
 
                 $articleCode = $row[$codeColumn];
 
-                // Update or Create Article
                 $article = $this->articleRepository->findOneBy(['code' => $articleCode]);
                 if (!$article) {
                     $article = new Article();
                     $article->setCode($articleCode);
                     $stats['created']++;
-                    $this->entityManager->persist($article);
-                    $this->entityManager->flush();
                 } else {
                     $stats['updated']++;
                 }
