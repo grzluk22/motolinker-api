@@ -44,12 +44,12 @@ if [ ! -f ".env.prod.local" ]; then
 
     echo -e "${GREEN}Podaj parametry, naciśnij ENTER aby użyć wartości domyślnej w [nawiasach].${NC}\n"
 
-    ask "Domena API (np. api.motolinker.pl)" "api.motolinker.pl" API_DOMAIN
-    ask "Domena Mercure (np. mercure.motolinker.pl)" "mercure.motolinker.pl" MERCURE_DOMAIN
-    ask "Domena Frontend (do CORS, np. motolinker.pl)" "motolinker.pl" FRONTEND_DOMAIN
+    ask "Domena API (np. api.example.com)" "api.example.com" API_DOMAIN
+    ask "Domena Mercure (np. mercure.example.com)" "mercure.example.com" MERCURE_DOMAIN
+    ask "Domena Frontend (do CORS, np. example.com)" "example.com" FRONTEND_DOMAIN
 
-    ask "Nazwa produkcyjnej bazy danych" "motolinker_prod" MYSQL_DATABASE
-    ask "Użytkownik bazy danych" "motolinker_user" MYSQL_USER
+    ask "Nazwa produkcyjnej bazy danych" "app_prod" MYSQL_DATABASE
+    ask "Użytkownik bazy danych" "db_user" MYSQL_USER
     ask "Hasło bazy danych" "$GEN_DB_PASS" MYSQL_PASSWORD
     ask "Hasło ROOT bazy danych" "$GEN_DB_ROOT" MYSQL_ROOT_PASSWORD
 
