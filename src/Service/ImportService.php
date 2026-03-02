@@ -189,23 +189,29 @@ class ImportService
                 // Store error in job?
                 $this->entityManager->flush();
             }
-            $this->publishProgress($job);
+            $this->publishProgress($job, $e->getMessage());
             throw $e;
         } finally {
             fclose($handle);
         }
     }
 
-    private function publishProgress(ImportJob $job): void
+    private function publishProgress(ImportJob $job, ?string $error = null): void
     {
         try {
+            $payload = [
+                'status' => $job->getStatus(),
+                'processed' => $job->getProcessedRows(),
+                'total' => $job->getTotalRows()
+            ];
+
+            if ($error !== null) {
+                $payload['error'] = $error;
+            }
+
             $update = new Update(
                 rtrim($this->mercureTopicBaseUrl, '/') . '/import/progress/' . $job->getId(),
-                json_encode([
-                    'status' => $job->getStatus(),
-                    'processed' => $job->getProcessedRows(),
-                    'total' => $job->getTotalRows()
-                ])
+                json_encode($payload)
             );
             $this->hub->publish($update);
         } catch (\Exception $e) {
