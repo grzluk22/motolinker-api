@@ -11,18 +11,18 @@ services:
       - docker/env.docker
     environment:
       APP_ENV: dev
-      APP_SECRET: ${APP_SECRET:-frajerek123!}
+      APP_SECRET: ${APP_SECRET:-default123!}
       DATABASE_URL: mysql://symfony:symfony@db:3306/motolinker
       MERCURE_URL: http://mercure/.well-known/mercure
       # Ustawienie poprawnego URL publicznego dla Mercure
-      MERCURE_PUBLIC_URL: https://mercure.motolinker.grzesiak24.pl/.well-known/mercure
-      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-frajerek123!}
-      MERCURE_TOPIC_BASE_URL: https://mercure.motolinker.grzesiak24.pl/.well-known/mercure
-      CORS_ALLOW_ORIGIN: ^https?://(${DOMAIN_NAME}|dev.motolinker.grzesiak24.pl|localhost|127\.0\.0\.1)(:[0-9]+)?$
+      MERCURE_PUBLIC_URL: https://mercure.motolinker.domain.com/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-default!}
+      MERCURE_TOPIC_BASE_URL: https://mercure.motolinker.domain.com/.well-known/mercure
+      CORS_ALLOW_ORIGIN: ^https?://(${DOMAIN_NAME}|dev.motolinker.domain.com|localhost|127\.0\.0\.1)(:[0-9]+)?$
       # Nginx Proxy Env Vars - Usunięto błędną składnię ${...}
-      VIRTUAL_HOST: dev.api.motolinker.grzesiak24.pl
-      LETSENCRYPT_HOST: dev.api.motolinker.grzesiak24.pl
-      LETSENCRYPT_EMAIL: admin@grzesiak24.pl
+      VIRTUAL_HOST: dev.api.motolinker.domain.com
+      LETSENCRYPT_HOST: dev.api.motolinker.domain.com
+      LETSENCRYPT_EMAIL: admin@domain.com
     volumes:
       - .:/var/www
       - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
@@ -59,15 +59,15 @@ services:
     restart: unless-stopped
     environment:
       SERVER_NAME: ':80'
-      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-frajerek123!}
-      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-frajerek123!}
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-default123!}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-default123!}
       MERCURE_EXTRA_DIRECTIVES: |
         cors_origins *
         anonymous
       # Nginx Proxy Env Vars - Ustawiono spójnie z app
-      VIRTUAL_HOST: mercure.motolinker.grzesiak24.pl
-      LETSENCRYPT_HOST: mercure.motolinker.grzesiak24.pl
-      LETSENCRYPT_EMAIL: admin@grzesiak24.pl
+      VIRTUAL_HOST: mercure.motolinker.domain.com
+      LETSENCRYPT_HOST: mercure.motolinker.domain.com
+      LETSENCRYPT_EMAIL: admin@domain.com
     volumes:
       - mercure_data:/data
       - mercure_config:/config
