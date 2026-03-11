@@ -1,0 +1,42 @@
+FROM php:8.2-apache
+
+ENV APACHE_DOCUMENT_ROOT=/var/www/public \
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_CACHE_DIR=/tmp/composer \
+    PATH="${PATH}:/var/www/vendor/bin"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    unzip \
+    libicu-dev \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libwebp-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install -j$(nproc) gd intl pdo_mysql zip \
+    && docker-php-ext-enable opcache \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN a2enmod rewrite \
+    && sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+
+COPY docker/vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/init-uploads.sh /usr/local/bin/init-uploads.sh
+RUN sed -i 's/\r$//' /usr/local/bin/init-uploads.sh
+COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
+
+RUN mkdir -p var/cache var/log public/uploads/articles && \
+    chown -R www-data:www-data var public/uploads && \
+    chmod -R 775 public/uploads && \
+    chmod +x /usr/local/bin/init-uploads.sh
+
+CMD ["/bin/bash", "-c", "/usr/local/bin/init-uploads.sh && apache2-foreground"]
+
