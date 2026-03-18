@@ -1,0 +1,89 @@
+version: "3.7"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: motolinker_backend_dev
+    restart: unless-stopped
+    env_file:
+      - docker/env.docker
+    environment:
+      APP_ENV: dev
+      APP_SECRET: ${APP_SECRET:-!ChangeMe!}
+      DATABASE_URL: mysql://db_user:!ChangeMe!@db:3306/motolinker
+      MERCURE_URL: http://mercure/.well-known/mercure
+      # Ustawienie poprawnego URL publicznego dla Mercure
+      MERCURE_PUBLIC_URL: https://mercure.example.com/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-!ChangeMe!}
+      MERCURE_TOPIC_BASE_URL: https://mercure.example.com/.well-known/mercure
+      CORS_ALLOW_ORIGIN: ^https?://(${DOMAIN_NAME}|dev.example.com|localhost|127\.0\.0\.1)(:[0-9]+)?$
+      # Nginx Proxy Env Vars - Usunięto błędną składnię ${...}
+      VIRTUAL_HOST: dev.api.example.com
+      LETSENCRYPT_HOST: dev.api.example.com
+      LETSENCRYPT_EMAIL: admin@example.com
+    volumes:
+      - .:/var/www
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - public_uploads:/var/www/public/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - motolinker
+      - proxy
+
+  db:
+    image: mysql:8.0
+    container_name: motolinker_db_dev
+    restart: unless-stopped
+    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_DATABASE: motolinker
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: "!ChangeMe!"
+      MYSQL_ROOT_PASSWORD: "!ChangeMe!"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - motolinker
+
+  mercure:
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-!ChangeMe!}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-!ChangeMe!}
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins *
+        anonymous
+      # Nginx Proxy Env Vars - Ustawiono spójnie z app
+      VIRTUAL_HOST: mercure.example.com
+      LETSENCRYPT_HOST: mercure.example.com
+      LETSENCRYPT_EMAIL: admin@example.com
+    volumes:
+      - mercure_data:/data
+      - mercure_config:/config
+    networks:
+      - motolinker
+      - proxy
+
+networks:
+  # Dodano brakującą definicję sieci motolinker
+  motolinker:
+  proxy:
+    external: true
+    name: audiora_audiora-network
+
+volumes:
+  db_data:
+  mercure_data:
+  mercure_config:
+  public_uploads:

@@ -1,0 +1,115 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: MotolinkerApi
+            description: Api do panelu motolinker udostępnia metody do tworzenia bazy danych części samochodowych
+            version: 0.0.1
+        components:
+            securitySchemes:
+                Bearer:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+        security:
+            - Bearer: []
+        paths:
+            /login_check:
+                post:
+                    tags: [Auth]
+                    summary: Logowanie (JWT)
+                    requestBody:
+                        required: true
+                        content:
+                            application/json:
+                                schema:
+                                    type: object
+                                    required: [username, password]
+                                    properties:
+                                        username:
+                                            type: string
+                                            example: admin@example.com
+                                        password:
+                                            type: string
+                                            example: superSecretPassword
+                    responses:
+                        '200':
+                            description: Zwrot tokenu JWT
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            token:
+                                                type: string
+                                            refresh_token:
+                                                type: string
+                                            refresh_token_expiration:
+                                                type: string
+                        '401':
+                            description: Nieprawidłowe dane logowania
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            message:
+                                                type: string
+                                                example: Invalid credentials
+                                            code:
+                                                type: string
+                                                example: 401
+                                            status:
+                                                type: string
+                                                example: Unauthorized
+                                            path:
+                                                type: string
+                                                example: /login_check
+                                            timestamp:
+                                                type: string
+                                                example: 2025-01-01 12:00:00
+                                            trace:
+                                                type: string
+            /token/refresh:
+                post:
+                    tags: [Auth]
+                    summary: Odświeżenie tokenu JWT
+                    requestBody:
+                        required: true
+                        content:
+                            application/json:
+                                schema:
+                                    type: object
+                                    required: [refresh_token]
+                                    properties:
+                                        refresh_token:
+                                            type: string
+                                            example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+                    responses:
+                        '200':
+                            description: Nowy token JWT został wygenerowany
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            token:
+                                                type: string
+                                            refresh_token:
+                                                type: string
+                                            refresh_token_expiration:
+                                                type: string
+                        '400':
+                            description: Nieprawidłowy refresh token
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            message:
+                                                type: string
+                                                example: Invalid refresh token
+    html_config:
+        assets_mode: offline
+    areas: # to filter documented areas
+        path_patterns:
+            - ^\/((?!_error)(?!doc)(?!_wdt)(?!_profiler).)*$ # Accepts routes under / except /doc /_error /_wdt /_profler

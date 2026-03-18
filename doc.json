@@ -1,0 +1,4436 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "MotolinkerApi",
+        "description": "Api do panelu motolinker udost\u0119pnia metody do tworzenia bazy danych cz\u0119\u015bci samochodowych",
+        "version": "0.0.1"
+    },
+    "paths": {
+        "/login_check": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logowanie (JWT)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "username",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "type": "string",
+                                        "example": "admin@motolinker.local"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "superSecretPassword"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zwrot tokenu JWT",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "refresh_token": {
+                                            "type": "string"
+                                        },
+                                        "refresh_token_expiration": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Nieprawid\u0142owe dane logowania",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid credentials"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": 401
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        },
+                                        "path": {
+                                            "type": "string",
+                                            "example": "/login_check"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "example": 1735732800
+                                        },
+                                        "trace": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/token/refresh": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Od\u015bwie\u017cenie tokenu JWT",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string",
+                                        "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Nowy token JWT zosta\u0142 wygenerowany",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "refresh_token": {
+                                            "type": "string"
+                                        },
+                                        "refresh_token_expiration": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Nieprawid\u0142owy refresh token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid refresh token"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/article/{article_id}/car": {
+            "get": {
+                "tags": [
+                    "ArticleCar"
+                ],
+                "summary": "Wy\u015bwietla liste samochod\u00f3w podpi\u0119tych do danego artyku\u0142u",
+                "operationId": "get_app_article_car_get",
+                "parameters": [
+                    {
+                        "name": "article_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista samochod\u00f3w podpi\u0119tych do danego artyku\u0142u",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ArticleCar"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak samochod\u00f3w dla danego artyku\u0142\u00f3w"
+                    }
+                }
+            }
+        },
+        "/article/{article_id}/car/{car_id}": {
+            "post": {
+                "tags": [
+                    "ArticleCar"
+                ],
+                "summary": "Podpina samoch\u00f3d o danym id do artyku\u0142u o podanym id",
+                "operationId": "post_app_article_car_post",
+                "parameters": [
+                    {
+                        "name": "article_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "car_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pomy\u015blnie dodano"
+                    },
+                    "404": {
+                        "description": "Nie znaleziono samochodu lub artyku\u0142u o podanym id"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "ArticleCar"
+                ],
+                "summary": "Odpina samoch\u00f3d o danym id od artyku\u0142u o podanym id",
+                "operationId": "delete_app_article_car_delete",
+                "parameters": [
+                    {
+                        "name": "article_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "car_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pomy\u015blnie usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono samochodu lub artyku\u0142u o podanym id"
+                    }
+                }
+            }
+        },
+        "/category/{id_category}/articles": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Wy\u015bwietla liste artyku\u0142\u00f3w dla danej kategorii",
+                "operationId": "get_app_category_articles",
+                "parameters": [
+                    {
+                        "name": "id_category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista artyku\u0142\u00f3w w danej kategorii",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Article"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak artyku\u0142\u00f3w"
+                    }
+                }
+            }
+        },
+        "/category/{id_category}/article/{id_article}": {
+            "post": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Dodaje artyku\u0142 do kategorii",
+                "operationId": "post_app_category_article_delete_add",
+                "parameters": [
+                    {
+                        "name": "id_category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dodano",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u/kategorii o podanym id"
+                    },
+                    "400": {
+                        "description": "Artyku\u0142 ju\u017c przypisany do tej kategorii"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Usuwa artyku\u0142 z kategorii",
+                "operationId": "delete_app_category_article_delete",
+                "parameters": [
+                    {
+                        "name": "id_category",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usunieto"
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u/kategorii o podanym id"
+                    }
+                }
+            }
+        },
+        "/article/{id}/category": {
+            "get": {
+                "tags": [
+                    "ArticleCategory"
+                ],
+                "summary": "Zwraca list\u0119 kategorii przypisanych do artyku\u0142u.",
+                "operationId": "get_app_article_categories_list",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista kategorii artyku\u0142u",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "id_parent": {
+                                                "type": "integer",
+                                                "example": 1
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u o podanym id"
+                    }
+                }
+            }
+        },
+        "/article": {
+            "get": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Wy\u015bwietla liste artyku\u0142\u00f3w",
+                "operationId": "get_app_article_get",
+                "responses": {
+                    "200": {
+                        "description": "Lista artyku\u0142\u00f3w",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak artyku\u0142\u00f3w"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Edytuje istniej\u0105cy artyku\u0142",
+                "description": "Je\u017celi chcesz doda\u0107 nowe t\u0142umaczenie do artyku\u0142u mo\u017cesz r\u00f3wnie\u017c skorzysta\u0107 z tej metody. Poprostu w tabeli z t\u0142umaczeniami przeka\u017c jedno bez id, a zostanie ono automatycznie utworzone",
+                "operationId": "put_app_article_edit",
+                "requestBody": {
+                    "description": "Artyku\u0142",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ArticleUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowany artyku\u0142",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleDetailResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u o podanym id"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Tworzy nowy artyku\u0142",
+                "operationId": "post_app_article_create",
+                "requestBody": {
+                    "description": "Artyku\u0142",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ArticleCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stworzony artyku\u0142",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleDetailResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Artyku\u0142 o podanym kodzie juz istnieje"
+                    }
+                }
+            }
+        },
+        "/article/get": {
+            "post": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Wy\u015bwietla przefiltrowana liste artykulow.",
+                "operationId": "post_app_article_get_by",
+                "requestBody": {
+                    "description": "Filtry",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ArticleGetByRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lista artyku\u0142\u00f3w",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u"
+                    }
+                }
+            }
+        },
+        "/article/{id_article}": {
+            "get": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Wy\u015bwietla konkretny artyku\u0142",
+                "operationId": "get_app_article_get_one",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Szczeg\u00f3\u0142y artyku\u0142u",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleDetailResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Usuwa istniej\u0105cy artyku\u0142",
+                "operationId": "delete_app_article_delete",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u o podanym kodzie"
+                    }
+                }
+            }
+        },
+        "/article/{id_article}/language": {
+            "get": {
+                "tags": [
+                    "ArticleLanguage"
+                ],
+                "summary": "Lista t\u0142umacze\u0144 wskazanego artyku\u0142u.",
+                "operationId": "get_app_article_language_list",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista t\u0142umacze\u0144 artyku\u0142u",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ArticleLanguage"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono t\u0142umacze\u0144 dla artyku\u0142u"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "ArticleLanguage"
+                ],
+                "summary": "Tworzy t\u0142umaczenie artyku\u0142u.",
+                "operationId": "post_app_article_language_create",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_language",
+                                    "name",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "id_language": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Komplet hamulcowy"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Opis produktu w wybranym j\u0119zyku"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Dodano t\u0142umaczenie"
+                    },
+                    "400": {
+                        "description": "B\u0142\u0119dne dane wej\u015bciowe lub t\u0142umaczenie istnieje"
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u lub j\u0119zyka"
+                    }
+                }
+            }
+        },
+        "/article/language/{id}": {
+            "put": {
+                "tags": [
+                    "ArticleLanguage"
+                ],
+                "summary": "Aktualizuje t\u0142umaczenie artyku\u0142u.",
+                "operationId": "put_app_article_language_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ArticleLanguageUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowano t\u0142umaczenie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleLanguage"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono t\u0142umaczenia o podanym id"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "ArticleLanguage"
+                ],
+                "summary": "Usuwa t\u0142umaczenie dla artyku\u0142u",
+                "operationId": "delete_app_article_language_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono t\u0142umaczenia o podanym id"
+                    }
+                }
+            }
+        },
+        "/article/{id_article}/criterion": {
+            "get": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Lista kryteri\u00f3w wraz z t\u0142umaczeniami dla danego artyku\u0142u",
+                "operationId": "get_app_article_criterion",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista kryteriow",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ArticleCriterionResponse"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak kryteri\u00f3w"
+                    }
+                }
+            }
+        },
+        "/article/criterion": {
+            "put": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Aktualizuje kryterium artyku\u0142u",
+                "operationId": "put_app_article_criterion_update",
+                "requestBody": {
+                    "description": "Kryterium artyku\u0142u",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ArticleCriterionUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowane kryterium artyku\u0142u",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleCriterionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u/kryterium o podanym id"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Dodaje nowe kryterium do artykulu",
+                "operationId": "post_app_article_criterion_add",
+                "requestBody": {
+                    "description": "Kryterium artyku\u0142u",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ArticleCriterionCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dodane kryterium do artyku\u0142u",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ArticleCriterionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u/kryterium o podanym id"
+                    },
+                    "400": {
+                        "description": "Dla danego artyku\u0142u ju\u017c istnieje kryterium o podanym id"
+                    }
+                }
+            }
+        },
+        "/article/criterion/{id_article_criterion}": {
+            "delete": {
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Usuwa kryterium z artyku\u0142u",
+                "operationId": "delete_app_article_criterion_delete",
+                "parameters": [
+                    {
+                        "name": "id_article_criterion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono kryterium/artyku\u0142u o podanym id"
+                    }
+                }
+            }
+        },
+        "/car/get": {
+            "post": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Zwraca samoch\u00f3d pasuj\u0105cy do kryteri\u00f3w RequestBody",
+                "operationId": "post_app_car_get",
+                "requestBody": {
+                    "description": "Parametry samochodu do wyszukania",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CarSearchRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lista znalezionych samochod\u00f3w pasuj\u0105cych do danego kryterium",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Car"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/car": {
+            "put": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Aktualizuje samoch\u00f3d",
+                "operationId": "put_app_car_put",
+                "requestBody": {
+                    "description": "W\u0142a\u015bciwo\u015bci samochodu",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CarUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowany samoch\u00f3d",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Car"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono samochodu o podanym id"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Tworzy samoch\u00f3d",
+                "operationId": "post_app_car_post",
+                "requestBody": {
+                    "description": "W\u0142a\u015bciwo\u015bci samochodu",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CarCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stworzony samoch\u00f3d",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Car"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "W bazie ju\u017c istnieje samoch\u00f3d o dok\u0142adnie takich samych paraetrach"
+                    }
+                }
+            }
+        },
+        "/car/{id_car}": {
+            "delete": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Usuwa samoch\u00f3d z bazy daych i odpina go od cz\u0119\u015bci do kt\u00f3rych by\u0142 pod\u0142\u0105czony",
+                "operationId": "delete_app_car_delete",
+                "parameters": [
+                    {
+                        "name": "id_car",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119ty samoch\u00f3d",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CarDeleteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono samochodu o podanym id"
+                    }
+                }
+            }
+        },
+        "/car/search/{text_value}": {
+            "get": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Zwraca samoch\u00f3d pasuj\u0105cy do wyszukanej frazy",
+                "operationId": "get_app_car_search",
+                "parameters": [
+                    {
+                        "name": "text_value",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista znalezionych samochod\u00f3w pasuj\u0105cych do danego ci\u0105gu txt",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Car"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono samochodu na podstawie wpisanej frazy"
+                    }
+                }
+            }
+        },
+        "/car/search": {
+            "post": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Zwraca list\u0119 samochod\u00f3w pasuj\u0105cych do filtr\u00f3w w RequestBody",
+                "operationId": "post_app_car_search_post",
+                "requestBody": {
+                    "description": "Filtry do wyszukiwania samochod\u00f3w",
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CarSearchExtendedRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lista znalezionych samochod\u00f3w pasuj\u0105cych do filtr\u00f3w",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CarListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono samochod\u00f3w pasuj\u0105cych do filtr\u00f3w"
+                    }
+                }
+            }
+        },
+        "/car/manufacturers": {
+            "get": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Zwraca list\u0119 producent\u00f3w samochod\u00f3w",
+                "operationId": "get_app_car_manufacturers",
+                "responses": {
+                    "200": {
+                        "description": "Lista producent\u00f3w samochod\u00f3w",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/car/{manufacturer}/models": {
+            "get": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Zwraca list\u0119 modeli dla danego producenta",
+                "operationId": "get_app_car_models",
+                "parameters": [
+                    {
+                        "name": "manufacturer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista modeli dla danego producenta",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/car/affected-parts/{id}": {
+            "get": {
+                "tags": [
+                    "Car"
+                ],
+                "summary": "Zwraca ilo\u015b\u0107 artyku\u0142\u00f3w powi\u0105zanych z danym samochodem",
+                "operationId": "get_app_car_affected_parts",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liczba artyku\u0142\u00f3w powi\u0105zanych z samochodem",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/category": {
+            "get": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Wy\u015bwietla liste kategorii",
+                "operationId": "get_app_category_get",
+                "responses": {
+                    "200": {
+                        "description": "Lista kategorii",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CategoryResponse"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak kategorii"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Edytuje kategorie",
+                "operationId": "put_app_category_edit",
+                "requestBody": {
+                    "description": "Kategoria",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowana kategoria",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono kategorii o podanym id"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Tworzy kategorie",
+                "operationId": "post_app_category_create",
+                "requestBody": {
+                    "description": "Kategoria",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CategoryCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dodana kategoria",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CategoryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Nie przekazano t\u0142umacze\u0144"
+                    }
+                }
+            }
+        },
+        "/category/{id}": {
+            "delete": {
+                "tags": [
+                    "Category"
+                ],
+                "summary": "Usuwa kategorie",
+                "operationId": "delete_app_category_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono kategorii o podanym id"
+                    }
+                }
+            }
+        },
+        "/criterion": {
+            "get": {
+                "tags": [
+                    "Criterion"
+                ],
+                "summary": "Lista wszystkich kryteri\u00f3w wraz z t\u0142umaczeniami",
+                "operationId": "get_app_criterion_get",
+                "responses": {
+                    "200": {
+                        "description": "Lista kryteri\u00f3w",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CriterionResponse"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak kryteri\u00f3w"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Criterion"
+                ],
+                "summary": "Edytuje kryterium",
+                "operationId": "put_app_criterion_edit",
+                "requestBody": {
+                    "description": "Kryterium",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CriterionUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowane kryterium",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CriterionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono kryterium o podanym id"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Criterion"
+                ],
+                "summary": "Tworzy nowe kryterium",
+                "operationId": "post_app_criterion_add",
+                "requestBody": {
+                    "description": "Kryterium",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CriterionCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Utworzone kryterium",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CriterionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak kryteri\u00f3w"
+                    }
+                }
+            }
+        },
+        "/criterion/{id}": {
+            "delete": {
+                "tags": [
+                    "Criterion"
+                ],
+                "summary": "Usuwa kryterium",
+                "operationId": "delete_app_criterion_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to"
+                    },
+                    "404": {
+                        "description": "Nie znaleziono kryterium o podanym id"
+                    }
+                }
+            }
+        },
+        "/criterion/translation/{trid}": {
+            "delete": {
+                "tags": [
+                    "Criterion"
+                ],
+                "summary": "Usuwa pojedy\u0144cze t\u0142umaczenie kryterium",
+                "operationId": "delete_app_criterion_translation_delete",
+                "parameters": [
+                    {
+                        "name": "trid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono t\u0142umaczenia kryterium o podanym id"
+                    }
+                }
+            }
+        },
+        "/article/{id_article}/images": {
+            "get": {
+                "tags": [
+                    "ArticleImage"
+                ],
+                "summary": "Wy\u015bwietla list\u0119 obrazk\u00f3w dla danego produktu",
+                "operationId": "get_app_article_image_get",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista obrazk\u00f3w dla danego produktu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ImageResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/article/{id_article}/image": {
+            "post": {
+                "tags": [
+                    "ArticleImage"
+                ],
+                "summary": "Wgrywa obrazek dla danego artyku\u0142u",
+                "operationId": "post_app_article_image_post",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Plik obrazu do wgrania",
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "description": "Plik obrazu (JPG, PNG, WebP, max 10MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "position": {
+                                        "description": "Pozycja obrazu (opcjonalne, domy\u015blnie na ko\u0144cu)",
+                                        "type": "integer"
+                                    },
+                                    "is_main": {
+                                        "description": "Czy to g\u0142\u00f3wne zdj\u0119cie (opcjonalne, domy\u015blnie false)",
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Dodany obrazek artyku\u0142u",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "B\u0142\u0105d walidacji pliku"
+                    },
+                    "404": {
+                        "description": "Artyku\u0142 nie istnieje"
+                    }
+                }
+            }
+        },
+        "/article/image/{id}": {
+            "put": {
+                "tags": [
+                    "ArticleImage"
+                ],
+                "summary": "Aktualizuje metadane zdj\u0119cia (pozycja, bez zmiany pliku)",
+                "operationId": "put_app_article_image_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ImageUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zdj\u0119cie zaktualizowane"
+                    },
+                    "404": {
+                        "description": "Nie znaleziono obrazka o podanym id"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "ArticleImage"
+                ],
+                "summary": "Usuwa obrazek z produktu (plik i rekord w bazie)",
+                "operationId": "delete_app_article_image_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono obrazka o podanym id"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "ArticleImage"
+                ],
+                "summary": "Aktualizuje metadane zdj\u0119cia (pozycja, bez zmiany pliku)",
+                "operationId": "patch_app_article_image_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ImageUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zdj\u0119cie zaktualizowane"
+                    },
+                    "404": {
+                        "description": "Nie znaleziono obrazka o podanym id"
+                    }
+                }
+            }
+        },
+        "/article/{id_article}/images/reorder": {
+            "put": {
+                "tags": [
+                    "ArticleImage"
+                ],
+                "summary": "Aktualizuje kolejno\u015b\u0107 zdj\u0119\u0107 dla artyku\u0142u",
+                "operationId": "put_app_article_image_reorder",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Tablica z id i pozycjami zdj\u0119\u0107",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "position": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Kolejno\u015b\u0107 zaktualizowana",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Kolejno\u015b\u0107 zaktualizowana"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Nieprawid\u0142owy format danych"
+                    }
+                }
+            }
+        },
+        "/article/image/{id}/set-main": {
+            "put": {
+                "tags": [
+                    "ArticleImage"
+                ],
+                "summary": "Ustawia zdj\u0119cie jako g\u0142\u00f3wne",
+                "operationId": "put_app_article_image_set_main",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Zdj\u0119cie ustawione jako g\u0142\u00f3wne",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImageSetMainResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono obrazka o podanym id"
+                    }
+                }
+            }
+        },
+        "/api/import/headers": {
+            "post": {
+                "tags": [
+                    "Import"
+                ],
+                "summary": "Reads the first line of an uploaded CSV to return headers.",
+                "operationId": "post_api_import_headers",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "delimiter": {
+                                        "type": "string",
+                                        "example": ";"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/import/validate": {
+            "post": {
+                "tags": [
+                    "Import"
+                ],
+                "summary": "Validates the import mapping and column requirements.",
+                "operationId": "post_api_import_validate",
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/import/run": {
+            "post": {
+                "tags": [
+                    "Import"
+                ],
+                "summary": "Executes the import process.",
+                "operationId": "post_api_import_run",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "mapping": {
+                                        "description": "JSON string of mapping",
+                                        "type": "string"
+                                    },
+                                    "delimiter": {
+                                        "type": "string",
+                                        "example": ";"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/import/articles": {
+            "post": {
+                "tags": [
+                    "Import"
+                ],
+                "summary": "Import only articles.",
+                "operationId": "post_api_import_articles",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "mapping": {
+                                        "description": "JSON string of mapping",
+                                        "type": "string"
+                                    },
+                                    "delimiter": {
+                                        "type": "string",
+                                        "example": ";"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/import/cars": {
+            "post": {
+                "tags": [
+                    "Import"
+                ],
+                "summary": "Import cars (and optionally link to articles).",
+                "operationId": "post_api_import_cars",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "mapping": {
+                                        "description": "JSON string of mapping",
+                                        "type": "string"
+                                    },
+                                    "delimiter": {
+                                        "type": "string",
+                                        "example": ";"
+                                    },
+                                    "article_identifier_field": {
+                                        "description": "Field in mapping that connects to Article (default: code)",
+                                        "type": "string",
+                                        "example": "code"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/language": {
+            "get": {
+                "tags": [
+                    "Language"
+                ],
+                "summary": "Wy\u015bwietla liste j\u0119zyk\u00f3w",
+                "operationId": "get_app_language_get",
+                "responses": {
+                    "200": {
+                        "description": "Lista j\u0119zyk\u00f3w",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Language"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak j\u0119zyk\u00f3w"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Language"
+                ],
+                "summary": "Edytuje j\u0119zyk",
+                "operationId": "put_app_language_edit",
+                "requestBody": {
+                    "description": "J\u0119zyk",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LanguageUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowany j\u0119zyk",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LanguageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Inny j\u0119zyk ju\u017c ma tak\u0105 nazw\u0119"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Language"
+                ],
+                "summary": "Tworzy j\u0119zyk",
+                "operationId": "post_app_language_create",
+                "requestBody": {
+                    "description": "J\u0119zyk",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LanguageCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dodany j\u0119zyk",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LanguageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Inny j\u0119zyk ju\u017c ma tak\u0105 nazw\u0119"
+                    }
+                }
+            }
+        },
+        "/language/{id}": {
+            "delete": {
+                "tags": [
+                    "Language"
+                ],
+                "summary": "Usuwa j\u0119zyk",
+                "operationId": "delete_app_language_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono j\u0119zyka o podanym id"
+                    }
+                }
+            }
+        },
+        "/reference/{id_article}": {
+            "get": {
+                "tags": [
+                    "Reference"
+                ],
+                "summary": "Pobiera numery referencyjne",
+                "description": "Parametr type w RequestBody nie jest obowi\u0105zkowy, w przypadku jego braku metoda zwr\u00f3ci wszystkie numery referencjne",
+                "operationId": "get_app_article_reference_get",
+                "parameters": [
+                    {
+                        "name": "id_article",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista numer\u00f3w referencyjnych",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Reference"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reference": {
+            "put": {
+                "tags": [
+                    "Reference"
+                ],
+                "summary": "Aktualizuje numery referencyjne",
+                "operationId": "put_app_reference_put",
+                "requestBody": {
+                    "description": "Parametry reference",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReferenceUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowany numer referencyjny",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Reference"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u lub numeru referencyjnego o podanym id"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Reference"
+                ],
+                "summary": "Wstawia numery referencyjne",
+                "operationId": "post_app_reference_post",
+                "requestBody": {
+                    "description": "Parametry reference",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReferenceCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dodany numer referencyjny",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Reference"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono artyku\u0142u o podanym id"
+                    }
+                }
+            }
+        },
+        "/reference/{id_reference}": {
+            "delete": {
+                "tags": [
+                    "Reference"
+                ],
+                "summary": "Usuwa numery referencyjne",
+                "operationId": "delete_app_reference_delete",
+                "parameters": [
+                    {
+                        "name": "id_reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usunieto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono numeru referencyjnego o podanym id"
+                    }
+                }
+            }
+        },
+        "/reference_type": {
+            "get": {
+                "tags": [
+                    "ReferenceType"
+                ],
+                "summary": "Pobiera typy numer\u00f3w referencyjnych",
+                "operationId": "get_app_article_reference_type_get",
+                "responses": {
+                    "200": {
+                        "description": "Lista typ\u00f3w numer\u00f3w referencyjnych",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ReferenceType"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "ReferenceType"
+                ],
+                "summary": "Aktualizuje typ numeru referencyjnego",
+                "operationId": "put_app_reference_type_put",
+                "requestBody": {
+                    "description": "Parametry reference",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReferenceTypeUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zmodyfikowany typ numeru referencyjnego",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReferenceType"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono typu numeru referencyjnego o podanym id"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "ReferenceType"
+                ],
+                "summary": "Wstawia typ numeru referencyjnego",
+                "operationId": "post_app_reference_type_post",
+                "requestBody": {
+                    "description": "Nazwa typu",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReferenceTypeCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dodany typ numeru referencyjnego",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReferenceType"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "ReferenceType o podanej nazwie ju\u017c istnieje"
+                    }
+                }
+            }
+        },
+        "/reference_type/{id_reference_type}": {
+            "delete": {
+                "tags": [
+                    "ReferenceType"
+                ],
+                "summary": "Usuwa typ numeru referencyjnego",
+                "operationId": "delete_app_reference_type_delete",
+                "parameters": [
+                    {
+                        "name": "id_reference_type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usunieto"
+                    },
+                    "404": {
+                        "description": "Nie znaleziono typu numeru referencyjnego o podanym id"
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Pozwala na rejestracj\u0119 nowego u\u017cytkownika",
+                "operationId": "post_app_register",
+                "requestBody": {
+                    "description": "Login oraz has\u0142o do rejestracji",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegistrationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zarejestrowano pomy\u015blnie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegistrationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/seed/sample-data": {
+            "post": {
+                "tags": [
+                    "Seed"
+                ],
+                "summary": "Uzupe\u0142nia baz\u0119 danymi demonstracyjnymi",
+                "operationId": "post_app_seed_sample_data",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SeedSampleDataRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Dane zosta\u0142y dodane",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SeedSampleDataResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Wyst\u0105pi\u0142 b\u0142\u0105d podczas inicjalizacji danych"
+                    }
+                }
+            }
+        },
+        "/stock": {
+            "get": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Lista wszystkich magazyn\u00f3w",
+                "operationId": "get_app_stock_get",
+                "responses": {
+                    "200": {
+                        "description": "Lista kryteri\u00f3w",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "id": 1,
+                                    "name": "Antwerpia"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak Magazyn\u00f3w"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Edytuje magazyn",
+                "operationId": "put_app_stock_edit",
+                "requestBody": {
+                    "description": "Magazyn",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StockUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Zaktualizowany magazyn",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StockResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono magzynu o podanym id"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Tworzy nowy magazyn",
+                "operationId": "post_app_stock_add",
+                "requestBody": {
+                    "description": "Magazyn",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StockCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dodany magazyn",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StockResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Brak Magazynu"
+                    }
+                }
+            }
+        },
+        "/stock/{id}": {
+            "delete": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Usuwa magazyn",
+                "operationId": "delete_app_stock_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuni\u0119to",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nie znaleziono magazynu o podanym id"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ArticleCar": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "id_article": {
+                        "type": "integer"
+                    },
+                    "id_car": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "MessageResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca komunikat",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Usuni\u0119to"
+                    }
+                },
+                "type": "object"
+            },
+            "Article": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "ean13": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "id_category": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Image"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleListResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca list\u0119 artyku\u0142\u00f3w",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "code": {
+                                    "type": "string",
+                                    "example": "36790-SET-MS"
+                                },
+                                "ean13": {
+                                    "type": "string",
+                                    "example": "1234567890123"
+                                },
+                                "ean13_list": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "example": [
+                                        "1234567890123",
+                                        "5901234123457"
+                                    ]
+                                },
+                                "price": {
+                                    "type": "number",
+                                    "format": "float",
+                                    "example": 367.99
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Zestaw zawieszenia"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "Zawieszenie do Audi A3"
+                                },
+                                "id_category": {
+                                    "type": "integer",
+                                    "example": 0
+                                },
+                                "thumbnail_url": {
+                                    "type": "string",
+                                    "example": "/uploads/articles/1/thumbnails/abc123.jpg",
+                                    "nullable": true
+                                }
+                            }
+                        }
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleUpdateRequest": {
+                "description": "Request body do aktualizacji artyku\u0142u",
+                "required": [
+                    "id",
+                    "code",
+                    "price",
+                    "id_category",
+                    "name",
+                    "description"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "36790-SET-MS"
+                    },
+                    "ean13": {
+                        "type": "string",
+                        "example": "1234567890123"
+                    },
+                    "ean13_list": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "1234567890123",
+                            "5901234123457"
+                        ]
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 367.99
+                    },
+                    "id_category": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Article name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Article description"
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 10,
+                                    "nullable": true
+                                },
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "PL nazwa"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "PL opis"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleDetailResponse": {
+                "description": "Szczeg\u00f3\u0142y artyku\u0142u z t\u0142umaczeniami i list\u0105 EAN",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "36790-SET-MS"
+                    },
+                    "ean13": {
+                        "type": "string",
+                        "example": "1234567890123"
+                    },
+                    "ean13_list": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "1234567890123",
+                            "5901234123457"
+                        ]
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 367.99
+                    },
+                    "id_category": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Zestaw zawieszenia"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Zawieszenie do Audi A3"
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "id_article": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "PL nazwa"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "PL opis"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleCreateRequest": {
+                "description": "Request body do tworzenia nowego artyku\u0142u",
+                "required": [
+                    "code",
+                    "price",
+                    "id_category",
+                    "name",
+                    "description"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "example": "36790-SET-MS"
+                    },
+                    "ean13": {
+                        "type": "string",
+                        "example": "1234567890123"
+                    },
+                    "ean13_list": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "1234567890123",
+                            "5901234123457"
+                        ]
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 367.99
+                    },
+                    "id_category": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Article name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Article description"
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "PL nazwa"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "PL opis"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleGetByRequest": {
+                "description": "Request body do wyszukiwania artyku\u0142\u00f3w z filtrami",
+                "properties": {
+                    "criteria": {
+                        "properties": {
+                            "code": {
+                                "type": "string",
+                                "example": "36790-SET-MS"
+                            },
+                            "ean13": {
+                                "type": "string",
+                                "example": "1234567890123"
+                            },
+                            "price": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 367.99
+                            },
+                            "id_category": {
+                                "type": "integer",
+                                "example": 0
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Zestaw zawieszenia"
+                            },
+                            "description": {
+                                "type": "string",
+                                "example": "Zawieszenie do Audi A5 b6"
+                            },
+                            "searchLike": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "image": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "orderBy": {
+                        "type": "object",
+                        "example": {
+                            "id": "DESC"
+                        }
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "example": 40
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleLanguage": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "id_article": {
+                        "type": "integer"
+                    },
+                    "id_language": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleLanguageUpdateRequest": {
+                "description": "Request body do aktualizacji t\u0142umaczenia artyku\u0142u",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Nowa nazwa produktu"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Nowy opis produktu"
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleCriterionResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca kryterium artyku\u0142u",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "id_article": {
+                        "type": "integer",
+                        "example": 26
+                    },
+                    "id_crterion": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "value": {
+                        "type": "string",
+                        "example": "F"
+                    },
+                    "value_description": {
+                        "type": "string",
+                        "example": "Front"
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "id_article_criterion": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "value_description": {
+                                    "type": "string",
+                                    "example": "Prz\u00f3d"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleCriterionUpdateRequest": {
+                "description": "Request body do aktualizacji kryterium artyku\u0142u",
+                "required": [
+                    "id",
+                    "id_article",
+                    "id_criterion",
+                    "value",
+                    "value_description"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "id_article": {
+                        "type": "integer",
+                        "example": 6
+                    },
+                    "id_criterion": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "value": {
+                        "type": "string",
+                        "example": "P"
+                    },
+                    "value_description": {
+                        "type": "string",
+                        "example": "Prz\u00f3d"
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1,
+                                    "nullable": true
+                                },
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "value_description": {
+                                    "type": "string",
+                                    "example": "Prz\u00f3d"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ArticleCriterionCreateRequest": {
+                "description": "Request body do dodawania kryterium do artyku\u0142u",
+                "required": [
+                    "id_article",
+                    "id_criterion",
+                    "value",
+                    "value_description"
+                ],
+                "properties": {
+                    "id_article": {
+                        "type": "integer",
+                        "example": 6
+                    },
+                    "id_criterion": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "value": {
+                        "type": "string",
+                        "example": "P"
+                    },
+                    "value_description": {
+                        "type": "string",
+                        "example": "Prz\u00f3d"
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "value_description": {
+                                    "type": "string",
+                                    "example": "Prz\u00f3d"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CarSearchRequest": {
+                "description": "Request body do wyszukiwania samochod\u00f3w",
+                "properties": {
+                    "manufacturer": {
+                        "type": "string",
+                        "example": "Opel"
+                    },
+                    "model": {
+                        "type": "string",
+                        "example": "Vectra"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "C"
+                    },
+                    "model_from": {
+                        "type": "string",
+                        "example": "2002-09"
+                    },
+                    "model_to": {
+                        "type": "string",
+                        "example": "2004-5"
+                    },
+                    "body_type": {
+                        "type": "string",
+                        "example": "Sedan"
+                    },
+                    "drive_type": {
+                        "type": "string",
+                        "example": "FWD"
+                    },
+                    "displacement_liters": {
+                        "type": "string",
+                        "example": "1655"
+                    },
+                    "displacement_cmm": {
+                        "type": "string",
+                        "example": "1655"
+                    },
+                    "fuel_type": {
+                        "type": "string",
+                        "example": "Gas"
+                    },
+                    "kw": {
+                        "type": "string",
+                        "example": "90"
+                    },
+                    "hp": {
+                        "type": "string",
+                        "example": "120"
+                    },
+                    "cylinders": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "valves": {
+                        "type": "string",
+                        "example": "8"
+                    },
+                    "engine_type": {
+                        "type": "string",
+                        "example": "V2"
+                    },
+                    "engine_codes": {
+                        "type": "string",
+                        "example": "KWA456"
+                    },
+                    "kba": {
+                        "type": "string",
+                        "example": "45689722"
+                    }
+                },
+                "type": "object"
+            },
+            "Car": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "manufacturer": {
+                        "type": "string"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "model_from": {
+                        "type": "string"
+                    },
+                    "model_to": {
+                        "type": "string"
+                    },
+                    "body_type": {
+                        "type": "string"
+                    },
+                    "drive_type": {
+                        "type": "string"
+                    },
+                    "displacement_liters": {
+                        "type": "string"
+                    },
+                    "displacement_cmm": {
+                        "type": "string"
+                    },
+                    "fuel_type": {
+                        "type": "string"
+                    },
+                    "kw": {
+                        "type": "string"
+                    },
+                    "hp": {
+                        "type": "string"
+                    },
+                    "cylinders": {
+                        "type": "integer"
+                    },
+                    "valves": {
+                        "type": "string"
+                    },
+                    "engine_type": {
+                        "type": "string"
+                    },
+                    "engine_codes": {
+                        "type": "string"
+                    },
+                    "kba": {
+                        "type": "string"
+                    },
+                    "text_value": {
+                        "type": "string"
+                    },
+                    "hash": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CarUpdateRequest": {
+                "description": "Request body do aktualizacji samochodu",
+                "required": [
+                    "id",
+                    "manufacturer",
+                    "model",
+                    "type",
+                    "model_from",
+                    "model_to",
+                    "body_type",
+                    "drive_type",
+                    "displacement_liters",
+                    "displacement_cmm",
+                    "fuel_type",
+                    "kw",
+                    "hp",
+                    "cylinders",
+                    "valves",
+                    "engine_type",
+                    "engine_codes",
+                    "kba"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "manufacturer": {
+                        "type": "string",
+                        "example": "Opel"
+                    },
+                    "model": {
+                        "type": "string",
+                        "example": "Vectra"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "C"
+                    },
+                    "model_from": {
+                        "type": "string",
+                        "example": "2002-09"
+                    },
+                    "model_to": {
+                        "type": "string",
+                        "example": "2004-5"
+                    },
+                    "body_type": {
+                        "type": "string",
+                        "example": "Sedan"
+                    },
+                    "drive_type": {
+                        "type": "string",
+                        "example": "FWD"
+                    },
+                    "displacement_liters": {
+                        "type": "string",
+                        "example": "1655"
+                    },
+                    "displacement_cmm": {
+                        "type": "string",
+                        "example": "1655"
+                    },
+                    "fuel_type": {
+                        "type": "string",
+                        "example": "Gas"
+                    },
+                    "kw": {
+                        "type": "string",
+                        "example": "90"
+                    },
+                    "hp": {
+                        "type": "string",
+                        "example": "120"
+                    },
+                    "cylinders": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "valves": {
+                        "type": "string",
+                        "example": "8"
+                    },
+                    "engine_type": {
+                        "type": "string",
+                        "example": "V2"
+                    },
+                    "engine_codes": {
+                        "type": "string",
+                        "example": "KWA456"
+                    },
+                    "kba": {
+                        "type": "string",
+                        "example": "45689722"
+                    }
+                },
+                "type": "object"
+            },
+            "CarCreateRequest": {
+                "description": "Request body do tworzenia samochodu",
+                "required": [
+                    "manufacturer",
+                    "model",
+                    "type",
+                    "model_from",
+                    "model_to",
+                    "body_type",
+                    "drive_type",
+                    "displacement_liters",
+                    "displacement_cmm",
+                    "fuel_type",
+                    "kw",
+                    "hp",
+                    "cylinders",
+                    "valves",
+                    "engine_type",
+                    "engine_codes",
+                    "kba"
+                ],
+                "properties": {
+                    "manufacturer": {
+                        "type": "string",
+                        "example": "Opel"
+                    },
+                    "model": {
+                        "type": "string",
+                        "example": "Vectra"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "C"
+                    },
+                    "model_from": {
+                        "type": "string",
+                        "example": "2002-09"
+                    },
+                    "model_to": {
+                        "type": "string",
+                        "example": "2004-5"
+                    },
+                    "body_type": {
+                        "type": "string",
+                        "example": "Sedan"
+                    },
+                    "drive_type": {
+                        "type": "string",
+                        "example": "FWD"
+                    },
+                    "displacement_liters": {
+                        "type": "string",
+                        "example": "1655"
+                    },
+                    "displacement_cmm": {
+                        "type": "string",
+                        "example": "1655"
+                    },
+                    "fuel_type": {
+                        "type": "string",
+                        "example": "Gas"
+                    },
+                    "kw": {
+                        "type": "string",
+                        "example": "90"
+                    },
+                    "hp": {
+                        "type": "string",
+                        "example": "120"
+                    },
+                    "cylinders": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "valves": {
+                        "type": "string",
+                        "example": "8"
+                    },
+                    "engine_type": {
+                        "type": "string",
+                        "example": "V2"
+                    },
+                    "engine_codes": {
+                        "type": "string",
+                        "example": "KWA456"
+                    },
+                    "kba": {
+                        "type": "string",
+                        "example": "45689722"
+                    }
+                },
+                "type": "object"
+            },
+            "CarDeleteResponse": {
+                "description": "Odpowied\u017a po usuni\u0119ciu samochodu",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Usuni\u0119to samoch\u00f3d oraz odpi\u0119to od 5 produkt\u00f3w."
+                    },
+                    "deletedItem": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "manufacturer": {
+                                "type": "string",
+                                "example": "Opel"
+                            },
+                            "model": {
+                                "type": "string",
+                                "example": "Vectra"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "CarSearchExtendedRequest": {
+                "description": "Request body do zaawansowanego wyszukiwania samochod\u00f3w",
+                "properties": {
+                    "criteria": {
+                        "properties": {
+                            "manufacturer": {
+                                "type": "string",
+                                "example": "Opel"
+                            },
+                            "model": {
+                                "type": "string",
+                                "example": "Vectra"
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "C"
+                            },
+                            "model_from": {
+                                "type": "string",
+                                "example": "2002-09"
+                            },
+                            "model_to": {
+                                "type": "string",
+                                "example": "2004-5"
+                            },
+                            "body_type": {
+                                "type": "string",
+                                "example": "Sedan"
+                            },
+                            "drive_type": {
+                                "type": "string",
+                                "example": "FWD"
+                            },
+                            "displacement_liters": {
+                                "type": "string",
+                                "example": "1655"
+                            },
+                            "displacement_cmm": {
+                                "type": "string",
+                                "example": "1655"
+                            },
+                            "fuel_type": {
+                                "type": "string",
+                                "example": "Gas"
+                            },
+                            "kw": {
+                                "type": "string",
+                                "example": "90"
+                            },
+                            "hp": {
+                                "type": "string",
+                                "example": "120"
+                            },
+                            "cylinders": {
+                                "type": "integer",
+                                "example": 4
+                            },
+                            "valves": {
+                                "type": "string",
+                                "example": "8"
+                            },
+                            "engine_type": {
+                                "type": "string",
+                                "example": "V2"
+                            },
+                            "engine_codes": {
+                                "type": "string",
+                                "example": "KWA456"
+                            },
+                            "kba": {
+                                "type": "string",
+                                "example": "45689722"
+                            },
+                            "searchLike": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "orderBy": {
+                        "type": "object",
+                        "example": {
+                            "id": "DESC"
+                        }
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "example": 0
+                    }
+                },
+                "type": "object"
+            },
+            "CarListResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca list\u0119 samochod\u00f3w",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "manufacturer": {
+                                    "type": "string",
+                                    "example": "Opel"
+                                },
+                                "model": {
+                                    "type": "string",
+                                    "example": "Vectra"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "example": "C"
+                                },
+                                "model_from": {
+                                    "type": "string",
+                                    "example": "2002-09"
+                                },
+                                "model_to": {
+                                    "type": "string",
+                                    "example": "2004-5"
+                                },
+                                "body_type": {
+                                    "type": "string",
+                                    "example": "Sedan"
+                                },
+                                "drive_type": {
+                                    "type": "string",
+                                    "example": "FWD"
+                                },
+                                "displacement_liters": {
+                                    "type": "string",
+                                    "example": "1655"
+                                },
+                                "displacement_cmm": {
+                                    "type": "string",
+                                    "example": "1655"
+                                },
+                                "fuel_type": {
+                                    "type": "string",
+                                    "example": "Gas"
+                                },
+                                "kw": {
+                                    "type": "string",
+                                    "example": "90"
+                                },
+                                "hp": {
+                                    "type": "string",
+                                    "example": "120"
+                                },
+                                "cylinders": {
+                                    "type": "integer",
+                                    "example": 4
+                                },
+                                "valves": {
+                                    "type": "string",
+                                    "example": "8"
+                                },
+                                "engine_type": {
+                                    "type": "string",
+                                    "example": "V2"
+                                },
+                                "engine_codes": {
+                                    "type": "string",
+                                    "example": "KWA456"
+                                },
+                                "kba": {
+                                    "type": "string",
+                                    "example": "45689722"
+                                }
+                            }
+                        }
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca kategori\u0119 z t\u0142umaczeniami",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "id_parent": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 5
+                                },
+                                "id_category": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Uk\u0142ad Hamulcowy 2"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "Cz\u0119\u015bci uk\u0142adu hamulcowego"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryUpdateRequest": {
+                "description": "Request body do aktualizacji kategorii",
+                "required": [
+                    "id",
+                    "id_parent",
+                    "translations"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "id_parent": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 5,
+                                    "nullable": true
+                                },
+                                "id_category": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Uk\u0142ad Hamulcowy 2"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "Cz\u0119\u015bci uk\u0142adu hamulcowego"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CategoryCreateRequest": {
+                "description": "Request body do tworzenia kategorii",
+                "required": [
+                    "id_parent",
+                    "translations"
+                ],
+                "properties": {
+                    "id_parent": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "id_language",
+                                "name",
+                                "description"
+                            ],
+                            "properties": {
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Uk\u0142ad Hamulcowy 2"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "example": "Cz\u0119\u015bci uk\u0142adu hamulcowego"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CriterionResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca kryterium z t\u0142umaczeniami",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 3
+                                },
+                                "id_criterion": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 6
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Strona mocowania"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CriterionUpdateRequest": {
+                "description": "Request body do aktualizacji kryterium",
+                "required": [
+                    "id",
+                    "translations"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 3,
+                                    "nullable": true
+                                },
+                                "id_criterion": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 6
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Strona mocowania"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CriterionCreateRequest": {
+                "description": "Request body do tworzenia kryterium",
+                "required": [
+                    "translations"
+                ],
+                "properties": {
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "id_language",
+                                "name"
+                            ],
+                            "properties": {
+                                "id_language": {
+                                    "type": "integer",
+                                    "example": 6
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Strona mocowania"
+                                }
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ImageResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca informacje o obrazie",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "id_article": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "position": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "/uploads/articles/1/abc123.jpg"
+                    },
+                    "thumbnail_url": {
+                        "type": "string",
+                        "example": "/uploads/articles/1/thumbnails/abc123.jpg"
+                    },
+                    "is_main": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "width": {
+                        "type": "integer",
+                        "example": 1920
+                    },
+                    "height": {
+                        "type": "integer",
+                        "example": 1080
+                    },
+                    "file_size": {
+                        "type": "integer",
+                        "example": 524288
+                    }
+                },
+                "type": "object"
+            },
+            "ImageUpdateRequest": {
+                "description": "Request body do aktualizacji metadanych obrazu",
+                "properties": {
+                    "position": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            },
+            "ImageSetMainResponse": {
+                "description": "Odpowied\u017a po ustawieniu zdj\u0119cia jako g\u0142\u00f3wnego",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_main": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "Language": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "iso_code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "LanguageUpdateRequest": {
+                "description": "Request body do aktualizacji j\u0119zyka",
+                "required": [
+                    "id",
+                    "name",
+                    "isoCode"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "1"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Polski"
+                    },
+                    "isoCode": {
+                        "type": "string",
+                        "example": "pl-PL"
+                    },
+                    "iso_code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "LanguageResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca j\u0119zyk",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "1"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Polski"
+                    },
+                    "isoCode": {
+                        "type": "string",
+                        "example": "pl-PL"
+                    },
+                    "iso_code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "LanguageCreateRequest": {
+                "description": "Request body do tworzenia j\u0119zyka",
+                "required": [
+                    "name",
+                    "isoCode"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Polski"
+                    },
+                    "isoCode": {
+                        "type": "string",
+                        "example": "pl-PL"
+                    },
+                    "iso_code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Reference": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "id_article": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "integer"
+                    },
+                    "brand": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ReferenceUpdateRequest": {
+                "description": "Request body do aktualizacji numeru referencyjnego",
+                "required": [
+                    "id",
+                    "id_article",
+                    "type",
+                    "brand",
+                    "number"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "id_article": {
+                        "type": "integer",
+                        "example": 26
+                    },
+                    "type": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "brand": {
+                        "type": "string",
+                        "example": "BREMBO"
+                    },
+                    "number": {
+                        "type": "string",
+                        "example": "B156O1"
+                    }
+                },
+                "type": "object"
+            },
+            "ReferenceCreateRequest": {
+                "description": "Request body do tworzenia numeru referencyjnego",
+                "required": [
+                    "id_article",
+                    "type",
+                    "brand",
+                    "number"
+                ],
+                "properties": {
+                    "id_article": {
+                        "type": "integer",
+                        "example": 26
+                    },
+                    "type": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "brand": {
+                        "type": "string",
+                        "example": "BREMBO"
+                    },
+                    "number": {
+                        "type": "string",
+                        "example": "B156O1"
+                    }
+                },
+                "type": "object"
+            },
+            "ReferenceType": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ReferenceTypeUpdateRequest": {
+                "description": "Request body do aktualizacji typu numeru referencyjnego",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Oryginalny"
+                    }
+                },
+                "type": "object"
+            },
+            "ReferenceTypeCreateRequest": {
+                "description": "Request body do tworzenia typu numeru referencyjnego",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Oryginalny"
+                    }
+                },
+                "type": "object"
+            },
+            "RegistrationRequest": {
+                "description": "Request body do rejestracji u\u017cytkownika",
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "example": "admin@motolinker.local"
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "superSecretPassword"
+                    }
+                },
+                "type": "object"
+            },
+            "RegistrationResponse": {
+                "description": "Odpowied\u017a po rejestracji u\u017cytkownika",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Registered Successfully"
+                    }
+                },
+                "type": "object"
+            },
+            "SeedSampleDataRequest": {
+                "description": "Request body do generowania przyk\u0142adowych danych",
+                "properties": {
+                    "numCars": {
+                        "description": "Liczba samochod\u00f3w do wygenerowania (domy\u015blnie: 20)",
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "numArticles": {
+                        "description": "Liczba artyku\u0142\u00f3w do wygenerowania (domy\u015blnie: 30)",
+                        "type": "integer",
+                        "example": 30
+                    },
+                    "num_cars": {
+                        "type": "integer"
+                    },
+                    "num_articles": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "SeedSampleDataResponse": {
+                "description": "Odpowied\u017a po wygenerowaniu przyk\u0142adowych danych",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Dodano przyk\u0142adowe dane."
+                    },
+                    "summary": {
+                        "properties": {
+                            "languages": {
+                                "type": "integer",
+                                "example": 3
+                            },
+                            "categories": {
+                                "type": "integer",
+                                "example": 3
+                            },
+                            "category_translations": {
+                                "type": "integer",
+                                "example": 6
+                            },
+                            "criteria": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "criterion_translations": {
+                                "type": "integer",
+                                "example": 4
+                            },
+                            "cars": {
+                                "type": "integer",
+                                "example": 20
+                            },
+                            "articles": {
+                                "type": "integer",
+                                "example": 30
+                            },
+                            "reference_types": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "references": {
+                                "type": "integer",
+                                "example": 150
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "StockUpdateRequest": {
+                "description": "Request body do aktualizacji magazynu",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Antwerpia"
+                    }
+                },
+                "type": "object"
+            },
+            "StockResponse": {
+                "description": "Odpowied\u017a zawieraj\u0105ca magazyn",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Antwerpia"
+                    }
+                },
+                "type": "object"
+            },
+            "StockCreateRequest": {
+                "description": "Request body do tworzenia magazynu",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Antwerpia"
+                    }
+                },
+                "type": "object"
+            },
+            "Image": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "filename": {
+                        "type": "string"
+                    },
+                    "original_filename": {
+                        "type": "string"
+                    },
+                    "file_size": {
+                        "type": "integer"
+                    },
+                    "mime_type": {
+                        "type": "string"
+                    },
+                    "width": {
+                        "type": "integer"
+                    },
+                    "height": {
+                        "type": "integer"
+                    },
+                    "is_main": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "article": {
+                        "$ref": "#/components/schemas/Article"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "Bearer": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "security": [
+        {
+            "Bearer": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "ArticleCar"
+        },
+        {
+            "name": "Category"
+        },
+        {
+            "name": "ArticleCategory"
+        },
+        {
+            "name": "Article"
+        },
+        {
+            "name": "ArticleLanguage"
+        },
+        {
+            "name": "Car"
+        },
+        {
+            "name": "Criterion"
+        },
+        {
+            "name": "ArticleImage"
+        },
+        {
+            "name": "Language"
+        },
+        {
+            "name": "Reference"
+        },
+        {
+            "name": "ReferenceType"
+        },
+        {
+            "name": "Auth"
+        },
+        {
+            "name": "Stock"
+        },
+        {
+            "name": "Import",
+            "description": "Import"
+        },
+        {
+            "name": "Seed",
+            "description": "Seed"
+        }
+    ]
+}
