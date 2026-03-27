@@ -16,6 +16,9 @@ class Category
     #[ORM\Column]
     public ?int $id_parent = null;
 
+    #[ORM\Column]
+    public ?int $products_count = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -29,6 +32,18 @@ class Category
     public function setIdParent(int $id_parent): static
     {
         $this->id_parent = $id_parent;
+
+        return $this;
+    }
+
+    public function getProductsCount(): ?int
+    {
+        return $this->products_count;
+    }
+
+    public function setProductsCount(?int $products_count): static
+    {
+        $this->products_count = $products_count;
 
         return $this;
     }

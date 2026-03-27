@@ -32,17 +32,17 @@ use App\HttpRequestModel\ArticleBulkEditRequest;
 class ArticleController extends AbstractController
 {
     /**
-     * WyĹ›wietla liste artykuĹ‚Ăłw
+     * Wyświetla liste artykułów
      */
     #[OA\Tag(name: "Article")]
     #[OA\Response(
         response: 200,
-        description: "Lista artykuĹ‚Ăłw",
+        description: "Lista artykułów",
         content: new Model(type: ArticleListResponse::class)
     )]
     #[OA\Response(
         response: 404,
-        description: "Brak artykuĹ‚Ăłw"
+        description: "Brak artykułów"
     )]
     #[Route('/article', name: 'app_article_get', methods: ["GET"])]
     public function index(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService): JsonResponse
@@ -54,7 +54,7 @@ class ArticleController extends AbstractController
             return new JsonResponse(['data' => [], 'total' => 0]);
         }
         
-        // Pobierz wszystkie gĹ‚Ăłwne zdjÄ™cia w jednym zapytaniu
+        // Pobierz wszystkie główne zdjęcia w jednym zapytaniu
         $articleIds = array_map(fn($article) => $article->getId(), $result);
         $mainImages = $imageRepository->findMainImagesForArticles($articleIds);
         
@@ -62,10 +62,10 @@ class ArticleController extends AbstractController
         foreach ($result as $article) {
             $articleId = $article->getId();
             $mainImage = $mainImages[$articleId] ?? null;
-            // PrzekaĹĽ articleId bezpoĹ›rednio, aby uniknÄ…Ä‡ problemĂłw z relacjami Doctrine
+            // Przekaż articleId bezpośrednio, aby uniknąć problemów z relacjami Doctrine
             $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage, $articleId) : null;
             
-            // RÄ™cznie buduj tablicÄ™ z wĹ‚aĹ›ciwoĹ›ci Article
+            // Ręcznie buduj tablicę z właściwościami Article
             $articleArray = [
                 'id' => $article->id,
                 'code' => $article->code,
@@ -102,11 +102,11 @@ class ArticleController extends AbstractController
 
 
     /**
-     * Zbiorcze usuwanie artykuĹĂłw
+     * Zbiorcze usuwanie artykułów
      */
     #[OA\Tag(name: "Article")]
     #[OA\RequestBody(
-        description: "Lista ID lub filtry do usuniÄ™cia",
+        description: "Lista ID lub filtry do usunięcia",
         required: true,
         content: new Model(type: ArticleBulkDeleteRequest::class)
     )]
@@ -141,7 +141,7 @@ class ArticleController extends AbstractController
         }
 
         if (empty($ids)) {
-            return new JsonResponse(['message' => 'Brak artykuĹĂłw do usuniÄcia', 'deleted_count' => 0], 200);
+            return new JsonResponse(['message' => 'Brak artykułów do usunięcia', 'deleted_count' => 0], 200);
         }
 
         $entityManager = $doctrine->getManager();
@@ -162,17 +162,17 @@ class ArticleController extends AbstractController
             try {
                 $article = $articleRepository->find($id);
                 if ($article) {
-                    // Usuwanie powiÄzaĹ rÄcznie
+                    // Usuwanie powiązań ręcznie
                     $this->deleteRelatedEntities($doctrine, $article);
                     $entityManager->remove($article);
                     $entityManager->flush();
                     $deletedCount++;
                 }
             } catch (\Exception $e) {
-                $errors[] = "BĹÄd przy ID $id: " . $e->getMessage();
+                $errors[] = "Błąd przy ID $id: " . $e->getMessage();
             }
 
-            // Aktualizacja postÄpu co 5 rekordĂłw lub na koĹcu
+            // Aktualizacja postępu co 5 rekordów lub na końcu
             if ($index % 5 === 0 || $index === $total - 1) {
                 $session->set('bulk_delete_progress', [
                     'current' => $index + 1,
@@ -306,12 +306,12 @@ class ArticleController extends AbstractController
     }
 
     /**
-     * Pobiera status postÄpu zbiorczego usuwania
+     * Pobiera status postępu zbiorczego usuwania
      */
     #[OA\Tag(name: "Article")]
     #[OA\Response(
         response: 200,
-        description: "Status postÄpu",
+        description: "Status postępu",
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: "current", type: "integer"),
@@ -332,7 +332,7 @@ class ArticleController extends AbstractController
         return new JsonResponse($progress);
     }
     /**
-     * WyĹ›wietla przefiltrowana liste artykulow.
+     * Wyświetla przefiltrowana liste artykułów.
      */
     #[OA\Tag(name: "Article")]
     #[OA\RequestBody(
@@ -342,19 +342,19 @@ class ArticleController extends AbstractController
     )]
     #[OA\Response(
         response: 200,
-        description: "Lista artykuĹ‚Ăłw",
+        description: "Lista artykułów",
         content: new Model(type: ArticleListResponse::class)
     )]
     #[OA\Response(
         response: 404,
-        description: "Nie znaleziono artykuĹ‚u"
+        description: "Nie znaleziono artykułu"
     )]
     #[Route('/article/get', name: 'app_article_get_by', methods: ["POST"])]
     public function getBy(ArticleRepository $articleRepository, ImageRepository $imageRepository, ImageUploadService $imageUploadService, Request $request = null): JsonResponse
     {
-        /* Najprostsza metoda do pobrania artyklow przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
-        /* JeĹĽeli nie przekazano nic w body request to zwracanie wszystkich artykulow */
-        /* Jezeli ĹĽaden aartkul nie pasuje do parametrĂłw przekazanych w RequestBody lub nie ma nic w bazie to 404 */
+        /* Najprostsza metoda do pobrania artykułów przyjmuje obiekt i wyszukuje po jego polach w bazie danych */
+        /* Jeżeli nie przekazano nic w body request to zwracanie wszystkich artykulow */
+        /* Jezeli żaden artykuł nie pasuje do parametrów przekazanych w RequestBody lub nie ma nic w bazie to 404 */
         try {
             $requestArray = $request->toArray();
             $criteria = $requestArray['criteria'] ?? [];
@@ -375,7 +375,7 @@ class ArticleController extends AbstractController
         }
         if(!$articles) return new JsonResponse(['message' => 'Nie znaleziono'], 404);
         
-        // Pobierz wszystkie gĹ‚Ăłwne zdjÄ™cia w jednym zapytaniu
+        // Pobierz wszystkie główne zdjęcia w jednym zapytaniu
         $articleIds = array_map(fn($article) => $article->getId(), $articles);
         $mainImages = $imageRepository->findMainImagesForArticles($articleIds);
         
@@ -383,10 +383,10 @@ class ArticleController extends AbstractController
         foreach ($articles as $article) {
             $articleId = $article->getId();
             $mainImage = $mainImages[$articleId] ?? null;
-            // PrzekaĹĽ articleId bezpoĹ›rednio, aby uniknÄ…Ä‡ problemĂłw z relacjami Doctrine
+            // Przekaż articleId bezpośrednio, aby uniknąć problemów z relacjami Doctrine
             $thumbnailUrl = $mainImage ? $imageUploadService->getThumbnailUrl($mainImage, $articleId) : null;
             
-            // RÄ™cznie buduj tablicÄ™ z wĹ‚aĹ›ciwoĹ›ci Article
+            // Ręcznie buduj tablicę z właściwości Article
             $articleArray = [
                 'id' => $article->id,
                 'code' => $article->code,
@@ -403,17 +403,17 @@ class ArticleController extends AbstractController
     }
 
     /**
-     * WyĹ›wietla konkretny artykuĹ‚
+     * Wyświetla konkretny artykuł
      */
     #[OA\Tag(name: "Article")]
     #[OA\Response(
         response: 200,
-        description: "SzczegĂłĹ‚y artykuĹ‚u",
+        description: "Szczegóły artykułu",
         content: new Model(type: ArticleDetailResponse::class)
     )]
     #[OA\Response(
         response: 404,
-        description: "Nie znaleziono artykuĹ‚u"
+        description: "Nie znaleziono artykułu"
     )]
     #[Route('/article/{id_article}', name: 'app_article_get_one', requirements: ['id_article' => '\d+'], methods: ["GET"])]
     public function getOne(ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, int $id_article): JsonResponse
@@ -437,12 +437,12 @@ class ArticleController extends AbstractController
     )]
     #[OA\Response(
         response: 200,
-        description: "Stworzony artykuĹ‚",
+        description: "Stworzony artykuł",
         content: new Model(type: ArticleDetailResponse::class)
     )]
     #[OA\Response(
         response: 400,
-        description: "ArtykuĹ‚ o podanym kodzie juz istnieje"
+        description: "Artykuł o podanym kodzie juz istnieje"
     )]
     #[Route('/article', name: 'app_article_create', methods: ["POST"])]
     public function create(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, Request $request): JsonResponse
@@ -455,9 +455,9 @@ class ArticleController extends AbstractController
         /* Sprawdzanie czy artykuĹ‚ o podanym kodzie nie istnieje juz w bazie danych */
         $articleResult = $articleRepository->findOneByCode($requestArray['code']);
         if($articleResult !== null) {
-            return new JsonResponse(["message" => "ArtykuĹ‚ o takim kodzie juĹĽ istnieje"], 400);
+            return new JsonResponse(["message" => "Artykuł o takim kodzie już istnieje"], 400);
         }
-        /* Sprawdzanie czy wszystkie wymagane pola zostaĹ‚y przekazane */
+        /* Sprawdzanie czy wszystkie wymagane pola zostały przekazane */
         $requiredFields = ['code', 'price', 'id_category', 'name', 'description'];
         foreach ($requiredFields as $requiredField) {
             if (!isset($requestArray[$requiredField])) {
@@ -481,7 +481,7 @@ class ArticleController extends AbstractController
         }
         $eanList = array_values(array_unique(array_values(array_filter(array_map('strval', $eanList), fn($v) => trim($v) !== ''))));
         if (count($eanList) === 0) {
-            return new JsonResponse(["message" => "Lista kodĂłw EAN jest pusta"], 400);
+            return new JsonResponse(["message" => "Lista kodów EAN jest pusta"], 400);
         }
         $article->setEan13($eanList[0]);
         $article->setPrice($requestArray['price']);
@@ -500,13 +500,13 @@ class ArticleController extends AbstractController
             $articleEanManager->flush();
         }
 
-        /* Ustawianie tĹ‚umaczeĹ„ jezeli zotaly przekazane */
+        /* Ustawianie tłumaczeń jezeli zotaly przekazane */
         if(isset($requestArray['translations'])) {
             foreach ($requestArray['translations'] as $translation) {
-                /* Sprawdzanie czy jÄ™zyk o podanym id juĹĽ istnieje */
+                /* Sprawdzanie czy język o podanym id już istnieje */
                 $language = $languageRepository->findOneBy(['id' => $translation['id_language']]);
                 if($language === null) {
-                    return new JsonResponse(["message" => "Nie znaleziono jÄ™zyka o podanym id_language ".$translation['id_language']], 400);
+                    return new JsonResponse(["message" => "Nie znaleziono języka o podanym id_language ".$translation['id_language']], 400);
                 }
                 $articleLanguage = new ArticleLanguage();
                 $articleLanguage->setName($translation['name']);
@@ -527,24 +527,24 @@ class ArticleController extends AbstractController
     }
 
     /**
-     * Edytuje istniejÄ…cy artykuĹ‚
+     * Edytuje istniejący artykuł
      *
-     * JeĹĽeli chcesz dodaÄ‡ nowe tĹ‚umaczenie do artykuĹ‚u moĹĽesz rĂłwnieĹĽ skorzystaÄ‡ z tej metody. Poprostu w tabeli z tĹ‚umaczeniami przekaĹĽ jedno bez id, a zostanie ono automatycznie utworzone
+     * Jeżeli chcesz dodać nowe tłumaczenie do artykułu możesz również skorzystać z tej metody. Poprostu w tabeli z tłumaczeniami przekaż jedno bez id, a zostanie ono automatycznie utworzone
      */
     #[OA\Tag(name: "Article")]
     #[OA\RequestBody(
-        description: "ArtykuĹ‚",
+        description: "Artykuł",
         required: true,
         content: new Model(type: ArticleUpdateRequest::class)
     )]
     #[OA\Response(
         response: 200,
-        description: "Zaktualizowany artykuĹ‚",
+        description: "Zaktualizowany artykuł",
         content: new Model(type: ArticleDetailResponse::class)
     )]
     #[OA\Response(
         response: 404,
-        description: "Nie znaleziono artykuĹ‚u o podanym id"
+        description: "Nie znaleziono artykułu o podanym id"
     )]
     #[Route('/article', name: 'app_article_edit', methods: ["PUT"])]
     public function edit(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, Request $request): JsonResponse
@@ -555,9 +555,9 @@ class ArticleController extends AbstractController
         $requestArray = $request->toArray();
         $article = $articleRepository->findOneBy(['id' => $requestArray['id']]);
         if($article === null) {
-            return new JsonResponse(["message" => "Nie znaleziono artykuĹ‚u o podanym kodzie"], 404);
+            return new JsonResponse(["message" => "Nie znaleziono artykułu o podanym kodzie"], 404);
         }
-        /* Ustawianie danych artykuĹ‚u */
+        /* Ustawianie danych artykułu */
         $article->setCode($requestArray['code']);
         $article->setPrice($requestArray['price']);
         $article->setIdCategory($requestArray['id_category']);
@@ -566,7 +566,7 @@ class ArticleController extends AbstractController
         $entityManager->persist($article);
         $entityManager->flush();
 
-        // Synchronizacja listy EAN jeĹ›li przekazana
+        // Synchronizacja listy EAN jeśli przekazana
         if (isset($requestArray['ean13_list']) || isset($requestArray['ean13'])) {
             $eanList = [];
             if (isset($requestArray['ean13_list']) && is_array($requestArray['ean13_list'])) {
@@ -577,14 +577,14 @@ class ArticleController extends AbstractController
             }
             $eanList = array_values(array_unique(array_values(array_filter(array_map('strval', $eanList), fn($v) => trim($v) !== ''))));
             if (count($eanList) > 0) {
-                // zaktualizuj gĹ‚Ăłwny ean
+                // zaktualizuj główny ean
                 $article->setEan13($eanList[0]);
                 $entityManager->persist($article);
                 $entityManager->flush();
 
                 $existing = $articleEanRepository->findByArticleId($article->getId());
                 $existingValues = array_map(fn($e) => $e->getEan13(), $existing);
-                // usuĹ„ nieobecne
+                // usuń nieobecne
                 foreach ($existing as $existingEan) {
                     if (!in_array($existingEan->getEan13(), $eanList, true)) {
                         $articleEanManager->remove($existingEan);
@@ -603,11 +603,11 @@ class ArticleController extends AbstractController
                 }
             }
         }
-        /* Ustawianie tĹ‚umaczeĹ„ jezeli zostaly przekazane */
+        /* Ustawianie tłumaczeń jezeli zostaly przekazane */
         if(isset($requestArray['translations'])) {
             foreach ($requestArray['translations'] as $translation) {
                 if(!isset($translation['id'])) {
-                    /* Nie podano id istniejÄ…cego tĹ‚umaczenia wiÄ™c tworzymy nowe, uznajÄ…c ĹĽe uĹĽytkownik chce stworzyÄ‡ nowe tĹ‚umaczenie dla tego artykuĹ‚u */
+                    /* Nie podano id istniejącego tłumaczenia więc tworzymy nowe, uznając że użytkownik chce stworzyć nowe tłumaczenie dla tego artykułu */$translation['id'] = $article->getId();
                     $articleLanguage = new ArticleLanguage();
                     $articleLanguage->setIdArticle($article->getId());
                     $articleLanguage->setIdLanguage($translation['id_language']);
@@ -631,17 +631,17 @@ class ArticleController extends AbstractController
     }
 
     /**
-     * Usuwa istniejÄ…cy artykuĹ‚
+     * Usuwa istniejący artykuł
      */
     #[OA\Tag(name: "Article")]
     #[OA\Response(
         response: 200,
-        description: "UsuniÄ™to",
+        description: "Usunięto",
         content: new Model(type: MessageResponse::class)
     )]
     #[OA\Response(
         response: 404,
-        description: "Nie znaleziono artykuĹ‚u o podanym kodzie"
+        description: "Nie znaleziono artykułu o podanym kodzie"
     )]
     #[Route('/article/{id_article}', name: 'app_article_delete', requirements: ['id_article' => '\d+'], methods: ["DELETE"])]
     public function delete(ManagerRegistry $doctrine, LanguageRepository $languageRepository, ArticleRepository $articleRepository, ArticleLanguageRepository $articleLanguageRepository, ArticleEanRepository $articleEanRepository, int $id_article): JsonResponse
@@ -651,25 +651,25 @@ class ArticleController extends AbstractController
         $articleEanManager = $doctrine->getManagerForClass(ArticleEan::class);
         $article = $articleRepository->findOneBy(['id' => $id_article]);
         if($article === null) {
-            return new JsonResponse(["message" => "Nie znaleziono artykuĹ‚u o podanym id"], 404);
+            return new JsonResponse(["message" => "Nie znaleziono artykułu o podanym id"], 404);
         }
-        /* Usuwanie tlumaczeĹ„ artykuĹ‚u */
+        /* Usuwanie tłumaczeń artykułu */
         $translations = $articleLanguageRepository->findBy(['id_article' => $article->getId()]);
         foreach ($translations as $translation) {
             $articleLanguageManager->remove($translation);
             $articleLanguageManager->flush();
         }
-        /* Usuwanie eanĂłw artykuĹ‚u */
+        /* Usuwanie eanów artykułu */
         $eans = $articleEanRepository->findBy(['id_article' => $article->getId()]);
         foreach ($eans as $ean) {
             $articleEanManager->remove($ean);
             $articleEanManager->flush();
         }
-        /* Usuwanie samego artykuĹ‚u */
+        /* Usuwanie samego artykułu */
         $entityManager->remove($article);
         $entityManager->flush();
 
-        return new JsonResponse(["message" => "UsuniÄ™to"]);
+        return new JsonResponse(["message" => "Usunięto"]);
     }
 
     private function deleteRelatedEntities(ManagerRegistry $doctrine, Article $article): void

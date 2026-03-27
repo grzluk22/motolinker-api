@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\ArticleRepository;
 use App\Entity\Category;
 use App\Entity\CategoryLanguage;
 use App\Entity\Language;
@@ -181,5 +182,65 @@ class CategoryController extends AbstractController
         $data = array_merge((array) $category, ["translations" => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])]);
 
         return new JsonResponse($data);
+    }
+
+    /**
+     * Zwraca ilość produktów w kategorii
+     */
+    #[OA\Tag(name: "Category")]
+    #[OA\Response(
+        response: 200,
+        description: "Ilość produktów w kategorii",
+        content: new Model(type: CategoryResponse::class)
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Nie znaleziono kategorii o podanym id"
+    )]
+    #[Route('/category/{id}/article-count', name: 'app_category_article_count', methods: ["GET"])]
+    public function articleCount(CategoryRepository $categoryRepository, string $id): JsonResponse
+    {
+        $category = $categoryRepository->findOneBy(['id' => $id]);
+        if(!$category) return new JsonResponse(['message' => 'Nie znaleziono kategorii o podanym id'], 404);
+        return new JsonResponse(['article_count' => $category->getProductsCount()]);
+    }
+
+    /** 
+     * Liczy na nowo i aktualizuje ilość produktów dla każdej kategorii
+     */
+    #[OA\Tag(name:"Category")]
+    #[OA\Response(
+        response: 200,
+        description: "Zaktualizowano ilość produktów w kategoriach",
+        content: new Model(type: MessageResponse::class)
+    )]
+    #[Route('/category/article-count', name: 'app_category_products_count', methods: ["PUT"])]
+    public function recalculateProductsCount(CategoryRepository $categoryRepository, ArticleRepository $articleRepository): JsonResponse
+    {
+        $categories = $categoryRepository->findAll();
+        foreach ($categories as $category) {
+            $category->setProductsCount($articleRepository->count(['id_category' => $category->getId()]));
+            $categoryRepository->save($category, true);
+        }
+        return new JsonResponse(['message' => 'Zaktualizowano ilość produktów w kategoriach']);
+    }
+
+    /** 
+     * Liczy na nowo i aktualizuje ilość produktów dla kategorii o podanym id
+     */
+    #[OA\Tag(name:"Category")]
+    #[OA\Response(
+        response: 200,
+        description: "Zaktualizowano ilość produktów w kategoriach",
+        content: new Model(type: MessageResponse::class)
+    )]
+    #[Route('/category/{id_category}/article-count', name: 'app_category_id_products_count', methods: ["PUT"])]
+    public function recalculateProductsCountForCategoryID(int $id_category, CategoryRepository $categoryRepository, ArticleRepository $articleRepository): JsonResponse
+    {
+        $category = $categoryRepository->findOneBy(['id' => $id_category]);
+        if(!$category) return new JsonResponse(['message' => 'Nie znaleziono kategorii o podanym id'], 404);
+        $category->setProductsCount($articleRepository->count(['id_category' => $category->getId()]));
+        $categoryRepository->save($category, true);
+        return new JsonResponse(['message' => 'Zaktualizowano ilość produktów w kategoriach']);
     }
 }
