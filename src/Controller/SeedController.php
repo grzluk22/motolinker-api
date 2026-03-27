@@ -306,8 +306,9 @@ class SeedController extends AbstractController
                     ++$summary['references'];
                 }
             }
-
+            $category->recalculateProductsCount();
             $connection->commit();
+            
 
             return new JsonResponse([
                 'message' => 'Dodano przykładowe dane.',
@@ -481,6 +482,7 @@ class SeedController extends AbstractController
             if ($existingCategoryLanguage === null) {
                 $category = new Category();
                 $category->setIdParent($categoryData['id_parent']);
+                $category->setProductsCount(0);
                 $entityManager->persist($category);
                 $entityManager->flush();
                 $categoryMap[$key] = $category;

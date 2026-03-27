@@ -50,6 +50,7 @@ class CategoryController extends AbstractController
             $data[] = [
                 "id" => $category->getId(),
                 "id_parent" => $category->getIdParent(),
+                "products_count" => $category->getProductsCount(),
                 "translations" => $categoryLanguageRepository->findBy(['id_category' => $category->getId()])
             ];
         }
