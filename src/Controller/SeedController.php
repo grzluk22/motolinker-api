@@ -306,8 +306,9 @@ class SeedController extends AbstractController
                     ++$summary['references'];
                 }
             }
-            $category->recalculateProductsCount();
+            
             $connection->commit();
+            $categoryRepository->recalculateProductsCount();
             
 
             return new JsonResponse([

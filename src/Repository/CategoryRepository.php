@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Category;
+use App\Entity\Article;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -82,5 +83,14 @@ class CategoryRepository extends ServiceEntityRepository
         $grandChildIds = $this->getDescendantIds($childIds);
 
         return array_unique(array_merge($allIds, $grandChildIds));
+    }
+
+    public function recalculateProductsCount(): void
+    {
+        $categories = $this->findAll();
+        foreach ($categories as $category) {
+            $category->setProductsCount($this->getEntityManager()->getRepository(Article::class)->count(['id_category' => $category->getId()]));
+            $this->save($category, true);
+        }
     }
 }

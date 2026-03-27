@@ -216,13 +216,9 @@ class CategoryController extends AbstractController
         content: new Model(type: MessageResponse::class)
     )]
     #[Route('/category/article-count', name: 'app_category_products_count', methods: ["PUT"])]
-    public function recalculateProductsCount(CategoryRepository $categoryRepository, ArticleRepository $articleRepository): JsonResponse
+    public function recalculateProductsCount(CategoryRepository $categoryRepository): JsonResponse
     {
-        $categories = $categoryRepository->findAll();
-        foreach ($categories as $category) {
-            $category->setProductsCount($articleRepository->count(['id_category' => $category->getId()]));
-            $categoryRepository->save($category, true);
-        }
+        $categoryRepository->recalculateProductsCount();
         return new JsonResponse(['message' => 'Zaktualizowano ilość produktów w kategoriach']);
     }
 
