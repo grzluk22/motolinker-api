@@ -15,7 +15,7 @@ services:
       VIRTUAL_HOST: ${API_DOMAIN}
       LETSENCRYPT_HOST: ${API_DOMAIN}
       VIRTUAL_PORT: 80
-      MERCURE_TOPIC_BASE_URL: https://${MERCURE_DOMAIN}/.well-known/mercure
+      MERCURE_TOPIC_BASE_URL: https://${FRONTEND_DOMAIN}
     volumes:
       - public_uploads:/var/www/public/uploads
       - jwt_keys:/var/www/config/jwt
@@ -49,9 +49,6 @@ services:
       SERVER_NAME: ':80'
       MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET}
       MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET}
-      VIRTUAL_HOST: ${MERCURE_DOMAIN}
-      LETSENCRYPT_HOST: ${MERCURE_DOMAIN}
-      VIRTUAL_PORT: 80
       MERCURE_EXTRA_DIRECTIVES: |
         cors_origins https://${API_DOMAIN} https://${FRONTEND_DOMAIN}
         anonymous

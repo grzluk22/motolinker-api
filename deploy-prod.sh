@@ -45,7 +45,6 @@ if [ ! -f ".env.prod.local" ]; then
     echo -e "${GREEN}Podaj parametry, naciśnij ENTER aby użyć wartości domyślnej w [nawiasach].${NC}\n"
 
     ask "Domena API (np. api.example.com)" "api.example.com" API_DOMAIN
-    ask "Domena Mercure (np. mercure.example.com)" "mercure.example.com" MERCURE_DOMAIN
     ask "Domena Frontend (do CORS, np. example.com)" "example.com" FRONTEND_DOMAIN
 
     ask "Nazwa produkcyjnej bazy danych" "app_prod" MYSQL_DATABASE
@@ -76,13 +75,13 @@ JWT_PUBLIC_KEY="%kernel.project_dir%/config/jwt/public.pem"
 JWT_PASSPHRASE="${JWT_PASSPHRASE}"
 DEBUG_DELAY_MS=0
 MERCURE_URL="http://mercure/.well-known/mercure"
-MERCURE_PUBLIC_URL="https://${MERCURE_DOMAIN}/.well-known/mercure"
+MERCURE_PUBLIC_URL="https://${API_DOMAIN}/.well-known/mercure"
+MERCURE_TOPIC_BASE_URL="https://${FRONTEND_DOMAIN}"
 MERCURE_JWT_SECRET="${MERCURE_JWT_SECRET}"
-CORS_ALLOW_ORIGIN='^https?://(${FRONTEND_DOMAIN}|${API_DOMAIN})(:[0-9]+)?$'
+CORS_ALLOW_ORIGIN="^https?://(${FRONTEND_DOMAIN}|${API_DOMAIN})(:[0-9]+)?\\$"
 
 # Zmienne dla docker-compose i SSL
 API_DOMAIN=${API_DOMAIN}
-MERCURE_DOMAIN=${MERCURE_DOMAIN}
 FRONTEND_DOMAIN=${FRONTEND_DOMAIN}
 MYSQL_DATABASE=${MYSQL_DATABASE}
 MYSQL_USER=${MYSQL_USER}
@@ -156,7 +155,6 @@ ensure_ssl_certs() {
 }
 
 ensure_ssl_certs "$API_DOMAIN"
-ensure_ssl_certs "$MERCURE_DOMAIN"
 
 echo -e "\n${BLUE}Generowanie dynamicznych plików konfiguracyjnych Nginx...${NC}"
 
@@ -176,35 +174,7 @@ server {
     ssl_certificate /etc/nginx/ssl/${API_DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/${API_DOMAIN}/privkey.pem;
 
-    location / {
-        proxy_pass http://motolinker_backend_prod:80;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        
-        proxy_read_timeout 60s;
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-    }
-}
-EOF
-
-    cat > ${MERCURE_DOMAIN}.conf <<EOF
-server {
-    listen 80;
-    server_name ${MERCURE_DOMAIN};
-    return 301 https://\$host\$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    server_name ${MERCURE_DOMAIN};
-
-    ssl_certificate /etc/nginx/ssl/${MERCURE_DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/${MERCURE_DOMAIN}/privkey.pem;
-
-    location / {
+    location /.well-known/mercure {
         proxy_pass http://motolinker_mercure_prod:80;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -216,6 +186,19 @@ server {
         chunked_transfer_encoding off;
         proxy_buffering off;
         proxy_cache off;
+        proxy_read_timeout 3600s;
+    }
+
+    location / {
+        proxy_pass http://motolinker_backend_prod:80;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
     }
 }
 EOF
@@ -227,26 +210,7 @@ server {
     listen 80;
     server_name ${API_DOMAIN};
 
-    location / {
-        proxy_pass http://motolinker_backend_prod:80;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        
-        proxy_read_timeout 60s;
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-    }
-}
-EOF
-
-    cat > ${MERCURE_DOMAIN}.conf <<EOF
-server {
-    listen 80;
-    server_name ${MERCURE_DOMAIN};
-
-    location / {
+    location /.well-known/mercure {
         proxy_pass http://motolinker_mercure_prod:80;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -258,6 +222,19 @@ server {
         chunked_transfer_encoding off;
         proxy_buffering off;
         proxy_cache off;
+        proxy_read_timeout 3600s;
+    }
+
+    location / {
+        proxy_pass http://motolinker_backend_prod:80;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
     }
 }
 EOF
@@ -270,12 +247,11 @@ fi
 
 echo -e "\n${BLUE}Wgrywanie konfiguracji do kontenera ${PROXY_CONTAINER_NAME}...${NC}"
 docker cp ${API_DOMAIN}.conf ${PROXY_CONTAINER_NAME}:/etc/nginx/conf.d/${API_DOMAIN}.conf
-docker cp ${MERCURE_DOMAIN}.conf ${PROXY_CONTAINER_NAME}:/etc/nginx/conf.d/${MERCURE_DOMAIN}.conf
 
 echo -e "\n${BLUE}Restartowanie proxy...${NC}"
 docker exec ${PROXY_CONTAINER_NAME} nginx -s reload || echo -e "${RED}Nie udało się przeładować Nginx. Upewnij się, że nazwa kontenera (${PROXY_CONTAINER_NAME}) jest poprawna.${NC}"
 
-rm ${API_DOMAIN}.conf ${MERCURE_DOMAIN}.conf
+rm ${API_DOMAIN}.conf
 
 echo -e "\n${GREEN}=== Wdrożenie Zakończone ===${NC}"
 echo -e "Aplikacja podłączona pod sieć: ${PROXY_NETWORK_NAME}"
